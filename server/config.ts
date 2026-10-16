@@ -8,6 +8,7 @@ import { z } from "zod";
 import { normalizeImageGenerationUrl, type ImageGenerationConfig } from "../shared/image-generation.ts";
 
 import { writeFileAtomic } from "./atomic.ts";
+import { hindsightConfigSchema, type HindsightConfig } from "./hindsight-memory.ts";
 import { withoutComputerEngine } from "./computer-engine-removal.ts";
 import { newBotDefaultsSchema, type NewBotDefaults } from "./new-bot-defaults.ts";
 import { EFFORT_LEVELS, type EffortLevel, type LiveSettings } from "../shared/wire.ts";
@@ -564,6 +565,7 @@ const appConfigSchema = z.object({
     captureQuietMs: z.number().int().min(1_000).max(24 * 60 * 60_000).optional(),
     /** Local hour (0-23) after which the nightly tidy-up runs. */
     tidyHour: z.number().int().min(0).max(23).optional(),
+    hindsight: hindsightConfigSchema.optional(),
   }).strict().optional(),
   threads: threadsConfigSchema.optional(),
   /** The authorization decision log (server/decision-log.ts): days of month
@@ -645,7 +647,7 @@ export interface AppConfig {
   mcp?: { callTimeoutMinutes?: number };
   threads?: { maxConcurrentPerBot: number; eventLogMaxBytes?: number; eventLogRetentionDays?: number };
   context?: { rebuildBytes?: number; compactAt?: number; autoCompact?: boolean };
-  memory?: { captureQuietMs?: number; tidyHour?: number };
+  memory?: { captureQuietMs?: number; tidyHour?: number; hindsight?: HindsightConfig };
   /** Shared preserves the historical singleton. Per-bot gives every bot a
    * separate container, durable workspace, viewer and lease. Pool runs N
    * seats shared by all conversations, with per-thread affinity (#1654). */

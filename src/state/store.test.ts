@@ -2207,6 +2207,11 @@ describe("live config frames", () => {
     localVm: { mode: "shared", maxInstances: 1 },
   };
 
+  it("keeps Hindsight configuration and index status through live config refreshes", () => {
+    const memory = { hindsight: { enabled: true, url: "http://127.0.0.1:8888", maxTokens: 512, error: null, pending: true, indexedDocuments: 7 } };
+    expect(configStatusFromFrame({ ...baseFrame, memory }).memory).toEqual(memory);
+  });
+
   it("keeps automatic recovery and its backup through live config refreshes", () => {
     const automaticRecovery = { enabled: true, backup: { instanceId: "backup", model: "fixture-model" } };
     expect(configStatusFromFrame({ ...baseFrame, automaticRecovery }).automaticRecovery).toEqual(automaticRecovery);

@@ -6,6 +6,7 @@ import {
   verifyCloudflaredExecutable,
 } from "./prepare-cloudflared.mjs";
 import { verifyBrowserBundle } from "./prepare-browser.mjs";
+import { verifyHindsightBundle } from "./hindsight-bundle.mjs";
 import { LIPO_ARCH, isMachO, writeThinMachO } from "./mac-thin.mjs";
 
 async function requireRealDirectory(directory, mode = 0o755) {
@@ -102,6 +103,12 @@ export default async function afterPack(context) {
     throw error;
   });
   const arch = { 1: "x64", 3: "arm64" }[context.arch];
+  const hindsightRoot = path.join(resources, "hindsight-runtime");
+  const hasHindsight = await lstat(hindsightRoot).then(() => true, error => {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  });
+  if (hasHindsight || context.packager) await verifyHindsightBundle(hindsightRoot, `${context.electronPlatformName}-${arch}`);
   // electron-builder warns and skips missing extraResources. A real package
   // must fail here, before signing, rather than silently ship without Chrome.
   if (hasBrowser || context.packager) {

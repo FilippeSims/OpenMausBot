@@ -643,6 +643,8 @@ describe("agents-proxy MCP surface", () => {
       "manage_room",
       "request_credential",
       "memory_update",
+      "memory_search",
+      "memory_share",
       "retry_thread",
       "memory_log",
       "session_search",

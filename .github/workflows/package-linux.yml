@@ -37,6 +37,9 @@ jobs:
         run: >-
           sudo apt-get update && sudo apt-get install -y
           at-spi2-core dbus-x11 desktop-file-utils libxi6 libxkbcommon0 squashfs-tools x11-utils xdotool xvfb
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.9.9"
       - run: pnpm install --frozen-lockfile
       - name: Clean generated output
         run: pnpm clean

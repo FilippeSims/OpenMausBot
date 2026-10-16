@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { parse } from "yaml";
 import { LICENSE_FILES } from "./cua-linux-release.mjs";
 import {
   CLOUDFLARED_ASSETS,
@@ -27,6 +28,8 @@ const { validateDriverCandidate } = require("../electron/cua-linux.cjs");
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const releaseDir = path.resolve(process.argv[2] ?? path.join(root, "release"));
+const updaterConfig = parse(readFileSync(path.join(root, "electron-builder.yml"), "utf8")).publish;
+const updaterTarget = Array.isArray(updaterConfig) ? updaterConfig[0] : updaterConfig;
 
 function fail(message) {
   throw new Error(`[verify-linux-package] ${message}`);
@@ -75,8 +78,9 @@ function requireUpdaterTarget(resources, label) {
   const updateFile = path.join(resources, "app-update.yml");
   requireFile(updateFile);
   const update = readFileSync(updateFile, "utf8");
-  if (!/^owner: milind-soni$/m.test(update) || !/^repo: OpenMausBot$/m.test(update)) {
-    fail(`${label} app-update.yml does not point at milind-soni/OpenMausBot`);
+  const actual = parse(update);
+  if (actual.owner !== updaterTarget.owner || actual.repo !== updaterTarget.repo) {
+    fail(`${label} app-update.yml does not point at ${updaterTarget.owner}/${updaterTarget.repo}`);
   }
 }
 

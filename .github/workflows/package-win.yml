@@ -34,6 +34,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.9.9"
       - run: pnpm install --frozen-lockfile
       # the packaged app ships compiled JS, so a stale dist/ or dist-server/
       # would ride along unsigned-for and unsealed (the 0.1.15 "damaged"
@@ -87,8 +90,9 @@ jobs:
           fi
           [ -f "$res/app-update.yml" ] || { echo "::error::missing $res/app-update.yml"; fail=1; }
           if [ -f "$res/app-update.yml" ]; then
-            grep -Eq '^repo: OpenMausBot$' "$res/app-update.yml" || {
-              echo "::error::app-update.yml does not point at milind-soni/OpenMausBot"; fail=1; }
+            grep -Fxq "owner: $GITHUB_REPOSITORY_OWNER" "$res/app-update.yml" &&
+              grep -Eq '^repo: OpenMausBot$' "$res/app-update.yml" || {
+              echo "::error::app-update.yml does not point at $GITHUB_REPOSITORY_OWNER/OpenMausBot"; fail=1; }
             # while the build is unsigned, a publisherName makes
             # electron-updater reject every update as untrusted
             if grep -q "publisherName" "$res/app-update.yml"; then

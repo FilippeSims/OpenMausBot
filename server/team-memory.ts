@@ -76,8 +76,10 @@ export class TeamMemory {
   private data: TeamMemoryFile;
   private saved: TeamMemoryFile;
   private readable = true;
+  private readonly onChange?: () => void;
 
-  constructor(file: string) {
+  constructor(file: string, onChange?: () => void) {
+    this.onChange = onChange;
     this.file = file;
     this.data = this.load();
     this.saved = this.snapshot();
@@ -113,6 +115,17 @@ export class TeamMemory {
       this.data = { version: 1, sections: Object.assign(Object.create(null), structuredClone(this.saved.sections)) };
       throw error;
     }
+    this.onChange?.();
+  }
+
+  renameSection(previous: string, next: string | null): void {
+    const entries = this.data.sections[previous];
+    if (!Object.hasOwn(this.data.sections, previous)) return;
+    if (next !== null && next !== previous) {
+      this.data.sections[next] = [...(this.data.sections[next] ?? []), ...entries];
+    }
+    if (next !== previous) delete this.data.sections[previous];
+    this.save();
   }
 
   private entries(section: string | null | undefined): TeamMemoryEntry[] {

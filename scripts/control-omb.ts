@@ -4,7 +4,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { closeSync, mkdirSync, mkdtempSync, openSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join } from "node:path";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs, type ParseArgsOptionsConfig } from "node:util";
 
@@ -416,6 +416,10 @@ export async function launchVerificationServer(
   extraProviders: Array<"codex"> = [],
   /** Programmatic tests only: an owned loopback Boat provider, never a live account. */
   boatFixtureApi?: string,
+  /** Explicit bundled engine; database/home still belong to this fixture. */
+  hindsightBundle?: string,
+  /** Owned package smoke: same fake-provider fixture, compiled server entry. */
+  packagedServerEntry?: string,
 ): Promise<VerificationServer> {
   if (boatFixtureApi) {
     if (!/^http:\/\/127\.0\.0\.1:[1-9]\d{0,4}$/.test(boatFixtureApi)) {
@@ -459,6 +463,7 @@ export async function launchVerificationServer(
 
   const log = openSync(logPath, "a", 0o600);
   const childEnv = verificationServerEnvironment(parentEnv, dataDir, port);
+  if (hindsightBundle) childEnv.OMB_HINDSIGHT_RUNTIME = resolve(hindsightBundle);
   // Opt-in live Local VM fixture: keep the temporary home and fake engine,
   // granting only the explicitly selected machine connection and static UI.
   if (localVm) Object.assign(childEnv, {
@@ -480,7 +485,7 @@ export async function launchVerificationServer(
   if (childEnv.OMB_TEST_DESKTOP_OWNER_TOKEN) {
     serverArgs.push("--import", pathToFileURL(join(ROOT, "server", "testing", "desktop-parent.mjs")).href);
   }
-  serverArgs.push(join(ROOT, "server", "index.ts"));
+  serverArgs.push(packagedServerEntry ? resolve(packagedServerEntry) : join(ROOT, "server", "index.ts"));
   const child = spawn(process.execPath, serverArgs, {
     cwd: ROOT,
     env: childEnv,

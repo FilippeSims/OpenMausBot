@@ -647,6 +647,13 @@ export function visibleMessages(bot: Pick<Bot, "messages" | "activeLeafId">): Me
 
 /** GET /api/config — configured flags only; secrets are never echoed. */
 export interface ConfigStatus {
+  memory?: { hindsight?: {
+    mode?: "embedded" | "external"; embeddedAvailable?: boolean;
+    runtimeState?: "stopped" | "starting" | "ready" | "error";
+    available?: boolean; enabled: boolean; url?: string; recallTimeoutMs?: number;
+    retainTimeoutMs?: number; maxTokens?: number; keyConfigured?: boolean;
+    error: string | null; pending: boolean; indexedDocuments: number;
+  } };
   xai?: { configured: boolean };
   mistral?: { configured: boolean };
   cerebras?: { configured: boolean };
@@ -778,11 +785,12 @@ export interface BrowserProfile {
 // Settings shows (a saved key's Test button used to vanish that way).
 export type ConfigStatusFrame = Pick<
   ConfigStatus,
-  "xai" | "mistral" | "cerebras" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "localVm" | "opencodeGo" | "tts" | "decider" | "imageGen" | "live" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing" | "managedPolicy" | "cloudHome"
+  "memory" | "xai" | "mistral" | "cerebras" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "localVm" | "opencodeGo" | "tts" | "decider" | "imageGen" | "live" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing" | "managedPolicy" | "cloudHome"
 >;
 
 export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
   return {
+    memory: frame.memory,
     xai: frame.xai,
     mistral: frame.mistral,
     cerebras: frame.cerebras,
@@ -914,6 +922,7 @@ export type AppSettingsSection =
   | "experimental"
   | "connections"
   | "decisionModel"
+  | "memory"
   | "engines"
   | "companion"
   | "remote"

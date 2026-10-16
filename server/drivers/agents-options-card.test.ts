@@ -36,10 +36,18 @@ function context(overrides: Partial<ToolCallContext> = {}): ToolCallContext {
 }
 
 describe("Watcher options-card tool", () => {
+  it("keeps semantic memory and sharing unavailable on Cloud homes", () => {
+    const names = availableTools(profile({ cloudHome: true })).map((tool) => tool.name);
+    expect(names).not.toContain("memory_search");
+    expect(names).not.toContain("memory_share");
+    expect(names).toContain("memory_update");
+  });
   it("hides memory tools when native memory is off", () => {
     const names = availableTools(profile({ memoryEnabled: false })).map((tool) => tool.name);
     expect(names).not.toContain("memory_update");
     expect(names).not.toContain("memory_log");
+    expect(names).not.toContain("memory_search");
+    expect(names).not.toContain("memory_share");
     expect(names).toContain("session_search");
   });
   it("is advertised only to Watcher interactive turns", () => {

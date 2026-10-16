@@ -1,0 +1,70 @@
+{
+  "cpython-3.11.14-darwin-aarch64-none": {
+    "name": "cpython",
+    "arch": {
+      "family": "aarch64",
+      "variant": null
+    },
+    "os": "darwin",
+    "libc": "none",
+    "major": 3,
+    "minor": 11,
+    "patch": 14,
+    "prerelease": "",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.11.14%2B20251031-aarch64-apple-darwin-install_only_stripped.tar.gz",
+    "sha256": "3ee35ef147a7ec7b62e4d5686742959f5a8ea557724a9cd183e0532a71cf3221",
+    "variant": null,
+    "build": "20251031"
+  },
+  "cpython-3.11.14-darwin-x86_64-none": {
+    "name": "cpython",
+    "arch": {
+      "family": "x86_64",
+      "variant": null
+    },
+    "os": "darwin",
+    "libc": "none",
+    "major": 3,
+    "minor": 11,
+    "patch": 14,
+    "prerelease": "",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.11.14%2B20251031-x86_64-apple-darwin-install_only_stripped.tar.gz",
+    "sha256": "7d283bcbfaf0204b98d9d0f4eea216fc41220f67739d60b89fb91f88e551b8fb",
+    "variant": null,
+    "build": "20251031"
+  },
+  "cpython-3.11.14-linux-x86_64-gnu": {
+    "name": "cpython",
+    "arch": {
+      "family": "x86_64",
+      "variant": null
+    },
+    "os": "linux",
+    "libc": "gnu",
+    "major": 3,
+    "minor": 11,
+    "patch": 14,
+    "prerelease": "",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.11.14%2B20251031-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+    "sha256": "6fc38e1091600b29efb931ac77ecda9dd9b57ee19f7519e5b21042bf6eef3856",
+    "variant": null,
+    "build": "20251031"
+  },
+  "cpython-3.11.14-windows-x86_64-none": {
+    "name": "cpython",
+    "arch": {
+      "family": "x86_64",
+      "variant": null
+    },
+    "os": "windows",
+    "libc": "none",
+    "major": 3,
+    "minor": 11,
+    "patch": 14,
+    "prerelease": "",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20251031/cpython-3.11.14%2B20251031-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+    "sha256": "4109dfc4a4a76260c8b71343c2557db6405544edf23d890349b605771423d729",
+    "variant": null,
+    "build": "20251031"
+  }
+}

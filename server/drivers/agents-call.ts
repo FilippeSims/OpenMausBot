@@ -1082,6 +1082,21 @@ export async function callTool(name: string, args: Json, context: ToolCallContex
       : "";
     return { text: `Memory updated.${entry}${full}${movedNote}` };
   }
+  if (name === "memory_search" || name === "memory_share") {
+    const search = name === "memory_search";
+    if (search && (typeof args.query !== "string" || !args.query.trim() || args.query.length > 4_000)) {
+      return { text: "memory_search needs query, at most 4,000 characters.", isError: true };
+    }
+    if (!search && (typeof args.target_bot_id !== "string" || typeof args.source_path !== "string" || typeof args.text !== "string" || !args.text.trim() || args.text.length > 4_000)) {
+      return { text: "memory_share needs target_bot_id, source_path and an exact text passage, at most 4,000 characters.", isError: true };
+    }
+    const { body: result, ok } = await apiResponse(`/api/internal/memory/${search ? "search" : "share"}`, {
+      method: "POST", body: JSON.stringify(search ? { query: String(args.query).trim() } : {
+        targetBotId: args.target_bot_id, sourcePath: args.source_path, text: args.text,
+      }),
+    });
+    return { text: JSON.stringify(result), ...(!ok || result.error ? { isError: true } : {}) };
+  }
   if (name === "retry_thread") {
     const botId = String(args.bot_id ?? "").trim();
     const threadId = String(args.thread_id ?? "").trim();

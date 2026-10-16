@@ -453,6 +453,12 @@ describe("workspace", () => {
     const memory = loadMemory(BOT);
     expect(memory).toMatchObject({ truncated: true, lines: MEMORY_MAX_LINES + 50 });
     const managed = memorySystemPrompt(BOT, { managedWrites: true });
+    expect(managed).toContain("memory_search");
+    expect(managed).toContain("memory_share");
+    const cloud = memorySystemPrompt(BOT, { managedWrites: true, semanticTools: false });
+    expect(cloud).not.toContain("memory_search");
+    expect(cloud).not.toContain("memory_share");
+    expect(cloud).toContain("memory_update");
     expect(managed).toContain(`[MEMORY.md is ${MEMORY_MAX_LINES + 50} lines and ${memory!.bytes} bytes; only the first ${MEMORY_MAX_LINES} lines / ${MEMORY_MAX_BYTES} bytes are shown above.]`);
     expect(managed).toContain(`It is shown to you at the start of every session, up to ${MEMORY_MAX_LINES} lines / 24 KB.`);
     // how memory_update makes room is said once, in its own description

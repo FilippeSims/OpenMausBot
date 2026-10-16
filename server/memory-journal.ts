@@ -282,6 +282,13 @@ export interface MemoryChangeInput {
   after: string | null;
 }
 
+const memoryChangeListeners = new Set<(botId: string) => void>();
+
+export function onMemoryChange(listener: (botId: string) => void): () => void {
+  memoryChangeListeners.add(listener);
+  return () => memoryChangeListeners.delete(listener);
+}
+
 /** The last text this module saw for each memory file of each bot. What
  * the turn-boundary diff compares against, and what a route write
  * advances — so a person's save between two turns is never re-journaled
@@ -348,6 +355,9 @@ export function recordMemoryChange(botId: string, change: MemoryChangeInput): Me
   if (change.threadId) entry.threadId = change.threadId;
   if (revertUnavailableReason) entry.revertUnavailableReason = revertUnavailableReason;
   enqueue(botId, entry);
+  for (const listener of memoryChangeListeners) {
+    try { listener(botId); } catch {}
+  }
   return entry;
 }
 

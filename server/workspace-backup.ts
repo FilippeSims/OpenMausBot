@@ -32,6 +32,9 @@ const EXCLUDED = new Set([
   ".backups", "tools", "cache", ".cache", "tmp", ".tmp", "dist-native", "tunnel-runtime",
   ".openmausbot-server-child", "environment-id", "sessions.json", "tunnel-account.json",
   "team-computers.json",
+  // Hindsight is a derived index of the portable canonical notes. Never copy
+  // a running PostgreSQL data directory or this machine's database credential.
+  "hindsight-runtime", "hindsight-index.json",
   "openmausbot-server.lease", "box-create-requests.lock", "messages.db-wal", "messages.db-shm",
   // This machine's decision-model log (server/decider/log.ts): local
   // measurement of what the classifier picked, not workspace data.

@@ -15,7 +15,7 @@ protocols:
 # stranded on its installed version.
 publish:
   - provider: github
-    owner: milind-soni
+    owner: FilippeSims
     repo: OpenMausBot
 
 directories:
@@ -71,6 +71,10 @@ extraResources:
     to: licenses/models-dev-LICENSE.txt
   - from: third_party/opencode/LICENSE
     to: licenses/opencode-LICENSE.txt
+  - from: third_party/hindsight/LICENSE
+    to: licenses/Hindsight-LICENSE.txt
+  - from: third_party/hindsight/model-LICENSE.txt
+    to: licenses/multilingual-e5-LICENSE.txt
   - from: dist
     to: ui
   - from: dist-server
@@ -85,6 +89,7 @@ extraResources:
     to: android-platform-tools
 
 mac:
+  minimumSystemVersion: "15.0"
   # Two single-arch artifacts rather than one universal binary: the app is
   # architecture-specific, and universal would make users download both halves.
   # electron-updater picks by filename (arm64-marked files on Apple silicon,
@@ -115,6 +120,8 @@ mac:
       to: cloudflared/cloudflared
     - from: dist-native/browser/darwin-${arch}
       to: browser-engine
+    - from: dist-native/hindsight/darwin-${arch}
+      to: hindsight-runtime
   extendInfo:
     NSMicrophoneUsageDescription: OpenMausBot uses the microphone for voice dictation into the composer.
     NSSpeechRecognitionUsageDescription: OpenMausBot transcribes your voice on-device to type messages for you.
@@ -143,6 +150,8 @@ win:
       to: cloudflared/cloudflared.exe
     - from: dist-native/browser/win32-x64
       to: browser-engine
+    - from: dist-native/hindsight/win32-x64
+      to: hindsight-runtime
     # CUA driver and SDK for Windows — must live outside ASAR for native modules
     - from: dist-native/cua-win32-x64/cua-driver.exe
       to: cua-driver.exe
@@ -194,6 +203,8 @@ linux:
       to: cloudflared/cloudflared
     - from: dist-native/browser/linux-x64
       to: browser-engine
+    - from: dist-native/hindsight/linux-x64
+      to: hindsight-runtime
     - from: build/linux-openmausbot-browser.apparmor
       to: openmausbot-browser.apparmor
   desktop:

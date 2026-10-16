@@ -385,6 +385,7 @@ import {
   endMemoryTurn,
   flushAllMemoryJournals,
   journalMemoryWrite,
+  onMemoryChange,
   type MemoryJournalEntry,
 } from "./memory-journal.ts";
 import {
@@ -497,6 +498,10 @@ import { BOT_PACKAGE_MAX_SKILLS, isBotPackage, packageSummary, parsePackageDocum
 import { createTeamManifest, parseTeamManifest } from "./team-manifest.ts";
 import { readThreadEvents } from "./thread-events.ts";
 import { TeamMemory, TEAM_MEMORY_KINDS, type TeamMemoryKind } from "./team-memory.ts";
+import { HindsightMemory, hindsightEndpoint, checkHindsightConnection, type MemoryIndexScope } from "./hindsight-memory.ts";
+import { HindsightRuntime } from "./hindsight-runtime.ts";
+import { botMemoryScope, teamMemoryScope, renderSemanticMemory, searchActiveMemory } from "./memory-index.ts";
+import { MemorySharing } from "./memory-sharing.ts";
 import { describeTool, readBotActivity } from "./activity.ts";
 import { OutboundCounts } from "./outbound-counts.ts";
 import { OutboundRequestService } from "./outbound-requests.ts";
@@ -1556,8 +1561,15 @@ function recentWorkSources(bot: BotRecord) {
  * turn the person started — because a message from another bot, a webhook
  * or a room must not be able to pull a private chat into its reply. The
  * conversations are the ones session_search would search, minus this one. */
-function autoRecallPrompt(bot: BotRecord, threadId: string, message: string, opts: { conversations: boolean; userName: string }): string {
+async function autoRecallPrompt(bot: BotRecord, threadId: string, message: string, opts: { conversations: boolean; userName: string }): Promise<string> {
   if (bot.memoryEnabled === false || !autoRecallEnabled(cfg)) return "";
+  const section = sectionContextKey(bot.section);
+  const semantic = message.trim().length >= 8 ? renderSemanticMemory((await Promise.all([
+    hindsightMemory.recall("bot", bot.id, message),
+    hindsightMemory.recall("team", section, message),
+  ])).flat()) : "";
+  const current = store.bot(bot.id);
+  if (!current || current.memoryEnabled === false || sectionContextKey(current.section) !== section) return "";
   const roomByThread = new Map<string, GroupRecord>();
   if (opts.conversations) {
     for (const group of store.groups) {
@@ -1587,10 +1599,10 @@ function autoRecallPrompt(bot: BotRecord, threadId: string, message: string, opt
       author: (hit) => (hit.role === "user" ? hit.peer ?? opts.userName : hit.from ?? bot.name),
     });
     if (recalled) console.log(`auto-recall: ${bot.name} (${bot.id}) got ${recalled.notes} note and ${recalled.conversations} conversation passage(s) in ${threadId}`);
-    return recalled?.text ?? "";
+    return [semantic, recalled?.text].filter(Boolean).join("\n\n");
   } catch (err) {
     console.warn(`auto-recall failed for ${bot.id}: ${(err as Error).message}`);
-    return "";
+    return semantic;
   }
 }
 
@@ -3959,7 +3971,7 @@ function previewSystemPrompt(bot: BotRecord) {
     { id: "section-context", label: "Section context", text: sectionContextSystemPrompt(bot.section) },
     { id: "team-memory", label: "Team memory", text: teamMemory.systemPrompt(bot.section) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
     teamAvailabilityPart(agentsMounted && coordination ? peers : []),
-    { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false }) },
+    { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
     { id: "skills", label: "Skills index", text: privateWorkspace ? skillsSystemPrompt(bot.id, skillsLibraryEnabled(cfg) ? bot.assignedSkills : undefined) : "" },
   ]);
   const totalBytes = built.sections.reduce((n, s) => n + s.bytes, 0);
@@ -10825,7 +10837,7 @@ async function startTurn(
         // what the bot said lately in its other conversations, so a task
         // never redoes — or forgets — what another one already did
         { id: "recent", label: "Recent work", text: recentWorkPrompt(recentWork(recentWorkSources(bot), bot, { userName: cfg.profile?.name?.trim() || "User", currentThreadId: threadId, ...recentWorkFilter() })) },
-        { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false }) },
+        { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
         // liveBot was captured before awaited setup work; an assignment PUT
         // in that window must still reach this turn's prompt.
         { id: "skills", label: "Skills index", text: privateWorkspace ? skillsSystemPrompt(bot.id, skillsLibraryEnabled(cfg) ? (store.bot(bot.id)?.assignedSkills ?? bot.assignedSkills) : undefined) : "" },
@@ -10838,7 +10850,7 @@ async function startTurn(
       // Automatic recall rides in front of THIS turn's message, never in the
       // system prompt: the volatile half is re-sent whole whenever any part of
       // it changes, and recall changes nearly every turn.
-      const recalled = autoRecallPrompt(bot, threadId, resolvedImages.text, {
+      const recalled = await autoRecallPrompt(bot, threadId, resolvedImages.text, {
         // a routine run starts fresh by design, and a webhook is untrusted:
         // neither pulls earlier conversations in
         conversations: commsDepth === 0 && !coordinationNode && !opts?.automationSource && !opts?.unattended,
@@ -11910,7 +11922,39 @@ const validateModelProposal = (selection: ModelSelection, current?: BotRecord): 
   }
   return null;
 };
-const teamMemory = new TeamMemory(join(DATA_DIR, "team-memory.json"));
+const memorySharing = new MemorySharing(join(DATA_DIR, "memory-shares.json"));
+function indexedMemoryScope(kind: "bot" | "team", key: string): MemoryIndexScope | undefined {
+  if (kind === "bot") {
+    const bot = store.bot(key);
+    if (!bot || bot.memoryEnabled === false) return undefined;
+    return botMemoryScope(key, (path, hash) => memorySharing.metadata(key, path, hash));
+  }
+  const sections = new Set(["", ...store.sections, ...store.bots.map(bot => sectionContextKey(bot.section))]);
+  return sections.has(key) ? teamMemoryScope(key, teamMemory) : undefined;
+}
+const hindsightRuntime = new HindsightRuntime({
+  dataDir: DATA_DIR,
+  bundle: CLOUD_HOME ? undefined : process.env.OMB_HINDSIGHT_RUNTIME ?? (process.env.OMB_RESOURCES_PATH ? join(process.env.OMB_RESOURCES_PATH, "hindsight-runtime") : undefined),
+  config: () => CLOUD_HOME ? { enabled: false } : cfg.memory?.hindsight,
+  changed: () => hindsightMemory.schedule(),
+});
+const hindsightMemory = new HindsightMemory({
+  file: join(DATA_DIR, "hindsight-index.json"),
+  config: () => CLOUD_HOME ? undefined : hindsightRuntime.config(),
+  apiKey: () => hindsightRuntime.apiKey(),
+  destination: () => hindsightRuntime.destination(),
+  scope: indexedMemoryScope,
+  scopes: () => {
+    const bots = store.bots.filter(bot => bot.memoryEnabled !== false).flatMap(bot => indexedMemoryScope("bot", bot.id) ?? []);
+    const sections = new Set(["", ...store.sections, ...store.bots.map(bot => sectionContextKey(bot.section))]);
+    return [...bots, ...[...sections].flatMap(section => indexedMemoryScope("team", section) ?? [])];
+  },
+});
+const teamMemory = new TeamMemory(join(DATA_DIR, "team-memory.json"), () => hindsightMemory.schedule());
+onMemoryChange(() => hindsightMemory.schedule());
+store.onChange(change => {
+  if (change.type === "bot" || change.type === "bot.deleted" || change.type === "sections") hindsightMemory.schedule();
+});
 const outboundRequests = new OutboundRequestService();
 const outboundCounts = new OutboundCounts(join(DATA_DIR, "outbound-counts.json"));
 const OUTBOUND_HOLD_MS = 9 * 60_000;
@@ -13195,7 +13239,7 @@ async function runGroupMemberTurn(
     const drift = checkSoulDrift(bot.id, bot.soul ?? "", bot.soulHash ?? "");
     if (drift.drift !== Boolean(bot.soulDrift)) store.patchBot(bot.id, { soulDrift: drift.drift });
   }
-  const roomMemory = memorySystemPrompt(bot.id, { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false });
+  const roomMemory = memorySystemPrompt(bot.id, { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME });
   // The same brief a 1:1 turn gets: what this member said lately in its
   // other conversations, so a standup is answered from what happened. A
   // brief can carry a private chat into the room; as with session_search
@@ -13291,6 +13335,7 @@ async function runGroupMemberTurn(
       ? liveGroup.turnTimeoutMinutes
       : store.groupTaskByThread(liveGroup.id, threadId)?.turnTimeoutMinutes,
   );
+  const roomRecalled = cardContinuation ? "" : await autoRecallPrompt(bot, threadId, resolvedLatestImages.text, { conversations: false, userName });
   const outcome = await new Promise<GroupMemberTurnOutcome>((resolve) => {
     let done = false;
     let unsub = () => {};
@@ -13355,7 +13400,6 @@ async function runGroupMemberTurn(
     runningTurnEngines.set(threadId, instance);
     // notes only in a room: a private chat reaches a room through the
     // explicit, disclosed session_search, never automatically
-    const roomRecalled = cardContinuation ? "" : autoRecallPrompt(bot, threadId, resolvedLatestImages.text, { conversations: false, userName });
     guardTurnDispatch(instance.adapter.sendTurn({
         threadId,
         botId: readyBot.id,
@@ -15514,6 +15558,9 @@ function configStatus() {
   const eventLogRetentionDays = threadEventLogRetentionDays(cfg);
   return {
     xai: { configured: Boolean(cfg.xai?.key) },
+    memory: { hindsight: { ...cfg.memory?.hindsight, ...hindsightMemory.status(), available: !CLOUD_HOME, keyConfigured: Boolean(process.env.OMB_HINDSIGHT_API_KEY?.trim()), ...hindsightRuntime.status(),
+      error: hindsightRuntime.status().error ?? hindsightMemory.status().error,
+      pending: hindsightRuntime.status().pending || hindsightMemory.status().pending } },
     mistral: { configured: Boolean(cfg.mistral?.key) },
     cerebras: { configured: Boolean(cfg.cerebras?.key) },
     anthropic: { configured: Boolean(cfg.anthropic?.key), everyClaudeBot: cfg.anthropic?.everyClaudeBot !== false },
@@ -15949,10 +15996,11 @@ const workspaceBackupAccess = {
       teamComputers.list().every(computer => !teamComputerInUse(computer)) &&
       store.bots.every((bot) => !botHasActiveTurn(bot.id) && !routines?.activeRunForBot(bot.id) && !botComputerControlSnapshot(bot.id).held) &&
       store.groups.every((group) => !groupIsWorking(group)),
-    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); },
-    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); },
+    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); hindsightMemory.stop(); },
+    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); hindsightMemory.start(); },
     flush: async () => {
       await Promise.all([flushAllProfileHistory(), flushAllMemoryJournals(), flushUsageLedger(DATA_DIR), flushDecisionLog(DATA_DIR), flushAdminActivity(DATA_DIR)]);
+      await hindsightMemory.settled();
       // With writers gated and work idle, release our WAL connection for the
       // consistent snapshot. Store reopens it lazily after maintenance.
       await closeMessageSearch();
@@ -16847,6 +16895,47 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       // On a Cloud home only the owner's conversations get here (above): the
       // write is theirs (server/lending-memory.ts).
       const ownersWrite = <T,>(write: () => T): T => lendingMemory ? lendingMemory.trustedWrite(internalSender.id, write) : write();
+      if (method === "POST" && (path === "/api/internal/memory/search" || path === "/api/internal/memory/share")) {
+        const body = await readInternalBody();
+        if (CLOUD_HOME) return json(res, 403, { error: "Semantic memory and explicit memory sharing are unavailable on Cloud homes." });
+        const sender = store.bot(internalCapability.botId);
+        if (!sender || sender.memoryEnabled === false) return json(res, 403, { error: "Memory is disabled for this bot." });
+        const owner = connectorThread(sender.id, internalCapability.threadId);
+        if (!owner) return json(res, 403, { error: "source conversation does not belong to sender" });
+        if (path.endsWith("/search")) {
+          const parsed = z.object({ query: z.string().trim().min(1).max(4_000) }).strict().safeParse(body);
+          if (!parsed.success) return json(res, 400, { error: "query is required, at most 4,000 characters" });
+          const section = sectionContextKey(sender.section);
+          const hits = (await Promise.all([
+            hindsightMemory.recall("bot", sender.id, parsed.data.query),
+            hindsightMemory.recall("team", section, parsed.data.query),
+          ])).flat();
+          requireActiveInternalCapability();
+          const fresh = store.bot(sender.id);
+          if (!fresh || fresh.memoryEnabled === false || sectionContextKey(fresh.section) !== section) {
+            return json(res, 409, { error: "Memory access changed; retry in a new turn." });
+          }
+          const local = searchActiveMemory(botMemoryScope(sender.id, (path, hash) => memorySharing.metadata(sender.id, path, hash)), parsed.data.query)
+            .map(document => ({ file: document.source, snippet: document.text, metadata: document.metadata }));
+          const accepted = searchActiveMemory(teamMemoryScope(section, teamMemory), parsed.data.query);
+          return json(res, 200, { backend: hits.length ? "hindsight" : "local", hits, local, team: accepted });
+        }
+        if (owner.group && !roomFeedsBot(owner.group, sender)) return json(res, 403, { error: "Restricted room notes cannot be shared outside the room." });
+        const parsed = z.object({ targetBotId: z.string().regex(/^[\w-]{1,128}$/), sourcePath: z.string().max(256), text: z.string().min(1).max(4_000) }).strict().safeParse(body);
+        if (!parsed.success) return json(res, 400, { error: "targetBotId, sourcePath and an exact text passage are required" });
+        const recipient = store.bot(parsed.data.targetBotId);
+        if (!recipient) return json(res, 404, { error: "No such recipient." });
+        requireActiveInternalCapability();
+        try {
+          const shared = memorySharing.share(sender, recipient, parsed.data.sourcePath, parsed.data.text, internalCapability.threadId);
+          hindsightMemory.schedule();
+          appendDecision(DATA_DIR, { threadId: internalCapability.threadId, botId: sender.id,
+            tool: "memory_share", summary: `Shared ${parsed.data.sourcePath} with ${recipient.name}`, decision: "auto-approved", source: "memory-share" });
+          return json(res, 201, { ok: true, ...shared });
+        } catch (error) {
+          return json(res, 400, { error: error instanceof Error ? error.message : "Memory sharing failed." });
+        }
+      }
       if (method === "POST" && path === "/api/internal/memory") {
         const body = await readInternalBody();
         const result = ownersWrite(() => updateMemory(internalSender.id, { action: body.action, text: body.text, oldText: body.oldText, ...(body.until !== undefined ? { until: body.until } : {}) }, { source: memorySource() }));
@@ -21085,6 +21174,10 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       }
       const error = nextName === null ? store.deleteSection(section) : store.renameSection(section, nextName, teamComputers);
       if (error) return json(res, error === "No such team" ? 404 : 409, { error });
+      teamMemory.renameSection(section, nextName);
+      if (nextName !== null) hindsightMemory.renameTeam(section, nextName);
+      else hindsightMemory.deleteTeam(section);
+      hindsightMemory.schedule();
       return json(res, 200, { sections: store.sections });
     }
     if (method === "PUT" && path === "/api/sidebar-sections") {
@@ -24547,6 +24640,26 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       }
     }
 
+    // Admin-only, read-only health check. Draft URLs never change the index destination.
+    if (method === "POST" && path === "/api/memory/hindsight/test") {
+      if (CLOUD_HOME) return json(res, 403, { error: "Hindsight is unavailable on Cloud homes." });
+      const body = await readBody(req, 8192);
+      if (body.url !== undefined && (typeof body.url !== "string" || body.url.length > 2_000)) {
+        return json(res, 400, { error: "Invalid Hindsight URL." });
+      }
+      if (body.mode === "embedded" || (body.mode === undefined && body.url === undefined && hindsightRuntime.mode() === "embedded")) {
+        const candidate = hindsightRuntime.config();
+        res.setHeader("cache-control", "no-store");
+        if (!candidate?.enabled || hindsightRuntime.mode() !== "embedded") return json(res, 200, { ok: false, reason: "unreachable" });
+        return json(res, 200, await checkHindsightConnection(candidate, hindsightRuntime.apiKey()));
+      }
+      const candidate = { ...cfg.memory?.hindsight, ...(body.url !== undefined ? { url: body.url } : {}) };
+      try { hindsightEndpoint(candidate, process.env.OMB_HINDSIGHT_API_KEY); }
+      catch (error) { return json(res, 400, { error: error instanceof Error ? error.message : "Invalid Hindsight configuration." }); }
+      res.setHeader("cache-control", "no-store");
+      return json(res, 200, await checkHindsightConnection(candidate, process.env.OMB_HINDSIGHT_API_KEY));
+    }
+
     // ── app config (API keys — never echoed back, booleans only) ──
     if (method === "GET" && path === "/api/config") {
       return json(res, 200, configForAccess(configStatus(), auth.scopes.includes("admin")));
@@ -24555,6 +24668,13 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       const body = await readBody(req);
       if (hostedModels && ["instances", "anthropic", "openai", "openrouter", "openaiCompat", "xai", "mistral", "cerebras", "opencodeGo"].some(key => Object.hasOwn(body, key))) return json(res, 403, { error: HOSTED_PROVIDER_SETTINGS_ERROR });
       const patch = parseConfigPatch(body);
+      if (patch.memory?.hindsight?.enabled) {
+        if (CLOUD_HOME) return json(res, 403, { error: "Hindsight is unavailable on Cloud homes." });
+        const candidate = patch.memory.hindsight;
+        if (hindsightRuntime.mode(candidate) === "embedded" && !hindsightRuntime.available()) return json(res, 400, { error: "The built-in Hindsight runtime is not included in this build." });
+        try { if (hindsightRuntime.mode(candidate) === "external") hindsightEndpoint(candidate, process.env.OMB_HINDSIGHT_API_KEY); }
+        catch (error) { return json(res, 400, { error: error instanceof Error ? error.message : "Invalid Hindsight configuration." }); }
+      }
       // A Cloud home is personal: nobody is invited to sign in to it.
       if (CLOUD_HOME && (patch.signIn?.admins?.length || patch.signIn?.members?.length)) {
         return json(res, 403, { error: CLOUD_PERSONAL_REFUSAL, code: "cloud_personal" });
@@ -24998,6 +25118,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         throw error;
       }
       for (const key of resetKeys) if (key) forgetKey(key);
+      if (patch.memory?.hindsight) void hindsightRuntime.reconcile();
+      hindsightMemory.schedule();
       // Desktops already counting down move to the new window at once, in
       // every isolation mode; busy work still defers its expiry.
       if (patch.localVm?.idleTimeoutMinutes !== undefined) {
@@ -25736,6 +25858,8 @@ server.listen(PORT, "127.0.0.1", async () => {
   // endpoint is listening; earlier dispatch can hit uninitialized bindings.
   routines!.start();
   memoryUpkeep.start();
+  hindsightMemory.start();
+  void hindsightRuntime.reconcile();
   const leftover = pendingThreads();
   if (leftover.length) console.log(`delegations: ${leftover.length} thread(s) with queued handoffs from a previous run — draining`);
   for (const threadId of leftover) {
@@ -25789,10 +25913,12 @@ const gracefulShutdown = createGracefulShutdown({
       routines?.stop();
       calendarCalls?.stop();
       memoryUpkeep.stop();
+      hindsightMemory.stop();
       webhookIngress?.server.close();
       tunnelListener?.close();
     },
     async () => { await managedDesktop.close(); await registry.disposeAll(); },
+    () => hindsightRuntime.close(),
     async () => {
       await Promise.all([...temporaryBrowserSessions.keys()].map((botId) => forgetTemporaryBrowser(botId)));
       await browserRuntime.closeAll();

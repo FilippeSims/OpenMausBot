@@ -1,5 +1,9 @@
 # Bot memory
 
+For optional semantic retrieval with isolated bot/team banks and explicit
+peer sharing, see [Hindsight memory](hindsight-memory.md). Local notes remain
+authoritative and the existing upkeep/review workflows are preserved.
+
 By default, bots keep notes between tasks. The notes are plain markdown files in a
 folder on the computer running OpenMausBot — nothing is stored anywhere else,
 and you can open, edit, or delete any of it in any editor. **Bot Settings →

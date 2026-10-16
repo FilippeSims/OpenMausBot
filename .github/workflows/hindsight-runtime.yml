@@ -1,0 +1,50 @@
+name: Bundled Hindsight
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "third_party/hindsight/**"
+      - "server/hindsight*"
+      - "server/memory*"
+      - "scripts/*hindsight*"
+      - "electron-builder.yml"
+      - ".github/workflows/hindsight-runtime.yml"
+permissions:
+  contents: read
+jobs:
+  memory:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: darwin-arm64
+          - os: macos-15-intel
+            target: darwin-x64
+          - os: windows-latest
+            target: win32-x64
+          - os: ubuntu-24.04
+            target: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.9.9"
+      - run: pnpm install --frozen-lockfile
+      - name: Stage the pinned native memory engine
+        run: node scripts/prepare-hindsight.mjs ${{ matrix.target }}
+      - run: pnpm build:server
+      - name: Verify actual local recall, replacement, sharing and restart
+        env:
+          OMB_HINDSIGHT_VERIFY_BUNDLE: ${{ github.workspace }}/dist-native/hindsight/${{ matrix.target }}
+          OMB_HINDSIGHT_VERIFY_SERVER_ENTRY: ${{ github.workspace }}/dist-server/index.js
+        run: pnpm exec vitest run server/hindsight-memory.local.e2e.test.ts server/hindsight-runtime.test.ts
