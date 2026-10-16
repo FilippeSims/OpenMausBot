@@ -11989,7 +11989,12 @@
       "hindsight.test": "5bcf311b19d80c5645ce05f5fd36fc449412a6571ceb229fd483e9c415865912",
       "hindsight.refresh": "442c4b893915d8df437b1c70debb798401d590321131f7da73ec7da82b97bd6a",
       "hindsight.status": "39d8a1c40e5179ffbe7cdca1fab76c2b5e7c7768ab6a7ce3bd24bef340881296",
-      "hindsight.embeddedSaveFirst": "892e0a9cce6a56452b5e33e4df402e088f98bbe4c399d949767173af0303536c"
+      "hindsight.embeddedSaveFirst": "892e0a9cce6a56452b5e33e4df402e088f98bbe4c399d949767173af0303536c",
+      "globalChief.title": "0739ddf592c4453f2af2bc5f6ca41afcdc9eec5516ee41b8b0e3c73765480550",
+      "globalChief.independent": "f727755cb3d2735e126a0ef693a11a1c4c6e3992c04f91b776a2bbd999d01bfd",
+      "globalChief.description": "e3905f0a0cb067a3ff823e397259887cee322f18e2e95f68766aebfcb312de26",
+      "globalChief.privacy": "e7b40af131b8144afda11e630a22e08c8857400ac9dacf43d77479acb47070e8",
+      "globalChief.handover": "0a1e4fe14c55d88cb2dd2b2ef3e8141b668dfa6930d6b6e685ff7cecfeb08bc5"
     },
     "zh": {
       "pro.fromPrice": "a48a04a457d60b08b54fc83e7a6c4584ffedb1e23621859084900c8521a3af7b",

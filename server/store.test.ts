@@ -33,6 +33,30 @@ describe("Store", () => {
     rmSync(DATA_DIR, { recursive: true, force: true });
   });
 
+  it("persists one independent global Chief without replacing General's Chief", () => {
+    const store = new Store(selection);
+    const general = store.createBot({ name: "General Chief" });
+    const director = store.createBot({ name: "Director", section: "Leadership" });
+    const next = store.createBot({ name: "Next director" });
+    store.setChiefOfStaff(general.id);
+    expect(() => store.patchBot(director.id, { globalChief: true })).toThrow("explicit global Chief grant");
+    store.setGlobalChief(director.id);
+    expect(store.setBotsSection([director.id], "Engineering")).toEqual({ ok: false, reason: "unavailable" });
+    expect(() => store.patchBot(director.id, { section: "Engineering" })).toThrow("cannot join a team");
+    const restored = new Store(selection);
+    expect(restored.bot(general.id)?.chiefOfStaff).toBe(true);
+    expect(restored.bot(director.id)).toMatchObject({ globalChief: true, chiefOfStaff: true });
+    expect(restored.bot(director.id)?.section).toBeUndefined();
+    restored.setGlobalChief(next.id);
+    expect(restored.bot(director.id)).toMatchObject({ globalChief: false, chiefOfStaff: false });
+    expect(restored.bot(general.id)?.chiefOfStaff).toBe(true);
+    const secondRestart = new Store(selection);
+    expect(secondRestart.bots.filter(bot => bot.globalChief).map(bot => bot.id)).toEqual([next.id]);
+    secondRestart.patchBot(next.id, { chiefOfStaff: false });
+    expect(secondRestart.bot(next.id)?.globalChief).toBe(false);
+    expect(canAccessTeam(secondRestart.bot(next.id)!, "Engineering")).toBe(false);
+  });
+
   it("retains tool selection across restarts and distinguishes clearing from no tools", () => {
     const store = new Store(selection);
     const bot = store.createBot({ name: "Scoped drafter" });

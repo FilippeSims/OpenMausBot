@@ -1,4 +1,5 @@
 import { sameAudience } from "./bot-visibility.ts";
+import { isGlobalChief } from "../shared/global-chief.ts";
 import type { BotActivity } from "./store.ts";
 
 export interface RosterMember {
@@ -10,6 +11,8 @@ export interface RosterMember {
   hidden?: boolean;
   section?: string;
   chiefOfStaff?: boolean;
+  globalChief?: boolean;
+  memoryEnabled?: boolean;
   managedSections?: string[];
   /** Unset: every visible bot in the section; a list narrows to those ids; [] cuts the bot off from peers. */
   peers?: string[];
@@ -26,10 +29,10 @@ const openTeams = (): boolean => process.env.OMB_OPEN_TEAMS === "1";
 
 /** A title, peer id, imported persona or room membership is not a grant; invalid saved grants fail closed. */
 export function canAccessTeam(
-  from: Pick<RosterMember, "section" | "chiefOfStaff" | "managedSections">,
+  from: Pick<RosterMember, "section" | "chiefOfStaff" | "managedSections" | "globalChief">,
   section?: string,
 ): boolean {
-  if (openTeams()) return true;
+  if (openTeams() || isGlobalChief(from)) return true;
   const target = sectionKey(section);
   return target === sectionKey(from.section) || Boolean(from.chiefOfStaff &&
     Array.isArray(from.managedSections) && from.managedSections.some(value =>
@@ -37,10 +40,11 @@ export function canAccessTeam(
 }
 
 export function coordinatorSupervises(
-  coordinator: Pick<RosterMember, "chiefOfStaff" | "managedSections"> | null | undefined,
+  coordinator: Pick<RosterMember, "chiefOfStaff" | "managedSections" | "globalChief" | "section"> | null | undefined,
   bot: Pick<RosterMember, "section"> | null | undefined,
 ): boolean {
   if (!coordinator?.chiefOfStaff || !bot) return false;
+  if (isGlobalChief(coordinator)) return true;
   const target = sectionKey(bot.section);
   if (!target) return false;
   return Boolean(
@@ -171,6 +175,7 @@ export interface RosterOptions {
   empty: string;
   /** Chief only: the free-text blurb would otherwise read as the harness's own voice in the system prompt. */
   about: boolean;
+  teams?: boolean;
 }
 
 /** Says who, never what they are doing: the roster sits in the stable half of the system prompt. */
@@ -182,7 +187,7 @@ export function renderRoster(team: readonly RosterMember[], opts: RosterOptions)
     const name = clip(bot.name, ROSTER_NAME_MAX);
     const role = clip(bot.title ?? "", ROSTER_ROLE_MAX) || "General assistant";
     const about = opts.about ? clip(bot.description ?? "", ROSTER_ABOUT_MAX) : "";
-    return `- ${name} — ${role}${bot.chiefOfStaff ? " [Chief of Staff]" : ""}${about ? `: ${about}` : ""} [id: ${clip(bot.id, ROSTER_NAME_MAX)}]`;
+    return `- ${name} — ${role}${isGlobalChief(bot) ? " [Global Chief]" : bot.chiefOfStaff ? " [Chief of Staff]" : ""}${opts.teams ? ` [team: ${peerName(bot.section ?? "") || "General"}]` : ""}${about ? `: ${about}` : ""} [id: ${clip(bot.id, ROSTER_NAME_MAX)}]`;
   });
   return (
     lines.join("\n") +

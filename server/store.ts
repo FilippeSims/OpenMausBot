@@ -36,6 +36,7 @@ import type {
 import { movesThreadToTop } from "../shared/wire.ts";
 import { parseConnectorTools } from "./connector-tools.ts";
 import { sameModelSelection } from "../shared/thread-model.ts";
+import { isGlobalChief } from "../shared/global-chief.ts";
 export type {
   BotActivity, ConnectorCardData, GroupDefaultResponder, OptionCardData,
   SecretRequestCardData, Surface, TaskClosedBy, TaskOpenedBy, TaskUsage,
@@ -569,8 +570,12 @@ export class Store {
       }
     }
     for (const b of this.bots) {
+      if (b.globalChief !== undefined && !isGlobalChief(b)) {
+        delete b.globalChief;
+        botsMigrated = true;
+      }
       if (!b.chiefOfStaff) continue;
-      const key = sectionKey(b.section);
+      const key = isGlobalChief(b) ? "\u0000global" : sectionKey(b.section);
       if (!chiefSectionsSeen.has(key)) {
         chiefSectionsSeen.add(key);
         if (b.hidden) {
@@ -580,6 +585,7 @@ export class Store {
         continue;
       }
       b.chiefOfStaff = false;
+      delete b.globalChief;
       delete b.managedSections;
       botsMigrated = true;
     }
@@ -923,7 +929,7 @@ export class Store {
     if (members.some(bot => bot.busy || bot.tasks?.some(task => task.busy)) || rooms.some(group => group.busyBotId)) {
       return "Stop this team's active work before deleting the team";
     }
-    if (this.bots.filter(bot => bot.chiefOfStaff && (!sectionKey(bot.section) || sectionKey(bot.section) === name)).length > 1) {
+    if (this.bots.filter(bot => bot.chiefOfStaff && !isGlobalChief(bot) && (!sectionKey(bot.section) || sectionKey(bot.section) === name)).length > 1) {
       return "General already has a Chief of Staff. Move or change this team's Chief before deleting the team";
     }
     const nextBots = this.bots.map(bot => ({ ...bot,
@@ -1676,6 +1682,11 @@ export class Store {
   patchBot(id: string, patch: Partial<BotRecord>): BotRecord | null {
     const bot = this.bot(id);
     if (!bot) return null;
+    if (patch.globalChief === true && !isGlobalChief(bot)) throw new Error("Use the explicit global Chief grant");
+    if (isGlobalChief(bot) && patch.section?.trim() && patch.globalChief !== false && patch.chiefOfStaff !== false) throw new Error("A global Chief cannot join a team");
+    if (patch.globalChief === false || patch.chiefOfStaff === false) {
+      patch = { ...patch, globalChief: false, ...(bot.globalChief ? { chiefOfStaff: false, managedSections: [] } : {}) };
+    }
     if (patch.connectorTools !== undefined) {
       const parsed = parseConnectorTools(patch.connectorTools);
       if (!parsed.ok) throw new Error(parsed.error);
@@ -1757,14 +1768,14 @@ export class Store {
   ): { ok: true; bots: BotRecord[] } | { ok: false; reason: "unavailable" | "chief-conflict" } {
     const ids = [...new Set(botIds)];
     const targets = ids.map((id) => this.bot(id));
-    if (targets.some((bot) => !bot || bot.hidden)) return { ok: false, reason: "unavailable" };
+    if (targets.some((bot) => !bot || bot.hidden || isGlobalChief(bot))) return { ok: false, reason: "unavailable" };
 
     const targetSection = sectionKey(section);
     const selected = targets as BotRecord[];
     const destinationChiefIds = new Set([
       ...selected.filter((bot) => bot.chiefOfStaff).map((bot) => bot.id),
       ...this.bots
-        .filter((bot) => bot.chiefOfStaff && sectionKey(bot.section) === targetSection)
+        .filter((bot) => bot.chiefOfStaff && !isGlobalChief(bot) && sectionKey(bot.section) === targetSection)
         .map((bot) => bot.id),
     ]);
     if (destinationChiefIds.size > 1) return { ok: false, reason: "chief-conflict" };
@@ -1802,14 +1813,14 @@ export class Store {
     const ids = new Set([...adds, ...removes]);
     for (const id of ids) {
       const bot = this.bot(id);
-      if (!bot || bot.hidden) return { ok: false, reason: "unavailable" };
+      if (!bot || bot.hidden || isGlobalChief(bot)) return { ok: false, reason: "unavailable" };
       if (adds.has(id) && removes.has(id)) return { ok: false, reason: "membership-changed" };
       if (removes.has(id) && sectionKey(bot.section) !== key) return { ok: false, reason: "membership-changed" };
     }
     const next = this.bots.map(bot => ids.has(bot.id)
       ? { ...bot, section: adds.has(bot.id) ? key : undefined } : bot);
     for (const destination of [key, ""]) {
-      if (next.filter(bot => bot.chiefOfStaff && sectionKey(bot.section) === destination).length > 1) {
+      if (next.filter(bot => bot.chiefOfStaff && !isGlobalChief(bot) && sectionKey(bot.section) === destination).length > 1) {
         return { ok: false, reason: "chief-conflict" };
       }
     }
@@ -1861,9 +1872,11 @@ export class Store {
   setChiefOfStaff(id: string | null, section?: string | null): BotRecord[] | null {
     const selected = id ? this.bot(id) : null;
     if (id && !selected) return null;
+    if (isGlobalChief(selected)) return [];
     const targetSection = sectionKey(selected?.section ?? section);
     const changed: BotRecord[] = [];
     for (const bot of this.bots) {
+      if (isGlobalChief(bot)) continue;
       if (sectionKey(bot.section) !== targetSection) continue;
       const next = bot.id === id;
       if (Boolean(bot.chiefOfStaff) === next && !(next && bot.hidden)) continue;
@@ -1877,6 +1890,19 @@ export class Store {
       changed.push(bot);
     }
     if (changed.length) this.saveBots();
+    for (const bot of changed) this.emit({ type: "bot", botId: bot.id });
+    return changed;
+  }
+
+  setGlobalChief(id: string): BotRecord[] | null {
+    if (!this.bot(id)) return null;
+    const changed = this.bots.filter(bot => bot.id === id || isGlobalChief(bot));
+    const patches = new Map(changed.map(bot => [bot.id, bot.id === id
+      ? { globalChief: true, chiefOfStaff: true, section: undefined, managedSections: [], hidden: false, pinned: false }
+      : { globalChief: false, chiefOfStaff: false, managedSections: [] }]));
+    const next = this.bots.map(bot => ({ ...bot, ...patches.get(bot.id) }));
+    this.saveBots(next);
+    for (const bot of changed) Object.assign(bot, patches.get(bot.id));
     for (const bot of changed) this.emit({ type: "bot", botId: bot.id });
     return changed;
   }

@@ -1632,5 +1632,10 @@
   "hindsight.test": "Testar conexão",
   "hindsight.refresh": "Atualizar status",
   "hindsight.status": "{status} · {count} documentos indexados",
-  "hindsight.embeddedSaveFirst": "Ative e salve o serviço integrado antes de testar a conexão."
+  "hindsight.embeddedSaveFirst": "Ative e salve o serviço integrado antes de testar a conexão.",
+  "globalChief.title": "Chefe Geral",
+  "globalChief.independent": "Fora de todos os times",
+  "globalChief.description": "Coordena os times atuais e futuros por meio dos seus chefes, revisa o trabalho e entrega um resultado consolidado. Busca memórias e conversas dos bots autorizados em todo o workspace.",
+  "globalChief.privacy": "Ativar concede acesso ao contexto de todo o workspace e retira este bot do time dele. A visibilidade, os contatos permitidos, as configurações de memória e as aprovações continuam valendo. Remova este bot dos grupos antes de ativar.",
+  "globalChief.handover": "Isso transfere o cargo global do chefe atual para este bot."
 }

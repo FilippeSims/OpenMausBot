@@ -5,10 +5,10 @@ export function memorySearchText(memoryHits: readonly Json[], teamHits: readonly
     const source = hit.source;
     const origin = source && typeof source === "object" && "messageId" in source && "threadId" in source && source.messageId
       ? ` · source thread ${String(source.threadId)} message ${String(source.messageId)}` : "";
-    return `- [team memory ${String(hit.id)} · key ${String(hit.key ?? hit.name)}${origin}] ${String(hit.name)}${hit.kind === "outcome" ? ` [${String(hit.evidenceStatus ?? "unverified")}]` : ""}: ${String(hit.detail)}`;
+    return `- [team memory ${String(hit.id)}${typeof hit.section === "string" ? ` · team ${hit.section || "General"}` : ""} · key ${String(hit.key ?? hit.name)}${origin}] ${String(hit.name)}${hit.kind === "outcome" ? ` [${String(hit.evidenceStatus ?? "unverified")}]` : ""}: ${String(hit.detail)}`;
   }).join("\n")}\n\n` : "";
   const privateNotes = memoryHits.length
-    ? `${memoryHits.length} matching memory file${memoryHits.length === 1 ? "" : "s"} of yours:\n${memoryHits.map(hit => `- [memory file ${String(hit.file)}] ${String(hit.snippet)}`).join("\n")}\n\n`
+    ? `${memoryHits.length} matching memory file${memoryHits.length === 1 ? "" : "s"} of yours:\n${memoryHits.map(hit => `- [memory file ${String(hit.file)}${typeof hit.botName === "string" ? ` · bot ${hit.botName}` : ""}] ${String(hit.snippet)}`).join("\n")}\n\n`
     : "";
   return team + privateNotes;
 }

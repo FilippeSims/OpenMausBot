@@ -1,6 +1,7 @@
 import type { WireMessage as Message } from "../shared/wire.ts";
 import { withoutDeliveredNote } from "./peer-provenance.ts";
-import { canAccessTeam } from "./peer-roster.ts";
+import { isGlobalChief } from "../shared/global-chief.ts";
+import { canAccessTeam, peerAllowed } from "./peer-roster.ts";
 
 export type IncidentKind = "failed" | "stalled" | "could-not-start" | "routine-failed";
 
@@ -9,6 +10,9 @@ export interface IncidentBot {
   name: string;
   section?: string;
   chiefOfStaff?: boolean;
+  globalChief?: boolean;
+  visibility?: unknown;
+  peers?: string[];
   managedSections?: string[];
   hidden?: boolean;
 }
@@ -29,9 +33,9 @@ export const INCIDENTS_THREAD_TITLE = "Team incidents";
 const sectionKey = (section?: string): string => section?.trim() || "";
 
 export function chiefForBot<T extends IncidentBot>(bots: readonly T[], bot: IncidentBot): T | null {
-  if (bot.chiefOfStaff) return null;
-  const chiefs = bots.filter((candidate) => candidate.chiefOfStaff && !candidate.hidden && candidate.id !== bot.id);
-  return chiefs.find((chief) => sectionKey(chief.section) === sectionKey(bot.section))
+  if (bot.chiefOfStaff) return bots.find(candidate => isGlobalChief(candidate) && !candidate.hidden && candidate.id !== bot.id && peerAllowed(candidate, bot)) ?? null;
+  const chiefs = bots.filter((candidate) => candidate.chiefOfStaff && !candidate.hidden && candidate.id !== bot.id && peerAllowed(candidate, bot));
+  return chiefs.find((chief) => !isGlobalChief(chief) && sectionKey(chief.section) === sectionKey(bot.section))
     ?? chiefs.find((chief) => canAccessTeam(chief, bot.section))
     ?? null;
 }

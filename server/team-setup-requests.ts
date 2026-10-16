@@ -1,3 +1,4 @@
+import { isGlobalChief } from "../shared/global-chief.ts";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { soulDiffLines } from "../shared/line-diff.ts";
@@ -41,7 +42,7 @@ export function teamSetupRevision(bot: BotRecord, fields?: TeamSetupFields): str
   if (fields === undefined) {
     return createHash("sha256").update(JSON.stringify({
       ...profileSnapshot(bot), section: section(bot.section), modelSelection: bot.modelSelection,
-      hidden: Boolean(bot.hidden), chiefOfStaff: Boolean(bot.chiefOfStaff), peers: bot.peers,
+      hidden: Boolean(bot.hidden), chiefOfStaff: Boolean(bot.chiefOfStaff), globalChief: Boolean(bot.globalChief), peers: bot.peers,
       managedSections: bot.managedSections,
       approvalMode: bot.approvalMode, autoApprove: bot.autoApprove, approvalGrant: bot.approvalGrant,
       receipt: bot.lastTeamSetupReceipt?.requestId,
@@ -141,11 +142,12 @@ export class TeamSetupRequestService {
     for (const name of request.newTeams) if (existingTeams.has(name)) throw new TeamSetupError(`Team ${JSON.stringify(name)} now exists. Review a new proposal.`, 409);
     const allowed = (name?: string) => request.newTeams.includes(section(name)) || this.options.canAccessTeam(chief, name);
     const targets = new Set<string>();
-    const projected = this.options.store.bots.map((bot) => ({ id: bot.id, name: bot.name, section: section(bot.section), chiefOfStaff: bot.chiefOfStaff, hidden: bot.hidden }));
+    const projected = this.options.store.bots.filter(bot => !isGlobalChief(bot)).map((bot) => ({ id: bot.id, name: bot.name, section: section(bot.section), chiefOfStaff: bot.chiefOfStaff, hidden: bot.hidden }));
     for (const operation of request.operations) {
       if (targets.has(operation.botId)) throw new TeamSetupError("A bot appears twice in the prepared setup");
       targets.add(operation.botId);
       const target = this.options.store.bot(operation.botId);
+      if (isGlobalChief(target)) throw new TeamSetupError("The global Chief is independent; edit its profile and role in Settings", 403);
       if (operation.action === "create") {
         if (target) throw new TeamSetupError("A proposed bot already exists. Review a new proposal.", 409);
         if (!operation.fields.name?.trim() || !operation.fields.title?.trim() || !operation.fields.soul?.trim() || !operation.fields.modelSelection) throw new TeamSetupError("Each new bot needs a name, title, soul instructions, and exact model selection");

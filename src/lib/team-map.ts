@@ -1,11 +1,14 @@
 import { t } from "./i18n";
 
+export const GLOBAL_CHIEF_MAP_KEY = "\u0000global";
+
 export interface TeamMapBot {
   id: string;
   name: string;
   hidden?: boolean;
   section?: string;
   chiefOfStaff?: boolean;
+  globalChief?: boolean;
   busy?: boolean;
   activity?: "working" | "waiting-on-you" | "idle" | "no-signal" | "dead" | "parked.computer";
 }
@@ -48,16 +51,16 @@ export function buildTeamMapSections<T extends TeamMapBot>(bots: T[], names: str
   const sections = new Map<string, T[]>();
   for (const bot of bots) {
     if (bot.hidden) continue;
-    const key = bot.section?.trim() || "";
+    const key = bot.globalChief && bot.chiefOfStaff && !bot.section?.trim() ? GLOBAL_CHIEF_MAP_KEY : bot.section?.trim() || "";
     sections.set(key, [...(sections.get(key) ?? []), bot]);
   }
   for (const name of names) {
     const key = name.trim();
     if (key && !sections.has(key)) sections.set(key, []);
   }
-  return [...sections].map(([key, sectionBots]) => ({
+  return [...sections].sort(([a], [b]) => a === GLOBAL_CHIEF_MAP_KEY ? -1 : b === GLOBAL_CHIEF_MAP_KEY ? 1 : 0).map(([key, sectionBots]) => ({
     key,
-    name: key || "General",
+    name: key === GLOBAL_CHIEF_MAP_KEY ? t("globalChief.title") : key || "General",
     chiefs: sectionBots.filter((bot) => bot.chiefOfStaff),
     members: sectionBots.filter((bot) => !bot.chiefOfStaff),
   }));

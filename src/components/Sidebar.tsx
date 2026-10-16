@@ -790,7 +790,7 @@ export function BotContextMenu({
         item(<FolderPlus size={16} className="text-ink-secondary" />, t("sidebar.bot.moveToSection"), () => {
           onClose();
           onMoveToSection(bot.id);
-        }),
+        }, { disabled: Boolean(bot.globalChief), hint: bot.globalChief ? t("globalChief.independent") : undefined }),
         item(<Pencil size={16} className="text-ink-secondary" />, t("sidebar.bot.editProfile"), () => {
           openForSettings();
           if (!state.settingsOpen) dispatch({ type: "toggleSettings", open: true });
@@ -1183,7 +1183,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   const visible = useVisibleMessages(bot);
   const last = lastNonReceipt(visible);
   const title = bot.title.trim();
-  const details = [title, bot.chiefOfStaff ? t("sidebar.bot.chiefOfStaff") : ""].filter(Boolean);
+  const details = [title, bot.chiefOfStaff ? (bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff")) : ""].filter(Boolean);
   const rowClass = cn(
     "flex w-full items-center rounded-xl text-left outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-accent/60",
     iconOnly
@@ -1229,8 +1229,8 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           className={cn("absolute -right-0.5 -bottom-0.5 rounded-full border-2 border-panel bg-ink-secondary", iconOnly ? "size-3" : "size-2.5")} />}
         {bot.chiefOfStaff && iconOnly && (
           <span className="absolute -left-1 -top-1 flex rounded-full bg-raised p-[3px]">
-            <Crown size={11} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={t("sidebar.bot.chiefOfStaff")} data-testid="chief-crown">
-              <title>{t("sidebar.bot.chiefOfStaff")}</title>
+            <Crown size={11} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))} data-testid="chief-crown">
+              <title>{(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))}</title>
             </Crown>
           </span>
         )}
@@ -1263,8 +1263,8 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               inputClassName="w-full rounded bg-inset px-1 py-0.5 text-[15px] font-semibold"
             />
             {bot.chiefOfStaff && !renaming && (
-              <Crown size={13} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={t("sidebar.bot.chiefOfStaff")} data-testid="chief-crown">
-                <title>{t("sidebar.bot.chiefOfStaff")}</title>
+              <Crown size={13} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))} data-testid="chief-crown">
+                <title>{(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))}</title>
               </Crown>
             )}
             {title && !renaming && <span className="sr-only">{`, ${title}`}</span>}
@@ -1328,7 +1328,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           !renaming && iconOnly
             ? deleting
               ? t("sidebar.bot.deletingAria", { name: bot.name })
-              : `${bot.name}${bot.title?.trim() ? ` · ${bot.title.trim()}` : ""}${bot.chiefOfStaff ? ` · ${t("sidebar.bot.chiefOfStaff")}` : ""}${onLiveCall ? ` · ${t("call.live.badge")}` : ""}${waiting ? ` · ${t("sidebar.preview.waiting")}` : working ? ` · ${t("chat.activity.working")}` : teammateWait ? ` · ${t("sidebar.preview.waitingOnTeammate")}` : queued ? ` · ${t("task.queued")}` : ""}${unread ? ` · ${t("task.unread")}` : ""}`
+              : `${bot.name}${bot.title?.trim() ? ` · ${bot.title.trim()}` : ""}${bot.chiefOfStaff ? ` · ${(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))}` : ""}${onLiveCall ? ` · ${t("call.live.badge")}` : ""}${waiting ? ` · ${t("sidebar.preview.waiting")}` : working ? ` · ${t("chat.activity.working")}` : teammateWait ? ` · ${t("sidebar.preview.waitingOnTeammate")}` : queued ? ` · ${t("task.queued")}` : ""}${unread ? ` · ${t("task.unread")}` : ""}`
             : undefined
         }
         aria-busy={deleting || undefined}
@@ -1840,6 +1840,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
   const {
+    globalChiefs,
     unsectionedChief,
     pinnedBots,
     sectionChiefs,
@@ -2260,6 +2261,12 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           {matchingBots.length === 0 && visibleGroups.length === 0 && q && q.length < MIN_QUERY && (
             <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
           )}
+          {globalChiefs.map(bot => (
+            <div key={bot.id} className="mb-2 border-b border-hairline/40 pb-2" data-global-chief={bot.id}>
+              {density !== "icons" && <div className="px-3 py-1 text-[11px] font-medium text-ink-secondary">{t("globalChief.title")}</div>}
+              <BotListItem {...botRow(bot)} />
+            </div>
+          ))}
           {unsectionedChief && (
             <div className="mb-1.5">
               <BotListItem {...botRow(unsectionedChief)} />

@@ -55,6 +55,7 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       if (!body || typeof body !== "object" || Array.isArray(body)) {
         return json(res, 400, { error: "bot must be a JSON object" });
       }
+      if (body.globalChief !== undefined) return json(res, 400, { error: "Create the bot first, then explicitly grant global Chief access in its permissions" });
       const template = resolveBotCreationDefaults(cfg.newBotDefaults, body);
       const settings = template.profile;
       if (auth.kind === "session" && !auth.scopes.includes("admin")) {

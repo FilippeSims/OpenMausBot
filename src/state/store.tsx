@@ -11,6 +11,7 @@ import {
 import { flushSync } from "react-dom";
 import type { BotVisibility, CardAnswerer, CloudBackend, ConnectorToolGrant, EffortLevel, InstalledPackageMetadata, LiveCallState, ServerFrame, GroupThreadUsage, SteerQueueReason, WireGroup, OptionCardData as WireOptionCard } from "../../shared/wire";
 import { movesThreadToTop } from "../../shared/wire";
+import { sameChiefOffice } from "../../shared/global-chief";
 import { DATA_ROUTES, type DataSheet, type DataTable } from "../../shared/data-surface";
 import type { NotificationLogEntry } from "../../shared/notification";
 import { reduceNotificationFeed, type NotificationFeedAction } from "./notification-feed";
@@ -337,6 +338,7 @@ export interface Bot {
   section?: string;
   pinnedMessageId?: string;
   chiefOfStaff?: boolean;
+  globalChief?: boolean;
   managedSections?: string[];
   approvePeerComms?: boolean;
   peers?: string[];
@@ -1295,9 +1297,9 @@ export function reducer(state: AppState, action: Action): AppState {
         ? {
             ...animated,
             bots: animated.bots.map((b) =>
-              b.id === action.bot.id || (b.section?.trim() || "") !== (action.bot.section?.trim() || "")
+              b.id === action.bot.id || !sameChiefOffice(b, action.bot)
                 ? b
-                : { ...b, chiefOfStaff: false },
+                : { ...b, chiefOfStaff: false, globalChief: false },
             ),
           }
         : animated;
@@ -1718,19 +1720,20 @@ export function reducer(state: AppState, action: Action): AppState {
         ? withMascotMotion(state, action.botId, "customize")
         : state;
       const target = animated.bots.find((bot) => bot.id === action.botId);
-      const chiefSection = (action.patch.section ?? target?.section)?.trim() || "";
-      const next = action.patch.chiefOfStaff
+      const nextOffice = { ...target, ...action.patch, ...(action.patch.globalChief ? { chiefOfStaff: true, section: undefined } : {}) };
+      const next = action.patch.chiefOfStaff || action.patch.globalChief
         ? {
             ...animated,
             bots: animated.bots.map((b) =>
-              b.id === action.botId || (b.section?.trim() || "") !== chiefSection
+              b.id === action.botId || !sameChiefOffice(b, nextOffice)
                 ? b
-                : { ...b, chiefOfStaff: false },
+                : { ...b, chiefOfStaff: false, globalChief: false },
             ),
           }
         : animated;
       const {
         acknowledgeLocalAuto: _localAck,
+        acknowledgeGlobalAccess: _globalAck,
         applyToAllThreads: _allThreads,
         keepThreadModels: _keepThreadModels, threadId: _threadId,
         computer,
@@ -1739,6 +1742,8 @@ export function reducer(state: AppState, action: Action): AppState {
         ...rest
       } = action.patch;
       const botPatch: Partial<Bot> = { ...rest };
+      if (rest.globalChief === true) Object.assign(botPatch, { chiefOfStaff: true, section: undefined, pinned: false });
+      if (rest.globalChief === false || rest.chiefOfStaff === false) Object.assign(botPatch, { globalChief: false, ...(target?.globalChief ? { chiefOfStaff: false, managedSections: [] } : {}) });
       if (computer === null) botPatch.computer = undefined;
       else if (computer !== undefined) botPatch.computer = computer;
       if (connectorTools === null) botPatch.connectorTools = undefined;

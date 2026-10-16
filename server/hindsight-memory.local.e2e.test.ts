@@ -62,6 +62,16 @@ it.skipIf(!destination && !bundle)("uses local chunks memory without an LLM thro
     const [privateToScout] = await search(writer, undefined, false);
     expect(privateToScout).toMatchObject({ backend: "local", hits: [], local: [], team: [] });
 
+    const { bot: director } = await api<{ bot: WireBot }>("/api/bots", "POST", { name: "Global Memory Chief", memoryUpkeep: false }, 201);
+    await api(`/api/bots/${director.id}`, "PATCH", { globalChief: true, acknowledgeGlobalAccess: true });
+    const [globalRecall] = await search(director);
+    expect(globalRecall.backend).toBe("hindsight");
+    expect(globalRecall.hits).toEqual(expect.arrayContaining([expect.objectContaining({ source: "memory/project.md",
+      metadata: expect.objectContaining({ bot_id: scout.id }) })]));
+    await api(`/api/bots/${director.id}`, "PATCH", { globalChief: false });
+    const [revokedGlobal] = await search(director, undefined, false);
+    expect(revokedGlobal).toMatchObject({ backend: "local", hits: [], local: [], team: [] });
+
     const [recalled, shared] = await search(scout, [
       { tool: "memory_search", arguments: { query: "Qual é a data do lançamento do projeto Aurora?" } },
       { tool: "memory_share", arguments: { target_bot_id: writer.id, source_path: "memory/project.md", text: note.trim() } },

@@ -30,6 +30,7 @@ export type BotUpdatePatch = Partial<
     | "section"
     | "pinnedMessageId"
     | "chiefOfStaff"
+    | "globalChief"
     | "approvePeerComms"
     | "composio"
     | "browser"
@@ -45,6 +46,7 @@ export type BotUpdatePatch = Partial<
   connectorScopes?: Bot["connectorScopes"] | null;
   /** The server's proof the local-auto warning was shown: wire-only, never folded into bot state. */
   acknowledgeLocalAuto?: boolean;
+  acknowledgeGlobalAccess?: boolean;
   applyToAllThreads?: boolean;
   keepThreadModels?: boolean;
   /** With modelSelection: the thread this client shows. Body only: Bot.threadId is the server's selection. */
@@ -53,7 +55,7 @@ export type BotUpdatePatch = Partial<
 
 export type BotStatePatch = Omit<
   BotUpdatePatch,
-  "computer" | "connectorTools" | "connectorScopes" | "acknowledgeLocalAuto" | "applyToAllThreads" | "keepThreadModels" | "threadId"
+  "computer" | "connectorTools" | "connectorScopes" | "acknowledgeLocalAuto" | "acknowledgeGlobalAccess" | "applyToAllThreads" | "keepThreadModels" | "threadId"
 > & {
   computer?: Bot["computer"];
   connectorTools?: Bot["connectorTools"];
@@ -105,6 +107,7 @@ const isAbortError = (error: unknown): boolean =>
 const stateOverlay = (patch: BotUpdatePatch): BotStatePatch => {
   const {
     acknowledgeLocalAuto: _localAck,
+    acknowledgeGlobalAccess: _globalAck,
     applyToAllThreads: _allThreads,
     keepThreadModels: _keepThreadModels,
     threadId: _threadId,
@@ -114,6 +117,8 @@ const stateOverlay = (patch: BotUpdatePatch): BotStatePatch => {
     ...fields
   } = patch;
   const normalized: BotStatePatch = { ...fields };
+  if (fields.globalChief === true) Object.assign(normalized, { chiefOfStaff: true, section: undefined, pinned: false });
+  if (fields.globalChief === false) Object.assign(normalized, { chiefOfStaff: false });
   if (computer === null) normalized.computer = undefined;
   else if (computer !== undefined) normalized.computer = computer;
   if (connectorTools === null) normalized.connectorTools = undefined;

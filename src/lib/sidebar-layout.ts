@@ -29,6 +29,7 @@ const GOAL_RUN_PREVIEW_LABEL = {
 export type SidebarBot = {
   id: string;
   chiefOfStaff?: boolean;
+  globalChief?: boolean;
   section?: string;
   pinned?: boolean;
   hidden?: boolean;
@@ -108,7 +109,9 @@ export function partitionSidebarBots<T extends SidebarBot>(
   options?: { universalPins?: boolean },
 ) {
   const universalPins = options?.universalPins === true;
-  const visible = bots.filter((bot) => !bot.hidden);
+  const globalChiefs = bots.filter(bot => !bot.hidden && bot.globalChief && bot.chiefOfStaff && !bot.section?.trim());
+  const globalIds = new Set(globalChiefs.map(bot => bot.id));
+  const visible = bots.filter((bot) => !bot.hidden && !globalIds.has(bot.id));
   const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff));
   const pinnedIds = new Set(pinnedBots.map((bot) => bot.id));
   const unsectionedChief = visible.find((bot) => bot.chiefOfStaff && !bot.section && !pinnedIds.has(bot.id)) ?? null;
@@ -119,7 +122,7 @@ export function partitionSidebarBots<T extends SidebarBot>(
   const unsectionedBots = visible.filter(
     (bot) => !bot.chiefOfStaff && !bot.section && !pinnedIds.has(bot.id),
   );
-  return { unsectionedChief, pinnedBots, sectionChiefs, sectionedBots, unsectionedBots };
+  return { globalChiefs, unsectionedChief, pinnedBots, sectionChiefs, sectionedBots, unsectionedBots };
 }
 
 export function partitionSidebarGroups<T extends SidebarGroup>(groups: T[]) {

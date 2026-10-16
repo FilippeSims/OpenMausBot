@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isGlobalChief } from "../../shared/global-chief.ts";
 
 import { approvalModeFor, isApprovalMode, type ApprovalMode } from "../../shared/approval-mode.ts";
 import { normalizeConnectorScopes } from "../../shared/connector-scopes.ts";
@@ -93,6 +94,19 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
         if (field) return json(res, 403, { error: `forbidden: this session may change how a bot looks, not "${field}" (needs the admin scope)` });
       }
       const existingBot = store.bot(m[1]);
+      if (body.globalChief !== undefined && typeof body.globalChief !== "boolean") return json(res, 400, { error: "globalChief must be true or false" });
+      if (body.globalChief === true) {
+        if (body.chiefOfStaff === false || (typeof body.section === "string" && body.section.trim()) || body.hidden === true) {
+          return json(res, 400, { error: "The global Chief is an independent, visible coordinator outside all teams" });
+        }
+        if (!isGlobalChief(existingBot) && body.acknowledgeGlobalAccess !== true) return json(res, 400, { error: "Confirm workspace-wide memory, conversation and coordination access (acknowledgeGlobalAccess)" });
+        if (existingBot?.busy || (existingBot && activeGroupTurnForBot(existingBot.id))) return json(res, 409, { error: "Stop this bot before assigning the global Chief role" });
+        if (store.groups.some(group => !group.dm && group.memberIds.includes(m![1]))) return json(res, 409, { error: "Remove this bot from group chats before making it the global Chief" });
+        if (auth.kind === "loopback" && !DESKTOP_MANAGED && store.bots.some(bot => bot.busy)) return json(res, 409, { error: "Stop running bots before granting global Chief access, or use the desktop app or a paired admin session" });
+      }
+      if (isGlobalChief(existingBot) && body.globalChief !== false && body.chiefOfStaff !== false && typeof body.section === "string" && body.section.trim()) {
+        return json(res, 400, { error: "Remove the global Chief role before moving this bot into a team" });
+      }
       const rawSelection = (body as Record<string, unknown>).modelSelection;
       if (body.threadId !== undefined && rawSelection === undefined) {
         return json(res, 400, { error: "threadId goes with modelSelection" });
@@ -185,6 +199,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       }
       if (section !== undefined) patch.section = section ?? undefined;
       if (body.chiefOfStaff === false) patch.chiefOfStaff = false;
+      if (body.globalChief === false) patch.globalChief = false;
       if (body.fallback !== undefined) {
         if (!Array.isArray(body.fallback) || body.fallback.length > 5) {
           return json(res, 400, { error: "fallback must be a list of up to five { instanceId, model } entries" });
@@ -547,12 +562,18 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
         }
       }
       const chiefMovedSections =
-        Boolean(existingBot?.chiefOfStaff) &&
+        Boolean(existingBot?.chiefOfStaff) && !isGlobalChief(existingBot) && body.globalChief !== true &&
         body.chiefOfStaff !== false &&
         section !== undefined &&
         sectionKey(existingBot?.section) !== sectionKey(section);
       let bot: BotRecord | null;
       const freshBrowserBot = store.bot(m[1]);
+      if (body.globalChief === true) {
+        if (auth.kind === "session" && !sessions.isLive(auth.session.id)) return json(res, 401, { error: "This admin session was revoked" });
+        if (freshBrowserBot?.busy || (freshBrowserBot && activeGroupTurnForBot(freshBrowserBot.id)) ||
+            store.groups.some(group => !group.dm && group.memberIds.includes(m![1]))) return json(res, 409, { error: "The bot started work or joined a group; stop it and remove it from groups before granting global Chief access" });
+        if (auth.kind === "loopback" && !DESKTOP_MANAGED && store.bots.some(bot => bot.busy)) return json(res, 409, { error: "Stop running bots before granting global Chief access" });
+      }
       // Rechecked: the awaits above can yield after the first memory check.
       if (freshBrowserBot && body.memoryEnabled !== undefined &&
           body.memoryEnabled !== (freshBrowserBot.memoryEnabled !== false) &&
@@ -627,6 +648,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
         }
       }
       const chiefChanges =
+        body.globalChief === true ? store.setGlobalChief(bot.id) :
         body.chiefOfStaff === true || chiefMovedSections
           ? store.setChiefOfStaff(bot.id)
           : [];

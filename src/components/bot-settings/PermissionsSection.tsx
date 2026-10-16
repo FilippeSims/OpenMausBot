@@ -47,7 +47,22 @@ export function PermissionsSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div
+      {ownerOrAdmin && !draft && <div className={cn("rounded-xl border p-4", bot.globalChief ? "border-accent/40 bg-accent/10" : "border-hairline/40 bg-card")}>
+        <div className="flex items-center gap-3">
+          <Crown size={20} className="text-accent" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-medium text-ink">{t("globalChief.title")}</div>
+            <div className="text-[11.5px] text-ink-secondary">{t("globalChief.independent")}</div>
+          </div>
+          <Switch checked={Boolean(bot.globalChief)} aria-label={t("globalChief.title")}
+            disabled={Boolean(bot.busy) || (!bot.globalChief && !canCoordinate)}
+            onClick={() => patch({ globalChief: !bot.globalChief, acknowledgeGlobalAccess: true })} />
+        </div>
+        <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">{t("globalChief.description")}</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-ink-secondary">{t("globalChief.privacy")}</p>
+        {!bot.globalChief && state.bots.some(member => member.globalChief) && <p className="mt-2 text-[12px] text-ink-secondary">{t("globalChief.handover")}</p>}
+      </div>}
+      {!bot.globalChief && <div
         className={cn(
           "rounded-xl border p-4",
           bot.chiefOfStaff ? "border-accent/40 bg-accent/10" : "border-hairline/40 bg-card",
@@ -95,7 +110,7 @@ export function PermissionsSection({
           onSave={managedSections => patch({ managedSections, acknowledgePeerScope: true })}
         />}
         {bot.chiefOfStaff && <ProposalStatus bot={bot} kind="owner" />}
-      </div>
+      </div>}
 
       <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
         <div>

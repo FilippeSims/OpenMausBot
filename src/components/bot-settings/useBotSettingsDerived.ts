@@ -34,6 +34,7 @@ export type BotPatch = Partial<
     | "memoryEnabled"
     | "voice"
     | "chiefOfStaff"
+    | "globalChief"
     | "managedSections"
     | "approvePeerComms"
     | "composio"
@@ -48,6 +49,7 @@ export type BotPatch = Partial<
   connectorScopes?: Bot["connectorScopes"] | null;
   acknowledgeLocalAuto?: boolean;
   acknowledgePeerScope?: boolean;
+  acknowledgeGlobalAccess?: boolean;
 };
 
 export function useBotSettingsDerived(bot: Bot) {
@@ -76,7 +78,7 @@ export function useBotSettingsDerived(bot: Bot) {
   const sectionName = bot.section?.trim() || "General";
   const currentChief = state.bots.find(
     (candidate) =>
-      candidate.chiefOfStaff &&
+      candidate.chiefOfStaff && !candidate.globalChief &&
       (candidate.section?.trim() || "") === (bot.section?.trim() || ""),
   );
   const botRoutines = state.routines.filter((routine) => routine.botId === bot.id);

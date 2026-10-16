@@ -4773,5 +4773,10 @@
   "hindsight.test": "Test connection",
   "hindsight.refresh": "Refresh status",
   "hindsight.status": "{status} · {count} indexed documents",
-  "hindsight.embeddedSaveFirst": "Enable and save the built-in service before testing the connection."
+  "hindsight.embeddedSaveFirst": "Enable and save the built-in service before testing the connection.",
+  "globalChief.title": "Global Chief",
+  "globalChief.independent": "Outside all teams",
+  "globalChief.description": "Coordinate current and future teams through their chiefs, review their work and deliver one combined result. Search authorized bots’ memories and conversations across the workspace.",
+  "globalChief.privacy": "Enabling this role grants workspace-wide context access and removes this bot from its team. Visibility, allowed peers, memory settings and normal approvals still apply. Remove this bot from group chats first.",
+  "globalChief.handover": "This transfers the global role from the current Chief to this bot."
 }

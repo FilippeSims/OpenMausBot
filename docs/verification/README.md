@@ -67,6 +67,7 @@ Use only mapped, tested commands:
 - [Channels](channels.md)
 - [In-chat team coordination](room-coordination.md)
 - [Chief access to additional teams](team-access.md)
+- [Independent Global Chief and workspace recall](global-chief.md)
 - [Engines and Doctor](engines.md)
 - [Cline engine and native loopback qualification](cline.md)
 - [Claude coordination and turn-scoped tools](claude-tool-lifecycle.md)

@@ -22,6 +22,16 @@ import {
 } from "./sidebar-layout";
 
 describe("sidebar virtual sections", () => {
+  it("places the global Chief outside General, teams and pins", () => {
+    const global = { id: "global", chiefOfStaff: true, globalChief: true, pinned: true };
+    const general = { id: "general", chiefOfStaff: true };
+    const parts = partitionSidebarBots([general, global], { universalPins: true });
+    expect(parts.globalChiefs).toEqual([global]);
+    expect(parts.unsectionedChief).toBe(general);
+    expect(parts.pinnedBots).toEqual([]);
+    expect(parts.sectionChiefs).toEqual([]);
+    expect(parts.unsectionedBots).toEqual([]);
+  });
   it("keeps reserved labels separate from identically named user sections", () => {
     for (const name of ["Pinned", "pinned", "channels", "bots", "bot-chats", "Bot Chats"]) {
       const id = userSectionId(name);

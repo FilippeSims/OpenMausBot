@@ -4,7 +4,7 @@ import { api, openBot, useStore, type Bot } from "@/state/store";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { teamMapStatus, type TeamMapSection } from "@/lib/team-map";
+import { GLOBAL_CHIEF_MAP_KEY, teamMapStatus, type TeamMapSection } from "@/lib/team-map";
 import { COMPUTER_DRAG_TYPE, fitTeams, layoutTeams, orderBots, parseBotOrders, parsePositions, reorderBot, zoomAt, type Point, type View } from "@/lib/team-canvas";
 import { BotAvatar } from "./Avatar";
 import { InstanceProviderMark, ProviderMark } from "./ProviderIcons";
@@ -47,8 +47,8 @@ function BotCard({ bot, selected, moving, connected, onComputer, onArrange }: {
       <BotAvatar bot={bot} size={38} motion="none" motionKey={0} animated={false} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5"><span className="truncate text-[14px] font-semibold">{bot.name}</span>
-          {bot.chiefOfStaff && <Crown size={12} className="shrink-0 text-warning" aria-label={t("chat.chiefOfStaff")} />}</span>
-        <span className="mt-1 block truncate text-[11px] text-ink-secondary">{bot.title || (bot.chiefOfStaff ? t("chat.chiefOfStaff") : t("canvas.bot"))}</span>
+          {bot.chiefOfStaff && <Crown size={12} className="shrink-0 text-warning" aria-label={(bot.globalChief ? t("globalChief.title") : t("chat.chiefOfStaff"))} />}</span>
+        <span className="mt-1 block truncate text-[11px] text-ink-secondary">{bot.title || (bot.chiefOfStaff ? (bot.globalChief ? t("globalChief.title") : t("chat.chiefOfStaff")) : t("canvas.bot"))}</span>
       </span>
     </button>
     <div className="flex h-[43px] items-center gap-1 border-t border-hairline/30 px-2">
@@ -210,7 +210,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
     const teamKey = element.closest<HTMLElement>("[data-arrange-team]")?.dataset.arrangeTeam;
     const bot = botId ? sections.flatMap((section) => [...section.chiefs, ...section.members]).find((item) => item.id === botId) : undefined;
     if (!bot && teamKey === undefined && element.closest("button, details, a, input, [data-team-key]")) return;
-    if (bot && (moving || !layoutLoaded)) return;
+    if (bot && (bot.globalChief || moving || !layoutLoaded)) return;
     if (teamKey !== undefined && !layoutLoaded) return;
     const common = { id: event.pointerId, start: { x: event.clientX, y: event.clientY }, view, positions, moved: false };
     const tile = teamKey === undefined ? undefined : tiles.find((item) => item.key === teamKey);
@@ -220,7 +220,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
   };
   const destinationAt = (x: number, y: number) => {
     const section = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-team-key]");
-    return section && viewport.current?.contains(section) ? section.dataset.teamKey ?? null : null;
+    return section && viewport.current?.contains(section) && section.dataset.teamKey !== GLOBAL_CHIEF_MAP_KEY ? section.dataset.teamKey ?? null : null;
   };
   const insertionAt = (bot: Bot, y: number) => {
     const section = sections.find((item) => item.key === (bot.section?.trim() ?? ""));
@@ -307,8 +307,8 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
       if (!canManage || !onComputerDrop || !event.dataTransfer.types.includes(COMPUTER_DRAG_TYPE)) return;
       const target = (event.target as HTMLElement).closest<HTMLElement>("[data-team-key]");
       const key = target && event.currentTarget.contains(target) ? target.dataset.teamKey ?? null : null;
-      setComputerDropKey(key);
-      if (key !== null) { event.preventDefault(); event.dataTransfer.dropEffect = "link"; }
+      setComputerDropKey(key === GLOBAL_CHIEF_MAP_KEY ? null : key);
+      if (key !== null && key !== GLOBAL_CHIEF_MAP_KEY) { event.preventDefault(); event.dataTransfer.dropEffect = "link"; }
     }}
     onDragLeave={(event) => {
       if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setComputerDropKey(null);
@@ -319,7 +319,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
       const target = (event.target as HTMLElement).closest<HTMLElement>("[data-team-key]");
       const key = target && event.currentTarget.contains(target) ? target.dataset.teamKey : undefined;
       const resourceId = event.dataTransfer.getData(COMPUTER_DRAG_TYPE);
-      if (key === undefined || !sections.some((section) => section.key === key) || !resourceId) return;
+      if (key === undefined || key === GLOBAL_CHIEF_MAP_KEY || !sections.some((section) => section.key === key) || !resourceId) return;
       event.preventDefault();
       onComputerDrop(resourceId, key);
     }}
@@ -361,7 +361,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
         const renderBot = (bot: Bot) => <div key={bot.id} className="relative">
           {insertion?.botId === bot.id && <div className={cn("pointer-events-none absolute inset-x-1 h-0.5 rounded bg-accent", insertion.after ? "-bottom-[9px]" : "-top-[9px]")} />}
           <BotCard bot={bot} selected={state.selectedId === bot.id && state.settingsOpen} moving={dragged?.bot.id === bot.id || moving === bot.id}
-            connected={connectedBotIds.includes(bot.id)} onComputer={onComputer} onArrange={layoutLoaded ? arrangeBot : undefined} />
+            connected={connectedBotIds.includes(bot.id)} onComputer={onComputer} onArrange={layoutLoaded && !bot.globalChief ? arrangeBot : undefined} />
         </div>;
         return <section key={section.key} data-team-key={section.key} aria-label={t("canvas.teamRegion", { name: section.name })}
           className={cn("absolute rounded-2xl border bg-panel/90 shadow-sm has-[details[open]]:z-20 data-[computer-dropping=true]:border-accent data-[computer-dropping=true]:ring-2 data-[computer-dropping=true]:ring-accent/25", dropping ? "border-accent ring-2 ring-accent/25" : "border-hairline/50")}
@@ -384,7 +384,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
               <Monitor size={12} className="shrink-0" /><span className="truncate">{computer.name}</span>
             </button>}
             <span className="text-[11px] tabular-nums text-ink-secondary">{section.chiefs.length + section.members.length}</span>
-            {canManage && <details className="relative" onToggle={(event) => {
+            {canManage && section.key !== GLOBAL_CHIEF_MAP_KEY && <details className="relative" onToggle={(event) => {
               if (event.currentTarget.open) {
                 const bounds = viewport.current?.getBoundingClientRect();
                 setMenuAbove(bounds && event.currentTarget.getBoundingClientRect().bottom > bounds.bottom - 210 * view.scale ? section.key : null);

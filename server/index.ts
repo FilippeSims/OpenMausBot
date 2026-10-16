@@ -120,6 +120,8 @@ import * as composio from "./composio.ts";
 import { connectorCallFromFrame, connectorRefusalText, connectorScopeRefusalText, connectorUnrecognizedText, evaluateConnectorTools } from "./connector-verdict.ts";
 import { connectorCardText } from "./connector-card-text.ts";
 import { chiefOfStaffSystemPrompt } from "./chief-of-staff.ts";
+import { isGlobalChief } from "../shared/global-chief.ts";
+import { batchedRecall, globalReadBots, globalReadTeams } from "./global-chief-access.ts";
 import { buildRecall, recallRooms, recallThreadIds, withRecalled } from "./recall.ts";
 import { hostTimeZone, takesTurnClock, turnClockLine, withTurnClock } from "./turn-clock.ts";
 import { createMemoryUpkeep, upkeepEnabled } from "./memory-upkeep.ts";
@@ -1296,7 +1298,26 @@ function recentWorkSources(bot: BotRecord) {
   };
 }
 
+function memoryRecallSources(from: BotRecord): Array<{ kind: "bot" | "team"; key: string }> {
+  if (from.memoryEnabled === false) return [];
+  const global = isGlobalChief(from) && !CLOUD_HOME;
+  const bots = global ? globalReadBots(from, store.bots).filter(bot => bot.memoryEnabled !== false) : [from];
+  const teams = global ? globalReadTeams(from, store.bots) : [sectionContextKey(from.section)];
+  return [...bots.map(bot => ({ kind: "bot" as const, key: bot.id })), ...teams.map(key => ({ kind: "team" as const, key }))];
+}
+
 function recallThreads(from: BotRecord, capability: Parameters<typeof cloudLendingView>[0]): { roomByThread: Map<string, GroupRecord>; ownThreads: string[] } {
+  if (isGlobalChief(from) && !CLOUD_HOME) {
+    const sources = globalReadBots(from, store.bots);
+    const allowed = new Set(sources.map(bot => bot.id));
+    const roomByThread = new Map<string, GroupRecord>();
+    for (const group of store.groups) {
+      if (!group.memberIds.length || !group.memberIds.every(id => allowed.has(id)) || !roomFeedsBot(group, from)) continue;
+      roomByThread.set(group.threadId, group);
+      for (const task of group.tasks ?? []) roomByThread.set(task.threadId, group);
+    }
+    return { roomByThread, ownThreads: [...new Set([...sources.flatMap(bot => recallThreadIds(bot, new Map())), ...roomByThread.keys()])] };
+  }
   const roomByThread = recallRooms(store.groups, from, roomFeedsBot);
   return { roomByThread, ownThreads: recallThreadIds(from, roomByThread).filter(cloudLendingView(capability) ? cloudOwnerOnlyThread : () => true) };
 }
@@ -1305,12 +1326,13 @@ function recallThreads(from: BotRecord, capability: Parameters<typeof cloudLendi
 async function autoRecallPrompt(bot: BotRecord, threadId: string, message: string, opts: { conversations: boolean; userName: string }): Promise<string> {
   if (bot.memoryEnabled === false || !autoRecallEnabled(cfg)) return "";
   const section = sectionContextKey(bot.section);
-  const semantic = message.trim().length >= 8 ? renderSemanticMemory((await Promise.all([
-    hindsightMemory.recall("bot", bot.id, message),
-    hindsightMemory.recall("team", section, message),
-  ])).flat()) : "";
+  const sources = memoryRecallSources(bot);
+  const sourceSignature = JSON.stringify(sources);
+  const semantic = message.trim().length >= 8 ? renderSemanticMemory(await batchedRecall(sources,
+    source => hindsightMemory.recall(source.kind, source.key, message))) : "";
   const current = store.bot(bot.id);
-  if (!current || current.memoryEnabled === false || sectionContextKey(current.section) !== section) return "";
+  if (!current || current.memoryEnabled === false || sectionContextKey(current.section) !== section ||
+      sourceSignature !== JSON.stringify(memoryRecallSources(current))) return "";
   const roomByThread = opts.conversations ? recallRooms(store.groups, bot, roomFeedsBot) : new Map<string, GroupRecord>();
   const threadIds = opts.conversations
     ? recallThreadIds(bot, roomByThread).filter((id) => id !== threadId && (!CLOUD_HOME || cloudOwnerOnlyThread(id)))
@@ -1449,7 +1471,8 @@ function requestedBotFields(req: IncomingMessage, path: string): string[] {
   if (!body || typeof body !== "object" || Array.isArray(body)) return [];
   const fields = new Set(Object.keys(body));
   if (fields.has("autoApprove") || fields.has("approvalMode")) fields.add("autoApprove").add("approvalMode");
-  if (fields.has("chiefOfStaff")) fields.add("managedSections");
+  if (fields.has("chiefOfStaff")) fields.add("managedSections").add("globalChief");
+  if (fields.has("globalChief")) fields.add("chiefOfStaff").add("section").add("managedSections").add("hidden").add("pinned");
   return [...fields];
 }
 
@@ -2066,6 +2089,7 @@ function agentsIntegration(
         return tts.voiceReady(cfg, speaking?.voice) && speaking?.voiceNotes !== false ? "1" : "0";
       })(),
       OMB_CHIEF_OF_STAFF: store.bot(botId)?.chiefOfStaff === true ? "1" : "0",
+      OMB_GLOBAL_CHIEF: isGlobalChief(store.bot(botId)) && !CLOUD_HOME ? "1" : "0",
       OMB_ESCALATIONS: chiefEscalationsEnabled(cfg) ? "1" : "0",
     },
   };
@@ -3332,8 +3356,8 @@ function previewSystemPrompt(bot: BotRecord) {
     { id: "credential", label: "Credentials", text: agentsMounted ? CREDENTIAL_PROMPT : "" },
     { id: "routine", label: "Routines", text: agentsMounted ? ROUTINE_PROMPT : "" },
     { id: "profile", label: "Profile changes", text: agentsMounted ? PROFILE_PROMPT : "" },
-    { id: "section-context", label: "Section context", text: sectionContextSystemPrompt(bot.section) },
-    { id: "team-memory", label: "Team memory", text: teamMemory.systemPrompt(bot.section) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
+    { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+    { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
     teamAvailabilityPart(agentsMounted && coordination ? peers : []),
     { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
     { id: "skills", label: "Skills index", text: privateWorkspace ? skillsHost.skillsIndex(bot, undefined, instance) : "" },
@@ -3377,6 +3401,7 @@ async function botOverview(bot: BotRecord): Promise<BotOverview> {
       connectorTools: bot.connectorTools,
       browser: bot.browser,
       chiefOfStaff: bot.chiefOfStaff,
+      globalChief: bot.globalChief,
       managedSections: bot.managedSections,
     },
     routines: routines!.listRoutines()
@@ -4044,6 +4069,7 @@ function createChannel(value: unknown): GroupRecord {
   const roster = checkedMemberIds(body.memberIds);
   if (!roster.ok) throw Object.assign(new Error(roster.error), { status: 400 });
   const { memberIds } = roster;
+  if (memberIds.some(id => isGlobalChief(store.bot(id)))) throw Object.assign(new Error("The global Chief stays outside group chats"), { status: 400 });
   const audienceConflict = roomAudienceConflict(memberIds);
   if (audienceConflict) throw Object.assign(new Error(audienceConflict), { status: 400 });
   if (body.name !== undefined && typeof body.name !== "string") {
@@ -4120,6 +4146,7 @@ function updateChannel(groupId: string, value: unknown): GroupRecord {
     if (existing.dm) throw Object.assign(new Error("direct-message channels cannot change members"), { status: 400 });
     const roster = checkedMemberIds(body.memberIds);
     if (!roster.ok) throw Object.assign(new Error(roster.error.replace("channel", "room")), { status: 400 });
+    if (roster.memberIds.some(id => isGlobalChief(store.bot(id)))) throw Object.assign(new Error("The global Chief stays outside group chats"), { status: 400 });
     const audienceConflict = roomAudienceConflict(roster.memberIds, existing.memberIds);
     if (audienceConflict) throw Object.assign(new Error(audienceConflict), { status: 400 });
     const removedGoalLead = routines!.listRoutines().some(
@@ -8591,7 +8618,8 @@ async function startTurn(
       const unseen = handed && handedStateUsable(handed, cursor, contextOrder) ? unseenMessages(replayable, contextOrder, handed) : undefined;
       const externalUpdate = Boolean(opts?.coordination?.resumed || unseen?.some((m) => m.keep));
       // What a resumed session keeps from its launch; Codex reasserts model and provider on resume, but an in-flight turn and an omitted effort keep the prior selection.
-      const persistentConfig = [bot.name, bot.title, bot.description, sectionContextSystemPrompt(bot.section),
+      const persistentConfig = [bot.name, bot.title, bot.description, bot.chiefOfStaff === true, isGlobalChief(bot),
+        isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section),
         ...(instance.driverKind === "codex" ? [model, effort ?? null] : [])];
       const sessionConfig = (soul: string | undefined) =>
         createHash("sha256").update(JSON.stringify([...persistentConfig, soul])).digest("hex").slice(0, 16);
@@ -9130,8 +9158,8 @@ async function startTurn(
         { id: "routine-execution", label: "Routine execution", text: opts?.automationSource === "schedule" || opts?.automationSource === "manual" || opts?.automationSource === "startup" ? ROUTINE_EXECUTION_PROMPT : "" },
         { id: "profile", label: "Profile changes", text: profilePrompt },
         { id: "learn", label: "Skill authoring", text: learnPrompt },
-        { id: "section-context", label: "Section context", text: sectionContextSystemPrompt(bot.section) },
-        { id: "team-memory", label: "Team memory", text: teamMemory.systemPrompt(bot.section) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
+        { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+        { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
         // Volatile, so a teammate starting or finishing never changes the stable half.
         teamAvailabilityPart(coordinationPrompt ? sectionPeers : []),
         { id: "recent", label: "Recent work", text: recentWorkPrompt(recentWork(recentWorkSources(bot), bot, { userName: cfg.profile?.name?.trim() || "User", currentThreadId: threadId, ...recentWorkFilter() })) },
@@ -11182,8 +11210,8 @@ async function runClaimedGroupMemberTurn(
     { id: "recall", label: "Recall", text: integrations.agents && bot.memoryEnabled !== false ? SESSION_SEARCH_SYSTEM_PROMPT : "" },
     teamAvailabilityPart(outsideRoom),
     { id: "recent", label: "Recent work", text: recentWorkPrompt(recentLines) },
-    { id: "section-context", label: "Section context", text: sectionContextSystemPrompt(bot.section) },
-    { id: "team-memory", label: "Team memory", text: teamMemory.systemPrompt(bot.section) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
+    { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+    { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
     { id: "memory", label: "Memory", text: roomMemory ? `\n${roomMemory.trim()}` : "" },
     { id: "skills", label: "Skills index", text: workspace ? skillsHost.skillsIndex(bot, threadId, instance) : "" },
     { id: "skill-instructions", label: "Skill instructions", text: renderSkillInstructions(selectedSkills, { includeRoot: Boolean(workspace) }) },
@@ -14638,20 +14666,22 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (path.endsWith("/search")) {
           const parsed = z.object({ query: z.string().trim().min(1).max(4_000) }).strict().safeParse(body);
           if (!parsed.success) return json(res, 400, { error: "query is required, at most 4,000 characters" });
-          const section = sectionContextKey(sender.section);
-          const hits = (await Promise.all([
-            hindsightMemory.recall("bot", sender.id, parsed.data.query),
-            hindsightMemory.recall("team", section, parsed.data.query),
-          ])).flat();
+          const sources = memoryRecallSources(sender);
+          const signature = JSON.stringify(sources);
+          const hits = await batchedRecall(sources, source => hindsightMemory.recall(source.kind, source.key, parsed.data.query));
           requireActiveInternalCapability();
           const fresh = store.bot(sender.id);
-          if (!fresh || fresh.memoryEnabled === false || sectionContextKey(fresh.section) !== section) {
+          if (!fresh || fresh.memoryEnabled === false || signature !== JSON.stringify(memoryRecallSources(fresh))) {
             return json(res, 409, { error: "Memory access changed; retry in a new turn." });
           }
-          const local = searchActiveMemory(botMemoryScope(sender.id, (path, hash) => memorySharing.metadata(sender.id, path, hash)), parsed.data.query)
-            .map(document => ({ file: document.source, snippet: document.text, metadata: document.metadata }));
-          const accepted = searchActiveMemory(teamMemoryScope(section, teamMemory), parsed.data.query);
-          return json(res, 200, { backend: hits.length ? "hindsight" : "local", hits, local, team: accepted });
+          const local = sources.filter(source => source.kind === "bot").flatMap(source =>
+            searchActiveMemory(botMemoryScope(source.key, (path, hash) => memorySharing.metadata(source.key, path, hash)), parsed.data.query)
+              .map(document => ({ file: document.source, snippet: document.text, metadata: document.metadata, botId: source.key, botName: store.bot(source.key)?.name }))
+          ).slice(0, 25);
+          const accepted = sources.filter(source => source.kind === "team").flatMap(source =>
+            searchActiveMemory(teamMemoryScope(source.key, teamMemory), parsed.data.query).map(document => ({ ...document, section: source.key }))
+          ).slice(0, 25);
+          return json(res, 200, { backend: hits.length ? "hindsight" : "local", hits: hits.slice(0, 25), local, team: accepted });
         }
         if (owner.group && !roomFeedsBot(owner.group, sender)) return json(res, 403, { error: "Restricted room notes cannot be shared outside the room." });
         const parsed = z.object({ targetBotId: z.string().regex(/^[\w-]{1,128}$/), sourcePath: z.string().max(256), text: z.string().min(1).max(4_000) }).strict().safeParse(body);
@@ -15167,7 +15197,6 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           source: proposed.state === "pending" ? "profile" : "full-access" });
         return json(res, 201, proposed);
       }
-      // session_search searches the calling bot's own threads only: search across bots would be an isolation change.
       const discloseRecall = (bot: BotRecord, roomThreadId: string, sourceThreadIds: readonly string[]): void => {
         const crossing = claimRecallCrossings(roomThreadId, sourceThreadIds);
         if (!crossing.count) return;
@@ -15204,18 +15233,24 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (scope !== "all" && scope !== "conversations" && scope !== "memory" && scope !== "team") {
           return json(res, 400, { error: "scope must be all, conversations, memory, or team" });
         }
-        const memoryHits = scope === "conversations" || scope === "team" || !q || from.memoryEnabled === false ? [] : searchMemoryFiles(from.id, q, limit);
-        if (scope === "memory" || scope === "team") return json(res, 200, { hits: [], memoryHits, teamHits: scope === "team" ? teamMemory.search(from.section, q, limit, range) : [] });
+        const sources = memoryRecallSources(from);
+        const memoryHits = scope === "conversations" || scope === "team" || !q || from.memoryEnabled === false ? [] : sources.filter(source => source.kind === "bot")
+          .flatMap(source => searchMemoryFiles(source.key, q, limit).map(hit => ({ ...hit, botId: source.key, botName: store.bot(source.key)?.name }))).slice(0, limit);
+        const teamHits = scope === "conversations" || scope === "memory" || from.memoryEnabled === false ? [] : sources.filter(source => source.kind === "team")
+          .flatMap(source => teamMemory.search(source.key, q, limit, range).map(hit => ({ ...hit, section: source.key }))).slice(0, limit);
+        if (scope === "memory" || scope === "team") return json(res, 200, { hits: [], memoryHits, teamHits });
         const { roomByThread, ownThreads } = recallThreads(from, internalCapability);
         const inRoom = Boolean(store.groupByThread(fromThreadId));
         const found = q ? recallMessages(q, ownThreads, limit, range) : recentMessages(ownThreads, range ?? {}, limit);
         const hits = found.map((hit) => {
           const room = roomByThread.get(hit.threadId);
+          const sourceBot = store.bots.find(bot => bot.threadId === hit.threadId || bot.tasks?.some(task => task.threadId === hit.threadId));
           return {
             ...hit,
+            ...(sourceBot ? { botId: sourceBot.id, botName: sourceBot.name, section: sourceBot.section } : {}),
             task: room
               ? (room.tasks ?? []).find((task) => task.threadId === hit.threadId)?.title
-              : store.taskByThread(from.id, hit.threadId)?.title,
+              : store.taskByThread(sourceBot?.id ?? from.id, hit.threadId)?.title,
             ...(room ? { room: room.name } : {}),
             current: hit.threadId === fromThreadId,
             crossed: inRoom && !room && hit.threadId !== fromThreadId,
@@ -15224,9 +15259,9 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (inRoom) {
           discloseRecall(from, fromThreadId, hits.filter((hit) => hit.crossed).map((hit) => hit.threadId));
         }
-        return json(res, 200, { hits, memoryHits, teamHits: scope === "conversations" ? [] : teamMemory.search(from.section, q, limit, range) });
+        return json(res, 200, { hits, memoryHits, teamHits });
       }
-      // session_read: a message id from another bot's thread reads as missing, not forbidden, so the id space leaks nothing.
+      // A message outside the current recall grant reads as missing, so its id leaks nothing.
       if (method === "GET" && path === "/api/internal/session-read") {
         const fromBotId = String(url.searchParams.get("fromBotId") ?? "");
         const from = store.bot(fromBotId);
@@ -15245,11 +15280,13 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         const readInRoom = Boolean(store.groupByThread(fromThreadId));
         const readCrossed = readInRoom && threadId !== fromThreadId && !recall.roomByThread.has(threadId);
         if (readCrossed) discloseRecall(from, fromThreadId, [threadId]);
+        const sourceBot = store.bots.find(bot => bot.threadId === threadId || bot.tasks?.some(task => task.threadId === threadId));
         return json(res, 200, {
           ...message,
+          ...(sourceBot ? { botId: sourceBot.id, botName: sourceBot.name, section: sourceBot.section } : {}),
           crossed: readCrossed,
           text: message.text.length > SESSION_READ_MAX_CHARS ? `${message.text.slice(0, SESSION_READ_MAX_CHARS)}…` : message.text,
-          task: store.taskByThread(from.id, threadId)?.title,
+          task: store.taskByThread(sourceBot?.id ?? from.id, threadId)?.title,
         });
       }
       if (method === "GET" && path === "/api/internal/skills") {
