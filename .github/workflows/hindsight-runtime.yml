@@ -5,8 +5,17 @@ on:
     paths:
       - "third_party/hindsight/**"
       - "server/hindsight*"
+      - "server/index.ts"
+      - "server/routes/config.ts"
+      - "server/routes/hindsight.ts"
       - "server/memory*"
+      - "server/team-memory.ts"
+      - "src/components/HindsightSettings*"
+      - "src/state/config-status.ts"
+      - "src/state/store.tsx"
       - "scripts/*hindsight*"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - "electron-builder.yml"
       - ".github/workflows/hindsight-runtime.yml"
 permissions:

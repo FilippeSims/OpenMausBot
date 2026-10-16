@@ -7,6 +7,7 @@ import { activeMemoryText, hindsightConfigSchema, hindsightEndpoint, HindsightMe
   type HindsightConfig, type MemoryIndexDocument, type MemoryIndexScope } from "./hindsight-memory.ts";
 import { renderSemanticMemory, teamMemoryScope, searchActiveMemory } from "./memory-index.ts";
 import { TeamMemory } from "./team-memory.ts";
+import { changeEmptySection, ensureSections } from "./section-context.ts";
 
 let directory: string;
 beforeEach(() => { directory = mkdtempSync(join(tmpdir(), "omb-hindsight-unit-")); });
@@ -209,11 +210,13 @@ describe("memory projection content", () => {
   });
 
   it("indexes approved team entries only and preserves identity through rename", () => {
+    ensureSections(["Marketing"]);
     const memory = new TeamMemory(join(directory, "team.json"));
     const entry = memory.propose("Marketing", { kind: "decision", name: "Launch", detail: "Launch Friday" }, { botId: "scout", botName: "Scout", threadId: "t1", at: 10 });
     expect(teamMemoryScope("Marketing", memory).documents).toEqual([]);
     memory.resolve("Marketing", entry.entry.id, "accept");
-    memory.renameSection("Marketing", "Growth");
+    changeEmptySection("Marketing", "Growth");
+    ensureSections(["Marketing"]);
     expect(teamMemoryScope("Marketing", memory).documents).toEqual([]);
     expect(teamMemoryScope("Growth", memory).documents).toMatchObject([{ id: entry.entry.id, metadata: { author_bot_id: "scout" } }]);
   });

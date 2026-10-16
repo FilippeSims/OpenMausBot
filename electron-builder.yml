@@ -75,6 +75,14 @@ extraResources:
     to: licenses/Hindsight-LICENSE.txt
   - from: third_party/hindsight/model-LICENSE.txt
     to: licenses/multilingual-e5-LICENSE.txt
+  # Code adapted from T3 Code (MIT): the bots' browser egress gate, the Antigravity runtime, citations.
+  - from: third_party/t3-code/LICENSE
+    to: licenses/t3-code-LICENSE.txt
+  # The 1Password SDK and its WebAssembly core (MIT; saved logins from
+  # 1Password, staged in the duckdb resource tree). Neither npm package
+  # carries its license text, so the upstream file travels here.
+  - from: third_party/onepassword-sdk/LICENSE
+    to: licenses/1password-sdk-LICENSE.txt
   - from: dist
     to: ui
   - from: dist-server
@@ -122,6 +130,13 @@ mac:
       to: browser-engine
     - from: dist-native/hindsight/darwin-${arch}
       to: hindsight-runtime
+    # The Data engine's native modules (DuckDB, resvg; server/data/engine.ts)
+    # as a node_modules tree the server requires at runtime; prepare-duckdb
+    # stages this arch's slice. The copy names the node_modules directory
+    # itself: electron-builder's resource filter drops a root-level
+    # node_modules entry of any tree it copies (app-builder-lib util/filter).
+    - from: dist-native/duckdb/darwin-${arch}/node_modules
+      to: duckdb/node_modules
   extendInfo:
     NSMicrophoneUsageDescription: OpenMausBot uses the microphone for voice dictation into the composer.
     NSSpeechRecognitionUsageDescription: OpenMausBot transcribes your voice on-device to type messages for you.
@@ -152,6 +167,8 @@ win:
       to: browser-engine
     - from: dist-native/hindsight/win32-x64
       to: hindsight-runtime
+    - from: dist-native/duckdb/win32-x64/node_modules
+      to: duckdb/node_modules
     # CUA driver and SDK for Windows — must live outside ASAR for native modules
     - from: dist-native/cua-win32-x64/cua-driver.exe
       to: cua-driver.exe
@@ -205,6 +222,8 @@ linux:
       to: browser-engine
     - from: dist-native/hindsight/linux-x64
       to: hindsight-runtime
+    - from: dist-native/duckdb/linux-x64/node_modules
+      to: duckdb/node_modules
     - from: build/linux-openmausbot-browser.apparmor
       to: openmausbot-browser.apparmor
   desktop:

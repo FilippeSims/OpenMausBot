@@ -22,7 +22,7 @@ it.skipIf(!destination && !bundle)("uses local chunks memory without an LLM thro
   expect(await health.json()).toMatchObject({ status: "healthy" });
   }
 
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true }, [], undefined, bundle, process.env.OMB_HINDSIGHT_VERIFY_SERVER_ENTRY);
+  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true }, [], undefined, undefined, bundle, process.env.OMB_HINDSIGHT_VERIFY_SERVER_ENTRY);
   console.log(JSON.stringify({ verification: "hindsight-local", ...fixture.info, backend: bundle ? "embedded" : "external" }));
   const manifestPath = join(fixture.info.dataDir, "hindsight-index.json");
   type Manifest = { namespace: string; indexed: Record<string, Record<string, string>> };

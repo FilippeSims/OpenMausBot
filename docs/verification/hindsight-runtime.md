@@ -55,3 +55,22 @@ tests, type checking, locale validation and the production UI build passed.
 The retained fixture log is:
 
 `/var/folders/wm/_vf8496d22x63qthwrfbf7x40000gn/T/openmausbot-verification-evidence/server-1791582842315-66614.log`
+
+The 2026-10-16 integration with upstream `55d4cd812` (0.1.113) passed the native
+memory lifecycle and semantic-recall suites, including a run against the built
+`dist-server/index.js`. The external-service fixture covers accepted team notes
+using legacy name-based ownership, rename continuity and reusing the old team
+name without inheriting its notes. Shared-memory approvals supply the upstream
+API's required `expectedRevision`.
+
+The production UI/server builds, type checking, lint, locale validation and the
+standalone packaged-server smoke passed. Focused suites also covered settings,
+tool catalogs with/without the bridge, authorization, Cloud lending, room-memory
+prompts, capture restart and workspace backup. The real settings panel connected
+to the bundled service in an isolated fixture (12 ms); its retained log is:
+
+`/var/folders/wm/_vf8496d22x63qthwrfbf7x40000gn/T/openmausbot-verification-evidence/server-1792160905160-23016.log`
+
+This validates the merged source and compiled server on Mac Apple Silicon. It
+does not install the merged version into the user's live desktop application or
+qualify new Windows/Linux installers.
