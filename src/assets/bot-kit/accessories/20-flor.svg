@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-20-flor" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-20-flor" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-20-flor" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-20-flor" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-20-flor" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-20-flor" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><circle cx="93" cy="24" r="9" fill="url(#coral-20-flor)"/><circle cx="105" cy="24" r="9" fill="url(#coral-20-flor)"/><circle cx="99" cy="13" r="9" fill="url(#coral-20-flor)"/><circle cx="99" cy="35" r="9" fill="url(#coral-20-flor)"/><circle cx="88" cy="30" r="8" fill="url(#coral-20-flor)"/><circle cx="110" cy="30" r="8" fill="url(#coral-20-flor)"/><circle cx="99" cy="26" r="7" fill="url(#gold-20-flor)"/><path d="M85 40 Q74 38 76 30 Q87 29 89 37Z" fill="#5ec68c" /></svg>

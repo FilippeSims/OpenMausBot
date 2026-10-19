@@ -7,6 +7,7 @@ import { Store, UNTITLED_TASK } from "./store.ts";
 import { RoutineManager } from "./routines.ts";
 import { createTeamBackup, importTeamBackup } from "./team-backup.ts";
 import { parseTeamBackup } from "../shared/team-backup.ts";
+import { defaultMascotAppearance } from "../shared/mascot-kit.ts";
 import { approvalModeFor } from "../shared/approval-mode.ts";
 import { WIDGET_SAMPLES } from "../shared/widget-samples.ts";
 import { soulFile, soulHash } from "./bot-folder.ts";
@@ -59,6 +60,20 @@ function fixture() {
 
 describe("additive portable team backups", () => {
   beforeEach(() => rmSync(DATA_DIR, { recursive: true, force: true }));
+
+  it("retains character layers, placement and colors across restart, backup and import", () => {
+    const { store, routines, scout } = fixture();
+    const appearance = { ...defaultMascotAppearance(), body: "18-fantasma" as const, face: "09-travesso" as const,
+      accessories: [{ id: "09-chapeu-mago" as const, x: 2, y: -3, scale: 1.1, rotation: -10 }] };
+    store.patchBot(scout.id, { color: "purple", mascotAppearance: appearance });
+    expect(new Store(selection).bot(scout.id)?.mascotAppearance).toEqual(appearance);
+    const backup = createTeamBackup(store, routines.listRoutines(), "Characters");
+    expect(backup.bots.find(bot => bot.key === scout.id)?.mascotAppearance).toEqual(appearance);
+    const restored = importTeamBackup(store, routines, JSON.parse(JSON.stringify(backup)), selection());
+    expect(restored.bots.find(bot => bot.name === "Scout 2")).toMatchObject({ color: "purple", mascotAppearance: appearance });
+    store.patchBot(scout.id, { mascotAppearance: null });
+    expect(new Store(selection).bot(scout.id)?.mascotAppearance).toBeNull();
+  });
 
   it("carries tool restrictions through backup and import without restoring execution grants", () => {
     const { store, routines, chief, scout } = fixture();

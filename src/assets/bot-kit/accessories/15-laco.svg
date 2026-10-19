@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-15-laco" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-15-laco" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-15-laco" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-15-laco" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-15-laco" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-15-laco" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M59 23 Q43 4 30 10 Q23 24 31 38 Q46 41 59 29Z" fill="url(#coral-15-laco)" /><path d="M69 23 Q85 4 98 10 Q105 24 97 38 Q82 41 69 29Z" fill="url(#coral-15-laco)" /><circle cx="64" cy="26" r="9" fill="#ffc2b0"/></svg>

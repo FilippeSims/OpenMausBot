@@ -35,6 +35,7 @@ import type {
 } from "../shared/wire.ts";
 import { movesThreadToTop } from "../shared/wire.ts";
 import { parseConnectorTools } from "./connector-tools.ts";
+import { mascotAppearanceSchema } from "../shared/mascot-kit.ts";
 import { sameModelSelection } from "../shared/thread-model.ts";
 import { isGlobalChief } from "../shared/global-chief.ts";
 export type {
@@ -1480,7 +1481,7 @@ export class Store {
     profile: Partial<
       Pick<
         BotRecord,
-        "name" | "title" | "description" | "soul" | "color" | "mascotExpression" | "mascotBody" | "modelSelection" | "section" | "cwd" | "visibility" | "toolScope"
+        "name" | "title" | "description" | "soul" | "color" | "mascotExpression" | "mascotBody" | "mascotAppearance" | "modelSelection" | "section" | "cwd" | "visibility" | "toolScope"
       >
     > = {},
     opts: {
@@ -1504,6 +1505,7 @@ export class Store {
       color: profile.color ?? COLORS[this.bots.length % COLORS.length],
       ...(profile.mascotExpression ? { mascotExpression: profile.mascotExpression } : {}),
       ...(profile.mascotBody ? { mascotBody: profile.mascotBody } : {}),
+      ...(profile.mascotAppearance ? { mascotAppearance: mascotAppearanceSchema.parse(profile.mascotAppearance) } : {}),
       // Restricted from its first frame: no one else is ever told it exists.
       ...(profile.visibility && profile.visibility !== "everyone" ? { visibility: structuredClone(profile.visibility) } : {}),
       ...(toolScope.scope ? { toolScope: toolScope.scope } : {}),
@@ -1687,6 +1689,7 @@ export class Store {
     if (patch.globalChief === false || patch.chiefOfStaff === false) {
       patch = { ...patch, globalChief: false, ...(bot.globalChief ? { chiefOfStaff: false, managedSections: [] } : {}) };
     }
+    if (patch.mascotAppearance != null) patch = { ...patch, mascotAppearance: mascotAppearanceSchema.parse(patch.mascotAppearance) };
     if (patch.connectorTools !== undefined) {
       const parsed = parseConnectorTools(patch.connectorTools);
       if (!parsed.ok) throw new Error(parsed.error);

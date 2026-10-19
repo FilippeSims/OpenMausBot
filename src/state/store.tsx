@@ -11,6 +11,7 @@ import {
 import { flushSync } from "react-dom";
 import type { BotVisibility, CardAnswerer, CloudBackend, ConnectorToolGrant, EffortLevel, InstalledPackageMetadata, LiveCallState, ServerFrame, GroupThreadUsage, SteerQueueReason, WireGroup, OptionCardData as WireOptionCard } from "../../shared/wire";
 import { movesThreadToTop } from "../../shared/wire";
+import type { MascotAppearance } from "../../shared/mascot-kit";
 import { sameChiefOffice } from "../../shared/global-chief";
 import { DATA_ROUTES, type DataSheet, type DataTable } from "../../shared/data-surface";
 import type { NotificationLogEntry } from "../../shared/notification";
@@ -311,6 +312,7 @@ export interface Bot {
   color: MausColor;
   mascotExpression?: string | null;
   mascotBody?: MascotBodyId | null;
+  mascotAppearance?: MascotAppearance | null;
   avatarUrl?: string | null;
   avatarCrop?: BotAvatarCrop;
   avatarZoom?: number;
@@ -2881,6 +2883,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             computer: source.computer,
             cloudBackend: source.cloudBackend,
             autoStartVps: source.autoStartVps,
+            color: source.color,
+            mascotBody: source.mascotBody,
+            mascotExpression: source.mascotExpression,
+            mascotAppearance: source.mascotAppearance,
             avatarUrl: source.avatarUrl,
             avatarCrop: source.avatarCrop,
             avatarZoom: source.avatarZoom,

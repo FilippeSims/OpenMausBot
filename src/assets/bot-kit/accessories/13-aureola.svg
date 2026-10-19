@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-13-aureola" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-13-aureola" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-13-aureola" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-13-aureola" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-13-aureola" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-13-aureola" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><ellipse cx="64" cy="12" rx="30" ry="6" fill="none" stroke="#ffe490" stroke-width="5"/><ellipse cx="64" cy="11" rx="30" ry="5" fill="none" stroke="#fff6cd" stroke-width="1.5"/></svg>

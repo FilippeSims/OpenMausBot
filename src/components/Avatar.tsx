@@ -11,6 +11,8 @@ import { MAUS_COLORS, type MausColor, type MausMotion, type MausState } from "@/
 import { CursorAvatar, type CursorAvatarHandle } from "./CursorAvatar";
 import { avatarCropRadius, botAvatarProfile, clampAvatarFocus, clampAvatarZoom, type BotAvatarCrop } from "../../shared/bot-avatar";
 import { MASCOT_BODIES, botMascotBody, type MascotBodyId } from "../../shared/mascot-bodies";
+import { botMascotAppearance, type MascotAppearance } from "../../shared/mascot-kit";
+import { BotKitAvatar } from "./BotKitAvatar";
 
 export const EYE_SCALE = 1.12;
 export const MOUTH_WEIGHT = 11;
@@ -87,6 +89,7 @@ export type MausAvatarProps = {
   trackPointer?: boolean;
   animated?: boolean;
   bodyId?: MascotBodyId;
+  appearance?: MascotAppearance | null;
   gradient?: [string, string, string];
 };
 
@@ -110,6 +113,7 @@ function MausAvatarComponent(
     trackPointer = true,
     animated = true,
     bodyId,
+    appearance,
     gradient,
   }: MausAvatarProps,
   ref: React.Ref<MausAvatarHandle>,
@@ -153,7 +157,9 @@ function MausAvatarComponent(
       onPointerMove={trackPointer && animated ? onPointerMove : undefined}
       onPointerLeave={trackPointer && animated ? onPointerLeave : undefined}
     >
-      <CursorAvatar
+      {appearance ? <BotKitAvatar ref={inner} appearance={appearance} color={(gradient ?? gradientFor(color))[1]}
+        size={size} label={label} state={motionState ?? state} animated={animated} motion={motion} motionKey={motionKey}
+        gaze={{ x: (gaze?.x ?? 0) + pointer.x, y: (gaze?.y ?? 0) + pointer.y }} /> : <CursorAvatar
         ref={inner}
         state={motionState ?? state}
         expression={expression}
@@ -169,7 +175,7 @@ function MausAvatarComponent(
         showMouth={showMouth}
         mouthStroke={mouthStroke}
         paused={!animated}
-      />
+      />}
     </span>
   );
 }
@@ -187,6 +193,7 @@ export type BotAvatarProps = Omit<MausAvatarProps, "color" | "gradient"> & {
     avatarFocusX?: number;
     avatarFocusY?: number;
     mascotBody?: MascotBodyId | null;
+    mascotAppearance?: MascotAppearance | null;
   };
 };
 
@@ -221,6 +228,7 @@ export function BotAvatar({ bot, size = 44, label, readable = false, ...mascotPr
     return (
       <MausAvatar
         bodyId={bot.mascotBody ?? undefined}
+        appearance={botMascotAppearance(bot.mascotAppearance)}
         {...mascotProps}
         color={bot.color}
         gradient={readable ? roomAvatarGradient(bot.color) : undefined}

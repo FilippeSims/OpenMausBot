@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-19-barba" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-19-barba" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-19-barba" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-19-barba" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-19-barba" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-19-barba" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M32 78 Q39 88 48 85 Q56 78 64 82 Q72 78 80 85 Q89 88 96 78 Q96 106 64 120 Q32 106 32 78Z" fill="url(#white-19-barba)" /><path d="M51 84 Q64 93 77 84 L74 94 Q64 101 54 94Z" fill="#55757c" /><path d="M45 96 L54 107 M83 96 L74 107" fill="none" stroke="#e4f3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

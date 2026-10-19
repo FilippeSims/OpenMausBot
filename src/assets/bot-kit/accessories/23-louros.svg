@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-23-louros" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-23-louros" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-23-louros" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-23-louros" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-23-louros" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-23-louros" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M41 40 Q21 26 34 8 M87 40 Q107 26 94 8" fill="none" stroke="#e4b64e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 33 Q19 33 20 23 Q31 22 34 33Z M29 25 Q17 19 22 11 Q33 15 29 25Z M31 17 Q26 5 35 3 Q41 13 31 17Z M94 33 Q109 33 108 23 Q97 22 94 33Z M99 25 Q111 19 106 11 Q95 15 99 25Z M97 17 Q102 5 93 3 Q87 13 97 17Z" fill="url(#gold-23-louros)" /></svg>

@@ -9,6 +9,7 @@ import {
 } from "../shared/bot-avatar.ts";
 import { BOT_PROFILE_LIMITS, fitsOnOneLine } from "../shared/bot-profile.ts";
 import { REPLY_STYLES } from "../shared/reply-style.ts";
+import { mascotAppearanceSchema } from "../shared/mascot-kit.ts";
 import { MASCOT_BODY_IDS, mascotBodySchema } from "../shared/mascot-bodies.ts";
 
 import type { BotRecord } from "./store.ts";
@@ -27,6 +28,7 @@ export const BOT_PROFILE_PATCH_FIELDS = [
   "avatarFocusX",
   "avatarFocusY",
   "mascotBody",
+  "mascotAppearance",
   "voice",
   "speakReplies",
   "replyStyle",
@@ -65,6 +67,7 @@ export const profilePatchSchema = z.object({
   avatarFocusX: z.number({ error: "avatarFocusX must be a number from 0 to 1" }).finite().min(0).max(1).optional(),
   avatarFocusY: z.number({ error: "avatarFocusY must be a number from 0 to 1" }).finite().min(0).max(1).optional(),
   mascotBody: mascotBodySchema.optional(),
+  mascotAppearance: mascotAppearanceSchema.nullable().optional(),
   voice: z
     .string({ error: "voice must be a string" })
     .max(BOT_PROFILE_LIMITS.voice, { error: "voice must be at most 200 characters" })
@@ -89,6 +92,7 @@ export type BotProfilePatch = Partial<
     | "avatarFocusX"
     | "avatarFocusY"
     | "mascotBody"
+    | "mascotAppearance"
     | "voice"
     | "speakReplies"
     | "replyStyle"

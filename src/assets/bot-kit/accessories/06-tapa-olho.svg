@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-06-tapa-olho" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-06-tapa-olho" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-06-tapa-olho" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-06-tapa-olho" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-06-tapa-olho" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-06-tapa-olho" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M31 46 L97 76" fill="none" stroke="#243342" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M67 50 Q80 47 91 52 L89 66 Q79 80 68 66Z" fill="url(#dark-06-tapa-olho)" /><path d="M74 55 L81 54" fill="none" stroke="#698699" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

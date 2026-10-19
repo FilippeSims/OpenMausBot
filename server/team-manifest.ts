@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mascotAppearanceSchema, type MascotAppearance } from "../shared/mascot-kit.ts";
 
 import { schemaIssue, type JsonValue } from "./schema.ts";
 import type { MausColor } from "./store.ts";
@@ -54,6 +55,7 @@ const memberSchema = z.object({
     color: z.enum(COLORS, { error: "is not supported" }),
     mascotExpression: optionalText(80),
     mascotBody: optionalText(40),
+    mascotAppearance: mascotAppearanceSchema.optional(),
   }),
 });
 
@@ -98,6 +100,7 @@ export interface TeamManifestMember {
     color: MausColor;
     mascotExpression?: string;
     mascotBody?: string;
+    mascotAppearance?: MascotAppearance;
   };
 }
 
@@ -145,6 +148,7 @@ interface ExportableBot {
   color: MausColor;
   mascotExpression?: string | null;
   mascotBody?: string | null;
+  mascotAppearance?: MascotAppearance | null;
 }
 
 interface ExportableTeam {
@@ -171,6 +175,7 @@ export function parseTeamManifest(value: TeamManifestInput): ParsedTeamManifest 
     const appearance: TeamManifestMember["appearance"] = { color: member.appearance.color };
     if (member.appearance.mascotExpression) appearance.mascotExpression = member.appearance.mascotExpression;
     if (member.appearance.mascotBody) appearance.mascotBody = member.appearance.mascotBody;
+    if (member.appearance.mascotAppearance) appearance.mascotAppearance = structuredClone(member.appearance.mascotAppearance);
     return {
       key: member.key,
       name: member.name,
@@ -215,6 +220,7 @@ export interface ImportedMemberProfile {
   color: MausColor;
   mascotExpression?: string;
   mascotBody?: MascotBodyId;
+  mascotAppearance?: MascotAppearance;
 }
 
 /** Everything an untrusted manifest may seed into a new bot, and nothing else:
@@ -237,6 +243,7 @@ export function importedMemberProfile(
   if (member.appearance.mascotExpression) profile.mascotExpression = member.appearance.mascotExpression;
   // Free text in the manifest: safe-parsed so an untrusted value never reaches a BotRecord unvalidated.
   if (member.appearance.mascotBody) profile.mascotBody = botMascotBody(member.appearance.mascotBody);
+  if (member.appearance.mascotAppearance) profile.mascotAppearance = structuredClone(member.appearance.mascotAppearance);
   return profile;
 }
 
@@ -267,6 +274,7 @@ export function createTeamManifest(team: ExportableTeam, bots: ExportableBot[]):
     const appearance: TeamManifestMember["appearance"] = { color: bot.color };
     if (bot.mascotExpression) appearance.mascotExpression = bot.mascotExpression;
     if (bot.mascotBody) appearance.mascotBody = bot.mascotBody;
+    if (bot.mascotAppearance) appearance.mascotAppearance = structuredClone(bot.mascotAppearance);
     return {
       key,
       name: bot.name,

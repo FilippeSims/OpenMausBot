@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 
 import { mcpServerNameError, MAX_MCP_SERVERS, parseStoredMcpServer } from "./mcp-registry.ts";
 import {
-  AGENT_PARTS, agentReleaseValues, connectionLocalValue, connectionReleaseValue, pair, pairs, playbookValues,
+  AGENT_PARTS, agentReleaseValues, connectionLocalValue, connectionReleaseValue, mascotLookBody, pair, pairs, playbookValues,
   ROOM_PARTS, roomReleaseValues, ROUTINE_PARTS, routineReleaseValues, scheduleValue, sha256Hex, TEAM_PARTS,
   type AgentPart, type PartPair, type TeamPart,
 } from "./package-parts.ts";
@@ -131,6 +131,7 @@ export function memberFromAgent(agent: PackageAgent): TeamManifestMember {
       color: agent.appearance.color,
       ...(agent.appearance.mascotExpression ? { mascotExpression: agent.appearance.mascotExpression } : {}),
       ...(agent.appearance.mascotBody ? { mascotBody: agent.appearance.mascotBody } : {}),
+      ...(agent.appearance.mascotAppearance ? { mascotAppearance: structuredClone(agent.appearance.mascotAppearance) } : {}),
     },
   };
 }
@@ -359,7 +360,7 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
           look: {
             color: written.color,
             mascotExpression: written.mascotExpression ?? null,
-            mascotBody: written.mascotBody ?? null,
+            mascotBody: mascotLookBody(written),
             avatar: avatarHash,
             crop: written.avatarCrop ?? null,
           },

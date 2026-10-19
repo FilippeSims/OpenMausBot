@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-11-fones" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-11-fones" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-11-fones" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-11-fones" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-11-fones" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-11-fones" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M15 69 V48 C15 -8 113 -8 113 48 V69 H103 V48 C103 5 25 5 25 48 V69Z" fill="url(#dark-11-fones)" /><rect x="12" y="47" width="17" height="33" rx="8" fill="url(#purple-11-fones)"/><rect x="99" y="47" width="17" height="33" rx="8" fill="url(#purple-11-fones)"/><rect x="24" y="50" width="6" height="27" rx="3" fill="#d8baff"/><rect x="98" y="50" width="6" height="27" rx="3" fill="#d8baff"/></svg>

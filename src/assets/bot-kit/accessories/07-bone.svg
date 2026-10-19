@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-07-bone" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-07-bone" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-07-bone" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-07-bone" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-07-bone" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-07-bone" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M29 30 C27 -2 86 -1 87 30Z" fill="url(#blue-07-bone)" /><path d="M28 28 H91 Q111 28 115 35 Q116 40 101 40 H31 Q23 40 23 34 Q23 30 28 28Z" fill="url(#blue-07-bone)" /><path d="M60 9 Q69 14 69 27" fill="none" stroke="#a6e4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="59" cy="6" r="3" fill="#98e5ff"/></svg>

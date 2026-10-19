@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-12-headset" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-12-headset" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-12-headset" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-12-headset" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-12-headset" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-12-headset" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M17 66 V48 C17 -5 111 -5 111 48 V66 H102 V48 C102 7 26 7 26 48 V66Z" fill="url(#dark-12-headset)" /><rect x="13" y="48" width="16" height="29" rx="7" fill="url(#blue-12-headset)"/><rect x="99" y="48" width="16" height="29" rx="7" fill="url(#blue-12-headset)"/><path d="M107 73 Q111 93 80 88" fill="none" stroke="#314859" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="71" y="84" width="15" height="8" rx="4" fill="#8bdef0"/></svg>

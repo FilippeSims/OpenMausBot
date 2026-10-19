@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs>
+<linearGradient id="gold-05-monoculo" x2=".65" y2="1"><stop stop-color="#ffe99b"/><stop offset=".46" stop-color="#ffce4d"/><stop offset="1" stop-color="#d98d1d"/></linearGradient>
+<linearGradient id="dark-05-monoculo" x2=".7" y2="1"><stop stop-color="#536578"/><stop offset=".5" stop-color="#243342"/><stop offset="1" stop-color="#101925"/></linearGradient>
+<linearGradient id="purple-05-monoculo" x2=".7" y2="1"><stop stop-color="#c699ff"/><stop offset="1" stop-color="#7643bd"/></linearGradient>
+<linearGradient id="blue-05-monoculo" x2=".7" y2="1"><stop stop-color="#6ed8ff"/><stop offset="1" stop-color="#2674d3"/></linearGradient>
+<linearGradient id="coral-05-monoculo" x2=".7" y2="1"><stop stop-color="#ffafa1"/><stop offset="1" stop-color="#e55062"/></linearGradient>
+<linearGradient id="white-05-monoculo" x2=".7" y2="1"><stop stop-color="#fff8e9"/><stop offset="1" stop-color="#b9d1dd"/></linearGradient>
+</defs><path d="M87 70 C102 80 88 92 103 100" fill="none" stroke="#e9bd5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="79" cy="61" r="13" fill="#a2f2ed" fill-opacity=".16" stroke="url(#gold-05-monoculo)" stroke-width="4"/><path d="M73 56 L78 53" fill="none" stroke="#c9f7f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>

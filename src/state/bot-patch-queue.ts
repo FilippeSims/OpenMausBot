@@ -12,6 +12,8 @@ export type BotUpdatePatch = Partial<
     | "autoStartVps"
     | "color"
     | "mascotExpression"
+    | "mascotBody"
+    | "mascotAppearance"
     | "avatarUrl"
     | "avatarCrop"
     | "avatarZoom"

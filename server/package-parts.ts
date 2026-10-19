@@ -2,6 +2,7 @@
 import { createHash } from "node:crypto";
 
 import { canonicalJson, decodeBase64 } from "../shared/package-format.ts";
+import type { MascotAppearance } from "../shared/mascot-kit.ts";
 import type {
   PackageAgent,
   PackageConnection,
@@ -37,12 +38,16 @@ export interface LookValue {
   crop: string | null;
 }
 
+export function mascotLookBody(value: { mascotBody?: string | null; mascotAppearance?: MascotAppearance | null }): string | null {
+  return value.mascotAppearance ? `kit:${canonicalJson(value.mascotAppearance)}` : value.mascotBody ?? null;
+}
+
 export function releaseLook(appearance: PackageAgent["appearance"]): LookValue {
   const bytes = appearance.avatar ? decodeBase64(appearance.avatar.data) : null;
   return {
     color: appearance.color,
     mascotExpression: appearance.mascotExpression ?? null,
-    mascotBody: appearance.mascotBody ?? null,
+    mascotBody: mascotLookBody(appearance),
     avatar: bytes ? sha256Hex(bytes) : null,
     crop: appearance.avatar?.crop ?? null,
   };

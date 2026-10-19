@@ -79,6 +79,7 @@ Use only mapped, tested commands:
 - [Sharing a whole team](team-sharing.md)
 - [The organization library](org-library.md)
 - [Preset bots](presets.md)
+- [Bot shapes, faces and accessories](bot-character-kit.md)
 - [Teams and shared instructions](teams.md)
 - [Full workspace backups](workspace-backups.md)
 - [Optional company cloud backups](company-backups.md)

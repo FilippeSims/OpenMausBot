@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import { createTeamManifest, importedMemberProfile, parseTeamManifest } from "./team-manifest.ts";
+import { defaultMascotAppearance } from "../shared/mascot-kit.ts";
 
 describe("team manifests", () => {
+  it("preserves layered characters and rejects untrusted artwork or placements", () => {
+    const appearance = { ...defaultMascotAppearance(), accessories: [{ id: "01-coroa" as const, x: 4, y: -2, scale: 0.9, rotation: 5 }] };
+    const manifest = createTeamManifest({ name: "Characters", memberIds: ["one"] }, [{
+      id: "one", name: "One", title: "", description: "", color: "purple", mascotAppearance: appearance,
+    }]);
+    const imported = importedMemberProfile(parseTeamManifest(JSON.parse(JSON.stringify(manifest))).team.members[0], new Set());
+    expect(imported.mascotAppearance).toEqual(appearance);
+    const invalid = structuredClone(manifest);
+    invalid.team.members[0].appearance.mascotAppearance!.accessories[0].scale = 10;
+    expect(() => parseTeamManifest(invalid)).toThrow();
+  });
   it("round-trips optional soul exactly and rejects over-budget Unicode", () => {
     const soul = "  Be precise. 🐭\n\n";
     const manifest = createTeamManifest({ name: "Soul team", memberIds: ["one"] }, [{

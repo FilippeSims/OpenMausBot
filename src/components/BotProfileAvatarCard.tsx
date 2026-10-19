@@ -26,9 +26,12 @@ import { MASCOT_BODIES, MASCOT_BODY_IDS } from "../../shared/mascot-bodies";
 import { BotAvatar, MausAvatar } from "./Avatar";
 import { AvatarImageGenerator } from "./AvatarImageGenerator";
 import { useOrganizationBranding } from "@/lib/use-organization-branding";
+import { t } from "@/lib/i18n";
+import { botMascotAppearance, defaultMascotAppearance } from "../../shared/mascot-kit";
+import { BotKitEditor } from "./BotKitEditor";
 
 type AvatarPatch = Partial<
-  Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody">
+  Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody" | "mascotAppearance">
 >;
 
 const FRAME_SIZE = 168;
@@ -139,6 +142,7 @@ export function BotProfileAvatarCard({
   const { flushBotPatches } = useStore();
   const { request: api, uploadAvatar } = useBotEditor();
   const organization = useOrganizationBranding();
+  const appearance = botMascotAppearance(bot.mascotAppearance);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [savingConnection, setSavingConnection] = useState(false);
@@ -218,7 +222,7 @@ export function BotProfileAvatarCard({
         <span className="rounded-lg bg-control px-3 py-1.5 text-[14px] font-medium text-ink">Avatar</span>
         <button
           disabled={busy}
-          onClick={() => onPatch({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor" })}
+          onClick={() => onPatch({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotAppearance: null })}
           className="rounded-md px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"
         >
           Reset mascot
@@ -240,7 +244,7 @@ export function BotProfileAvatarCard({
             <BotAvatar
               bot={bot}
               state={activeState}
-              size={112}
+              size={appearance ? 168 : 112}
               motion={mascotMotion?.kind ?? "none"}
               motionKey={mascotMotion?.nonce ?? 0}
             />
@@ -303,6 +307,16 @@ export function BotProfileAvatarCard({
 
         {crop === "mascot" && (
           <>
+            <div className="mt-4 grid grid-cols-2 gap-2" role="group" aria-label={t("botKit.style")}>
+              {([false, true] as const).map(layered => <button key={String(layered)} type="button" disabled={busy}
+                aria-pressed={Boolean(appearance) === layered} onClick={() => {
+                  if (Boolean(appearance) !== layered) onPatch({ mascotAppearance: layered ? defaultMascotAppearance() : null, ...(layered ? { mascotExpression: null } : {}) });
+                }}
+                className={cn("rounded-lg border px-2 py-2 text-[12px] disabled:opacity-40", Boolean(appearance) === layered ? "border-accent bg-accent/10" : "border-hairline/40 hover:bg-control")}>
+                {t(layered ? "botKit.layered" : "botKit.classic")}
+              </button>)}
+            </div>
+            {!appearance && <>
             <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
               Expression
             </div>
@@ -325,6 +339,7 @@ export function BotProfileAvatarCard({
                 </button>
               ))}
             </div>
+            </>}
 
             <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
               Color
@@ -348,7 +363,7 @@ export function BotProfileAvatarCard({
               ))}
             </div>
 
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            {!appearance && <><div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
               Body
             </div>
             <div className="grid grid-cols-5 gap-1.5">
@@ -371,6 +386,9 @@ export function BotProfileAvatarCard({
                 </button>
               ))}
             </div>
+            </>}
+            {appearance && <BotKitEditor key={bot.id} appearance={appearance} color={bot.color} disabled={busy}
+              onChange={value => onPatch({ mascotAppearance: value, ...(value.face === "auto" ? { mascotExpression: null } : {}) })} />}
           </>
         )}
 

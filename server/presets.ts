@@ -428,12 +428,13 @@ export function presetFromDefaults(defaults: NewBotDefaults | undefined, options
   };
   const mascotExpression = profile.mascotExpression?.trim() || undefined;
   const mascotBody = profile.mascotBody?.trim() || undefined;
-  if (profile.color || mascotExpression || mascotBody || options.avatar) {
+  if (profile.color || mascotExpression || mascotBody || profile.mascotAppearance || options.avatar) {
     const crop = profile.avatarCrop === "rounded" || profile.avatarCrop === "square" ? profile.avatarCrop : "circle";
     bot.appearance = {
       color: profile.color ?? "green",
       ...(mascotExpression ? { mascotExpression } : {}),
       ...(mascotBody ? { mascotBody } : {}),
+      ...(profile.mascotAppearance ? { mascotAppearance: structuredClone(profile.mascotAppearance) } : {}),
       ...(options.avatar ? { avatar: { ...options.avatar, crop } } : {}),
     };
   }

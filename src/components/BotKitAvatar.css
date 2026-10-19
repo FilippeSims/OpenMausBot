@@ -1,0 +1,12 @@
+.bot-kit-avatar { display: block; flex-shrink: 0; overflow: hidden; }
+.bot-kit-scene, .bot-kit-movement { transform-box: view-box; transform-origin: 64px 64px; }
+.bot-kit-avatar[data-animated="true"] .bot-kit-movement { animation: bot-kit-breathe 3.6s ease-in-out infinite; }
+.bot-kit-avatar[data-animated="true"][data-state="working"] .bot-kit-movement,
+.bot-kit-avatar[data-animated="true"][data-state="writing"] .bot-kit-movement { animation: bot-kit-work 0.9s ease-in-out infinite; }
+.bot-kit-avatar[data-animated="true"] .bot-kit-scene[data-motion="arrive"],
+.bot-kit-avatar[data-animated="true"] .bot-kit-scene[data-motion="customize"],
+.bot-kit-avatar[data-animated="true"] .bot-kit-scene[data-motion="celebrate"] { animation: bot-kit-pop 0.5s ease-out; }
+@keyframes bot-kit-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+@keyframes bot-kit-work { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes bot-kit-pop { 0% { transform: scale(0.92); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .bot-kit-avatar * { animation: none !important; } }
