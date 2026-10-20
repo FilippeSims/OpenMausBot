@@ -1208,6 +1208,12 @@ body {
   margin-top: var(--glass-top, 0px);
   margin-bottom: var(--glass-bottom, 0px);
 }
+.sidebar-navigation > .glass-bar {
+  background: var(--color-panel);
+}
+.sidebar-navigation > .glass-bar::before {
+  display: none;
+}
 .glass-scroller-content {
   padding-top: var(--glass-top, 0px);
   padding-bottom: calc(var(--glass-bottom, 0px) + var(--glass-bottom-reach, 0px));

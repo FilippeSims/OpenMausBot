@@ -22,6 +22,7 @@ function NavRow({
   iconsOnly,
   rail = false,
   tourId,
+  caption = false,
   onClick,
 }: {
   id: string;
@@ -32,6 +33,7 @@ function NavRow({
   iconsOnly: boolean;
   rail?: boolean;
   tourId?: string;
+  caption?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -40,17 +42,17 @@ function NavRow({
       data-tour={tourId}
       data-sidebar-nav={id}
       onClick={onClick}
-      aria-label={iconsOnly ? label : undefined}
-      title={iconsOnly ? label : undefined}
+      aria-label={iconsOnly || caption ? label : undefined}
+      title={iconsOnly || caption ? label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
         "relative flex items-center rounded-xl transition-colors",
-        rail ? "size-9 shrink-0 justify-center" : iconsOnly ? "mx-auto size-[46px] shrink-0 justify-center" : "w-full min-h-9 gap-3 px-3 py-1.5 text-left",
+        caption ? "min-h-[50px] min-w-0 flex-1 flex-col justify-center gap-1 px-1 py-1.5" : rail ? "size-9 shrink-0 justify-center" : iconsOnly ? "mx-auto size-[46px] shrink-0 justify-center" : "w-full min-h-9 gap-3 px-3 py-1.5 text-left",
         active ? "bg-raised text-ink" : "text-ink hover:bg-raised/50",
       )}
     >
       {icon(active)}
-      {!iconsOnly && <span className="flex-1 truncate text-[14px] font-medium leading-5">{label}</span>}
+      {caption ? <span className="max-w-full truncate text-[10.5px] leading-4">{label}</span> : !iconsOnly && <span className="flex-1 truncate text-[14px] font-medium leading-5">{label}</span>}
       {attention && (
         <span
           data-testid="routines-attention"
@@ -61,7 +63,6 @@ function NavRow({
   );
 }
 
-/** The Today page, at the top of the sidebar in every mode, like an inbox. */
 export function SidebarTodayNav({ density }: { density: SidebarDensity }) {
   const { state, dispatch } = useStore();
   const iconsOnly = density === "icons";
@@ -107,22 +108,25 @@ export function SidebarFooterNav({
   rail = false,
   collapsed = false,
   onToggleCollapsed,
+  compactNavigation = false,
 }: {
   density: SidebarDensity;
   rail?: boolean;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  compactNavigation?: boolean;
 }) {
   const { state, dispatch } = useStore();
   const advanced = useAdvancedMode();
   const iconsOnly = density === "icons";
   const toolsLayout = useSidebarToolsLayout();
-  const toolbar = advanced && !iconsOnly && toolsLayout === "toolbar";
+  const toolbar = compactNavigation || advanced && !iconsOnly && toolsLayout === "toolbar";
   const iconSize = iconsOnly && !rail ? 20 : 18;
   const tone = (active: boolean) => (active ? "text-accent" : "text-ink-secondary");
   const appTriggers = useAppTriggers();
   const automationsNeedYou = state.routineRuns.some((run) => isRoutineProblemRun(run) && !run.seenAt) || appTriggers.triggers.some((trigger) => trigger.enabled && trigger.problem);
   const automationsRow = <NavRow
+    caption={compactNavigation}
     id="automations"
     label={t("sidebar.nav.automations")}
     tourId="nav-automations"
@@ -134,16 +138,16 @@ export function SidebarFooterNav({
     onClick={() => dispatch({ type: "showRoutines", view: "list" })}
   />;
   const filesRow = useCloudFilesReady() && <NavRow
+    caption={compactNavigation}
     id="files"
     label={t("sidebar.nav.files")}
-    iconsOnly={iconsOnly}
+    iconsOnly={iconsOnly || toolbar}
     rail={rail}
     active={state.activeView === "files"}
     icon={(active) => <FolderOpen size={iconSize} className={tone(active)} />}
     onClick={() => dispatch({ type: "showFiles" })}
   />;
-  // Simple mode keeps Automations and Files, without the Tools header.
-  if (!advanced && !iconsOnly) return <nav aria-label={t("sidebar.tools")} className="flex flex-col gap-0.5">{automationsRow}{filesRow}</nav>;
+  if (!compactNavigation && !advanced && !iconsOnly) return <nav aria-label={t("sidebar.tools")} className="flex flex-col gap-0.5">{automationsRow}{filesRow}</nav>;
 
   const rows = (
     <>
@@ -160,6 +164,7 @@ export function SidebarFooterNav({
       />}
       {advanced && (
         <NavRow
+          caption={compactNavigation}
           id="team-map"
           label={t("sidebar.nav.teamMap")}
           tourId="team-tools"
@@ -172,6 +177,12 @@ export function SidebarFooterNav({
       {filesRow}
     </>
   );
+
+  if (compactNavigation) return <nav data-sidebar-navigation-tools aria-label={t("sidebar.tools")} className="flex items-stretch gap-1 border-t border-hairline/40 pt-1">
+    <NavRow id="today" label={t("sidebar.nav.today")} iconsOnly caption active={state.activeView === "today"}
+      icon={active => <Sun size={18} className={tone(active)} />} onClick={() => dispatch({ type: "showToday" })} />
+    {rows}
+  </nav>;
 
   if (iconsOnly) {
     return <nav data-tour="tools" aria-label={t("sidebar.tools")} className={cn("flex flex-col items-center", rail ? "gap-0.5" : "gap-1")}>{rows}</nav>;

@@ -39,12 +39,16 @@ vi.mock("@/state/store", async (importOriginal) => {
 });
 
 import { Sidebar } from "./Sidebar";
+import { SidebarNavigator } from "./SidebarNavigator";
 import { SidebarNewChatPanel } from "./SidebarNewChatPanel";
 
 type Props = { children?: ReactNode; className?: string; onClick?: () => void; [key: string]: unknown };
 function nodes(value: ReactNode): ReactElement<Props>[] {
   return Children.toArray(value).flatMap((child) => {
     if (!isValidElement<Props>(child)) return [];
+    if (child.type === SidebarNavigator) {
+      return [child, ...nodes(child.props.chrome as ReactNode), ...nodes(child.props.footer as ReactNode), ...nodes(child.props.panels as ReactNode)];
+    }
     return [child, ...nodes(child.props.children)];
   });
 }

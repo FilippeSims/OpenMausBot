@@ -50,7 +50,6 @@ import { lastNonReceipt } from "@/lib/receipts";
 import { botPreview, groupPreview } from "./sidebar-preview";
 import { activeLocale, t } from "@/lib/i18n";
 import { copyText } from "@/lib/copy-text";
-import type { LocaleKey } from "@/locales";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { BulkSelectFilters, ThreadListFooter, deleteThreadsInBulk, useBulkSelect } from "./BulkSelectBar";
 import { StackedMauses } from "./StackedMauses";
@@ -58,7 +57,6 @@ import { LocalComputerAutoWarning } from "./LocalComputerAutoWarning";
 import { WorkingDots } from "./WorkingIndicator";
 import { nextRename } from "@/lib/rename";
 import { useDesktopCapabilities } from "./DesktopCapabilities";
-import { MIN_QUERY, SearchResults } from "./SearchResults";
 import { TeamLibraryPanel } from "./TeamLibraryPanel";
 import { SidebarNewChatPanel } from "./SidebarNewChatPanel";
 import { openCommandPalette } from "./CommandPalette";
@@ -94,26 +92,16 @@ import {
   CHANNELS_SECTION_ID,
   PINNED_SECTION_ID,
   PINNED_THREADS_SECTION_ID,
-  SIMPLE_FIXED_SECTION_IDS,
   TOOLS_SECTION_ID,
-  keepFixedSectionSlots,
-  mergeSectionOrder,
-  moveSection,
   orderedSidebarSections,
   partitionSidebarBots,
   partitionSidebarGroups,
-  placeSection,
-  pinnedCircleThreadListVisible,
-  sameSectionOrder,
   sidebarLayoutInteractive,
   sidebarSectionCollapsed,
-  sidebarSectionLabel,
   simpleSidebarSections,
   userSectionId,
   userSectionName,
-  type SectionDropPlace,
 } from "@/lib/sidebar-layout";
-import { sidebarSectionAttention } from "@/lib/sidebar-attention";
 import { botListItemPointerIntent } from "@/lib/sidebar-selection";
 import { phoneSettingsAction, SidebarPhoneButton } from "./SidebarPhoneButton";
 import { SidebarAppsButton, SidebarFooterNav, SidebarTodayNav } from "./SidebarFooterNav";
@@ -122,9 +110,8 @@ import { DesktopWorkspaceSwitcher } from "./DesktopWorkspaceSwitcher";
 import { useCloudOwner } from "./CloudOwner";
 import { SidebarProfileMenu } from "./SidebarProfileMenu";
 import { UpdateIndicator } from "./UpdateIndicator";
-import { SidebarSectionHeader } from "./SidebarSectionHeader";
 import { SidebarResizeHandle, useSidebarWidth } from "./SidebarResizeHandle";
-import { SIMPLE_RAIL_BUTTON, SIMPLE_TOP_BUTTON, SidebarEdgeToggle, SidebarSearchPill, SidebarSearchToggle } from "./SidebarSimpleTop";
+import { SIMPLE_RAIL_BUTTON, SIMPLE_TOP_BUTTON, SidebarEdgeToggle } from "./SidebarSimpleTop";
 import { SidebarRailSeparator, SimpleRailFooter } from "./SidebarSimpleRail";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { botShowsUnread } from "@/lib/bot-unread";
@@ -137,8 +124,10 @@ import { ShortcutHint } from "./ShortcutHint";
 import { roomThreadSpeakerId, roomThreadWorking } from "@/lib/room-threads";
 import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { PinnedBotRoster, PinnedCircleThreadSection } from "./PinnedCircleThreads";
+import { PinnedBotRoster } from "./PinnedCircleThreads";
 import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
+import { SIDEBAR_TEAM_RENAMED_EVENT } from "@/lib/sidebar-navigation";
+import { SidebarNavigator } from "./SidebarNavigator";
 import { ArchivedBotsPanel, botConfirmCopy, type BotConfirmKind } from "./ArchivedBotsPanel";
 
 export { PinnedBotCircle, PinnedCircleThreadPanel, PinnedCircleThreadSection } from "./PinnedCircleThreads";
@@ -146,18 +135,6 @@ export { ArchivedBotRow, ArchivedBotsPanel, archivedDeleteAllCopy, botConfirmCop
 
 /** Coupled to electron/window-chrome.mjs: trafficLightPosition.y = 16 and 14px-tall buttons. */
 export const MAC_TRAFFIC_LIGHT_CENTER_Y = 23;
-
-const SECTION_LABEL_KEYS: Record<string, LocaleKey> = {
-  [PINNED_SECTION_ID]: "sidebar.section.pinned",
-  [CHANNELS_SECTION_ID]: "sidebar.section.channels",
-  [BOT_CHATS_SECTION_ID]: "sidebar.section.botChats",
-  [BOTS_SECTION_ID]: "sidebar.section.bots",
-};
-
-function sectionLabel(id: string): string {
-  const key = SECTION_LABEL_KEYS[id];
-  return key ? t(key) : sidebarSectionLabel(id);
-}
 
 interface MenuState {
   botId: string;
@@ -1116,6 +1093,7 @@ export interface BotRowProps {
   query: string;
   dispatch: Dispatch<Action>;
   onMenu: (menu: MenuState) => void;
+  navigationSubtitle?: string;
 }
 
 export function botRowProps(
@@ -1149,7 +1127,7 @@ function useVisibleMessages(bot: Bot): Message[] {
 
 export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   const advanced = useAdvancedMode();
-  const { bot, selected, deleting, mascotMotion, reveal, pendingQueued, instances, liveCall, density, quiet, query, dispatch, onMenu } = props;
+  const { bot, selected, deleting, mascotMotion, reveal, pendingQueued, instances, liveCall, density, quiet, query, dispatch, onMenu, navigationSubtitle } = props;
   const showThreads = useShowThreads();
   const liveMedia = useLiveMedia();
   const remoteClient = typeof window !== "undefined" && window.ogb?.remoteClient?.active === true;
@@ -1163,7 +1141,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   useEffect(() => { if (iconOnly) setRenaming(false); }, [iconOnly]);
   const simpleRow = !advanced && !showThreads && density === "comfortable";
   const railTile = iconOnly && !advanced;
-  const avatarSize = iconOnly ? (railTile ? 36 : 44) : density === "compact" ? (showThreads ? 26 : 36) : (showThreads ? 32 : simpleRow ? 36 : 44);
+  const avatarSize = navigationSubtitle ? (density === "compact" ? 36 : 42) : iconOnly ? (railTile ? 36 : 44) : density === "compact" ? (showThreads ? 26 : 36) : (showThreads ? 32 : simpleRow ? 36 : 44);
   const visible = useVisibleMessages(bot);
   const last = lastNonReceipt(visible);
   const title = bot.title.trim();
@@ -1176,7 +1154,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
         ? cn(showThreads ? "gap-1.5 py-1" : "gap-2.5 py-1.5", showThreads ? "pl-6 pr-9 group-hover:pr-[5.75rem] group-focus-within:pr-[5.75rem] max-md:pr-[5.75rem] touch:pr-[5.75rem]" : "pl-2 pr-9")
         : simpleRow ? "gap-2.5 py-2 pl-2 pr-3 group-hover:pr-9 group-focus-within:pr-9 max-md:pr-9 touch:pr-9"
         : cn(showThreads ? "gap-2 py-2" : "gap-3 py-2", showThreads ? "pl-6 pr-9 group-hover:pr-[5.75rem] group-focus-within:pr-[5.75rem] max-md:pr-[5.75rem] touch:pr-[5.75rem]" : "pl-2.5 pr-9"),
-    selected ? "bg-raised shadow-[0_1px_2px_rgb(0_0_0/0.10)]" : "hover:bg-raised/50",
+    selected ? navigationSubtitle ? "bg-accent/10 ring-1 ring-inset ring-accent/20" : "bg-raised shadow-[0_1px_2px_rgb(0_0_0/0.10)]" : "hover:bg-raised/50",
   );
   const activityTasks = sidebarBotActivityTasks(bot, pendingQueued);
   const waiting = bot.activity === "waiting-on-you" || activityTasks.some((task) => task.activity === "waiting-on-you");
@@ -1260,7 +1238,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               </Phone>
             )}
           </span>
-          {selected && last && !renaming && !expanded && (
+          {!navigationSubtitle && selected && last && !renaming && !expanded && (
             <span className="shrink-0 text-[12px] tabular-nums text-ink-secondary transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 touch:opacity-0">
               {formatTime(last.at)}
             </span>
@@ -1268,7 +1246,8 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           {advanced && density === "compact" && <BotModelMark bot={bot} instances={instances} />}
           {(expanded || (quiet && !statusLine)) && unread && <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-label={t("task.unreadMany")} />}
         </div>
-        {(!expanded || deleting) && (!quiet || statusLine) && <div className="flex items-center justify-between gap-2">
+        {navigationSubtitle && !deleting && <div className="mt-0.5 truncate text-[11.5px] text-ink-secondary" data-navigation-subtitle>{navigationSubtitle}{statusLine && <span className="sr-only" role="status"> · {t(waiting ? "sidebar.preview.waiting" : working ? "sidebar.preview.working" : teammateWait ? "sidebar.preview.waitingOnTeammate" : "task.queued")}</span>}</div>}
+        {(!navigationSubtitle || deleting) && (!expanded || deleting) && (!quiet || statusLine) && <div className="flex items-center justify-between gap-2">
           {deleting ? (
             <span role="status" className="flex min-w-0 items-center gap-1.5 truncate text-[13px] leading-[18px] text-ink-secondary">
               <Loader2 size={12} className="shrink-0 animate-spin" />
@@ -1421,6 +1400,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     setTeamMenu({ name, x: Math.max(8, Math.min(x, window.innerWidth - 266)), y: Math.max(8, Math.min(y, window.innerHeight - 190)) });
   };
   const renamedTeam = (oldName: string, newName: string) => {
+    window.dispatchEvent(new CustomEvent(SIDEBAR_TEAM_RENAMED_EVENT, { detail: { oldName, newName } }));
     const replace = (ids: string[]) => [...new Set(ids.map(id => id === userSectionId(oldName) ? userSectionId(newName) : id))];
     setCollapsedSections(current => { const next = replace(current); saveCollapsedSections(next); return next; });
     setSectionOrder(current => { const next = replace(current); saveSectionOrder(next); return next; });
@@ -1463,7 +1443,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     text: string;
     restoreBot?: { id: string; name: string };
   } | null>(null);
-  const [query, setQuery] = useState("");
   const storedDensity = useSidebarDensity();
   const density = collapseToIcons ? "icons" : storedDensity;
   const simple = !advanced && density !== "icons";
@@ -1471,29 +1450,18 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const sidePanelOpen = state.computerOpen || state.inspectorOpen;
   const sizing = useSidebarWidth({ simple: !advanced, density, sidePanelOpen, sidebarRef });
   const [searchOpen, setSearchOpen] = useState(false);
-  const searchShown = searchOpen || query !== "";
-  const searchToggleRef = useRef<HTMLButtonElement>(null);
-  const closeSearch = () => { setSearchOpen(false); setQuery(""); searchToggleRef.current?.focus(); };
   const [lastExpandedDensity, setLastExpandedDensity] = useState<Exclude<SidebarDensity, "icons">>(
     () => density === "icons" ? "comfortable" : density,
   );
   const pinnedCircles = usePinnedCircles();
   const universalPins = useUniversalPins();
-  const [pinnedCircleThreadsCollapsed, setPinnedCircleThreadsCollapsed] = useState(true);
   const quietRows = density === "compact";
+  const navigatorVisible = ["comfortable", "compact"].includes(density);
   const [collapsedSections, setCollapsedSections] = useState<string[]>(() => loadCollapsedSections());
   const [sectionOrder, setSectionOrder] = useState<string[]>(() => loadSectionOrder());
-  const [draggingSectionId, setDraggingSectionId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ id: string; place: SectionDropPlace } | null>(null);
-  const [reorderAnnouncement, setReorderAnnouncement] = useState("");
-  const sectionDragRef = useRef<{
-    from: string | null;
-    over: { id: string; place: SectionDropPlace } | null;
-  }>({ from: null, over: null });
 
   useEffect(() => {
     if (density !== "icons") setLastExpandedDensity(density);
-    else setQuery("");
   }, [density]);
 
   const toggleCollapsed = () => {
@@ -1569,20 +1537,10 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     ? ({ WebkitAppRegion: "no-drag" } as React.CSSProperties)
     : undefined;
 
-  const q = query.trim().toLowerCase();
+  const q = "";
 
-  const matchingBots = state.bots
-    .filter((b) => !b.hidden)
-    .filter(
-      (b) =>
-        !q ||
-        b.name.toLowerCase().includes(q) ||
-        (b.title ?? "").toLowerCase().includes(q) ||
-        botPreview(b, visibleMessages(b), state.instances, advanced).toLowerCase().includes(q) ||
-        b.tasks?.some((task) => !task.routineRunId && task.title.toLowerCase().includes(q)) ||
-        b.projects?.some((folder) => folder.name.toLowerCase().includes(q)),
-    );
-  const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
+  const matchingBots = state.bots.filter(bot => !bot.hidden);
+  const visibleGroups = state.groups;
   const {
     globalChiefs,
     unsectionedChief,
@@ -1593,7 +1551,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   } = partitionSidebarBots(matchingBots, { universalPins });
   const { botChats, sectionedRooms, unsectionedRooms } = partitionSidebarGroups(visibleGroups);
 
-  const sectionNames: string[] = (state.sections ?? []).filter((name) => !q || name.toLowerCase().includes(q.toLowerCase()));
+  const sectionNames: string[] = [...(state.sections ?? [])];
   for (const bot of sectionedBots) {
     if (!sectionNames.includes(bot.section!)) sectionNames.push(bot.section!);
   }
@@ -1612,8 +1570,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   ];
   const orderedIds = orderedSidebarSections(naturalSectionIds, sectionOrder);
   const sectionIds = simple || rail ? simpleSidebarSections(orderedIds) : orderedIds;
-  const reorderableIds = simple ? sectionIds.filter((id) => !SIMPLE_FIXED_SECTION_IDS.includes(id)) : sectionIds;
-  const showPinnedCircleThreads = pinnedCircleThreadListVisible(pinnedCircles, density, pinnedBots.length);
   const layoutInteractive = sidebarLayoutInteractive(density, q);
   const sectionCollapsed = (id: string) =>
     sidebarSectionCollapsed(id, collapsedSections, density, q);
@@ -1625,62 +1581,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     saveCollapsedSections(next);
   };
 
-  const commitSectionOrder = (visibleOrder: string[]) => {
-    if (!layoutInteractive) return;
-    const next = mergeSectionOrder(sectionOrder, visibleOrder);
-    if (sameSectionOrder(next, sectionOrder)) return;
-    setSectionOrder(next);
-    saveSectionOrder(next);
-  };
-
-  const announceSectionPosition = (id: string, visibleOrder: string[]) => {
-    const position = visibleOrder.indexOf(id);
-    if (position < 0) return;
-    setReorderAnnouncement(
-      t("sidebar.section.moved", {
-        name: sectionLabel(id),
-        position: position + 1,
-        count: visibleOrder.length,
-      }),
-    );
-  };
-
-  const reorderSections = (id: string, moved: string[]) => {
-    const next = simple ? simpleSidebarSections(moved) : moved;
-    if (sameSectionOrder(next, sectionIds)) return;
-    commitSectionOrder(simple ? keepFixedSectionSlots(orderedIds, next) : next);
-    announceSectionPosition(id, next);
-  };
-  const moveSidebarSection = (id: string, direction: -1 | 1) => reorderSections(id, moveSection(sectionIds, id, direction));
-
-  const resetSectionDrag = () => {
-    sectionDragRef.current = { from: null, over: null };
-    setDraggingSectionId(null);
-    setDropTarget(null);
-  };
-
-  const updateSectionDropTarget = (event: React.DragEvent<HTMLDivElement>, id: string) => {
-    if (!layoutInteractive || !sectionDragRef.current.from) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    const rect = event.currentTarget.getBoundingClientRect();
-    const place: SectionDropPlace = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
-    const next = { id, place };
-    sectionDragRef.current.over = next;
-    setDropTarget(next);
-  };
-
-  const dropSection = (event: React.DragEvent<HTMLDivElement>) => {
-    if (event.dataTransfer.types.includes(FOLDER_DRAG_TYPE)) return;
-    event.preventDefault();
-    const from =
-      event.dataTransfer.getData("application/x-openmausbot-sidebar-section") ||
-      event.dataTransfer.getData("text/plain") ||
-      sectionDragRef.current.from;
-    const over = sectionDragRef.current.over;
-    if (from && over) reorderSections(from, placeSection(sectionIds, from, over.id, over.place));
-    resetSectionDrag();
-  };
   const archivedBots = state.bots.filter((bot) => bot.hidden);
   const attention = crossBotAttentionThreads(state.bots, state.pendingQueued, undefined, state.groups);
   const pinnedThreads = crossBotPinnedThreads(state.bots, state.groups, state.pendingQueued);
@@ -1775,28 +1675,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     </div>
   );
 
-  return (
-    <aside
-      ref={sidebarRef}
-      tabIndex={-1}
-      aria-label={t("sidebar.aria")}
-      data-native-view-overlay
-      data-sidebar
-      style={{ "--sidebar-width": `${sizing.width}px` } as CSSProperties}
-      className={cn(
-        "relative flex h-full shrink-0 flex-col border-r border-hairline/40 bg-panel",
-        sizing.resizing ? "transition-none" : "transition-[width] duration-200",
-        density === "icons" ? rail ? "w-[92px]" : "w-[80px]" : density === "compact" ? "w-[272px] md:w-[var(--sidebar-width)]" : advanced ? "w-[320px] md:w-[var(--sidebar-width)]" : "w-[288px] md:w-[var(--sidebar-width)]",
-        sidePanelOpen ? density === "compact" ? "md:max-w-[272px]" : advanced ? "md:max-w-[320px]" : "md:max-w-[288px]" : "md:max-w-[calc(100vw-320px)]",
-        // max-md: rather than an md: cancel: Tailwind v4 emits the native `translate`, and any value but `none` makes
-        // this a containing block for its `fixed` descendants.
-        "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40",
-        "max-md:transition-transform max-md:duration-200",
-        open ? "max-md:translate-x-0" : "max-md:-translate-x-full",
-      )}
-    >
-      <GlassScrollFrame className="flex-1">
-      <GlassBar edge="top">
+  const topChrome = (
       <div
         data-sidebar-top-row
         className={cn(
@@ -1829,7 +1708,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           className={cn("relative flex shrink-0 items-center", density === "icons" ? "flex-col gap-1" : simple ? "gap-1 pl-0.5" : "ml-0.5 gap-0.5")}
           style={windowNoDragStyle}
         >
-          {simple && <SidebarSearchToggle ref={searchToggleRef} open={searchShown} onToggle={() => (searchShown ? closeSearch() : setSearchOpen(true))} />}
           {!collapseToIcons && (advanced || density === "icons") && <button
             type="button"
             onClick={toggleCollapsed}
@@ -1902,219 +1780,8 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           {plusControl}
         </div>}
       </div>
-
-      {density === "icons" && !rail && <DesktopWorkspaceSwitcher compact cloudHome={state.config?.cloudHome === true} owner={cloudOwner} howTo={state.cloudHowTo} onMenuClosed={endHowTo} />}
-      <OrganizationIdentity compact={density === "icons"} />
-      {simple ? searchShown && <SidebarSearchPill query={query} onQuery={setQuery} onClose={closeSearch} /> : <div className={cn("pt-1 pb-3", density === "icons" ? "hidden" : "px-3")}>
-        <div className="flex items-center gap-2 rounded-md border border-hairline/40 bg-inset/40 px-2.5 py-1.5 focus-within:border-focus">
-          <Search size={14} className="text-ink-secondary" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Escape" && setQuery("")}
-            placeholder={t("sidebar.search")}
-            aria-label={t("sidebar.searchAria")}
-            className="w-full bg-transparent text-[12.5px] text-ink placeholder:text-ink-secondary focus:outline-none"
-          />
-        </div>
-      </div>}
-      <SidebarTodayNav density={density} />
-      {universalPins && pinnedBots.length > 0 && (
-        <div
-          data-sidebar-universal-pins=""
-          // vh, not %: a percentage has no height to resolve against inside the glass head.
-          className="max-h-[min(40vh,280px)] shrink-0 overflow-y-auto border-b border-hairline/40 px-2 pb-2"
-        >
-          {density !== "icons" && !pinnedCircles && (
-            <div className="px-2 pb-1 pt-1 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              {t("sidebar.section.pinned")}
-            </div>
-          )}
-          <PinnedBotRoster
-            bots={pinnedBots}
-            density={density}
-            circles={pinnedCircles}
-            row={botRow}
-            listItem={BotListItem}
-          />
-        </div>
-      )}
-
-      {attentionPinned && density !== "icons" && (
-        <SidebarAttentionPanel
-          entries={attention}
-          density={density}
-          onUnpin={() => setAttentionPinned(false)}
-          onJump={(entry) => dispatch(attentionJumpAction(entry))}
-          collapsed={sectionCollapsed(ATTENTION_SECTION_ID)}
-          onToggle={layoutInteractive ? () => toggleSection(ATTENTION_SECTION_ID) : undefined}
-        />
-      )}
-
-      {density !== "icons" && (
-        <SidebarPinnedThreadsPanel
-          entries={pinnedThreads}
-          density={density}
-          now={now}
-          onJump={(entry) => dispatch(attentionJumpAction(entry))}
-          onUnpin={(entry) => dispatch(attentionUnpinAction(entry))}
-          collapsed={sectionCollapsed(PINNED_THREADS_SECTION_ID)}
-          onToggle={layoutInteractive ? () => toggleSection(PINNED_THREADS_SECTION_ID) : undefined}
-        />
-      )}
-      </GlassBar>
-
-      {density !== "icons" && <SidebarResizeHandle sizing={sizing} sidebarRef={sidebarRef} style={windowNoDragStyle} />}
-      {!advanced && !collapseToIcons && <SidebarEdgeToggle collapsed={rail} onToggle={toggleCollapsed} style={windowNoDragStyle} anchorRef={sidebarRef} />}
-
-      <GlassScroller className={rail ? "[scrollbar-gutter:stable_both-edges]" : "px-2"}>
-        <div className={cn("flex flex-col", advanced ? "gap-0.5" : "gap-1 pt-2")}>
-          {matchingBots.length === 0 && visibleGroups.length === 0 && q && q.length < MIN_QUERY && (
-            <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
-          )}
-          {globalChiefs.map(bot => (
-            <div key={bot.id} className="mb-2 border-b border-hairline/40 pb-2" data-global-chief={bot.id}>
-              {density !== "icons" && <div className="px-3 py-1 text-[11px] font-medium text-ink-secondary">{t("globalChief.title")}</div>}
-              <BotListItem {...botRow(bot)} />
-            </div>
-          ))}
-          {unsectionedChief && (
-            <div className="mb-1.5">
-              <BotListItem {...botRow(unsectionedChief)} />
-            </div>
-          )}
-          {sectionIds.map((id, index) => {
-            const sectionName = userSectionName(id);
-            const sectionChiefItems = sectionName
-              ? sectionChiefs.filter((bot) => bot.section === sectionName)
-              : [];
-            const sectionGroupItems =
-              id === CHANNELS_SECTION_ID
-                ? unsectionedRooms
-                : id === BOT_CHATS_SECTION_ID
-                  ? botChats
-                  : sectionName
-                    ? sectionedRooms.filter((group) => group.section === sectionName)
-                    : [];
-            const sectionBotItems =
-              id === PINNED_SECTION_ID
-                ? pinnedBots
-                : id === BOTS_SECTION_ID
-                  ? unsectionedBots
-                  : sectionName
-                    ? sectionedBots.filter((bot) => bot.section === sectionName)
-                    : [];
-            const headless = simple && id === BOTS_SECTION_ID && index === 0;
-            const collapsed = !headless && sectionCollapsed(id);
-            const queued = collapsed ? [...sectionChiefItems, ...sectionBotItems].flatMap((bot) =>
-              sidebarBotActivityTasks(bot, state.pendingQueued).filter((task) => task.queued).map((task) => `${bot.name}: ${task.title}`)) : [];
-            const attention = collapsed
-              ? sidebarSectionAttention(
-                  [...sectionChiefItems, ...sectionBotItems],
-                  sectionGroupItems,
-                )
-              : undefined;
-            return (
-              <div
-                key={id}
-                data-sidebar-section-id={id}
-                onDragOver={(event) => updateSectionDropTarget(event, id)}
-                onDrop={dropSection}
-                className={cn(
-                  "flex flex-col",
-                  advanced ? "gap-0.5" : "gap-1",
-                  density !== "icons" && index > 0 && !simple && "pt-3",
-                )}
-              >
-                {rail && index > 0 && <SidebarRailSeparator />}
-                {dropTarget?.id === id && dropTarget.place === "before" && draggingSectionId !== id && (
-                  <div className="mx-2 h-0.5 rounded-full bg-accent" />
-                )}
-                {density !== "icons" && !headless && (
-                  <SidebarSectionHeader
-                    name={sectionLabel(id)}
-                    line={simple}
-                    onMenu={simple && !remoteClient && sectionName ? (button) => {
-                      const rect = button.getBoundingClientRect();
-                      openTeamMenu(sectionName, rect.right - 256, rect.bottom + 4, button);
-                    } : undefined}
-                    menuOpen={teamMenu !== null && teamMenu.name === sectionName}
-                    onContextMenu={!remoteClient && layoutInteractive && sectionName ? (event) => {
-                      event.preventDefault();
-                      openTeamMenu(sectionName, event.clientX, event.clientY, event.currentTarget.querySelector<HTMLElement>("button") ?? event.currentTarget);
-                    } : undefined}
-                    collapsed={collapsed}
-                    attention={attention}
-                    onToggle={layoutInteractive ? () => toggleSection(id) : undefined}
-                    reorderable={layoutInteractive && reorderableIds.length > 1 && reorderableIds.includes(id)}
-                    dragging={draggingSectionId === id}
-                    onDragStart={(event) => {
-                      event.dataTransfer.effectAllowed = "move";
-                      event.dataTransfer.setData("application/x-openmausbot-sidebar-section", id);
-                      event.dataTransfer.setData("text/plain", id);
-                      sectionDragRef.current = { from: id, over: null };
-                      setDraggingSectionId(id);
-                    }}
-                    onDragEnd={resetSectionDrag}
-                    onMove={(direction) => moveSidebarSection(id, direction)}
-                    onDelete={!simple && !remoteClient && sectionName ? () => setDeletingTeam(sectionName) : undefined}
-                  />
-                )}
-                {collapsed && queued.length > 0 && <button type="button" onClick={() => toggleSection(id)}
-                  title={uiText("ui.Sidebar.7c639bc99b", { value1: String(uiText("task.queued")), value2: String(queued.join(", ")) })} aria-label={uiText("ui.Sidebar.c7897910bf", { value1: String(uiText("sidebar.section.expand", { name: sectionLabel(id) })), value2: String(uiText("task.queued")), value3: String(queued.join(", ")) })}
-                  className="mx-3 mb-1 inline-flex h-7 items-center self-start rounded-full bg-raised/50 px-3 text-[13px] font-medium leading-4 text-ink-secondary hover:text-ink">{t("task.queued")} · {queued.length}</button>}
-                {!collapsed && (
-                  <>
-                    {sectionChiefItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
-                    {sectionGroupItems.map((group) => (
-                      <GroupListItem
-                        key={group.id}
-                        group={group}
-                        density={density}
-                        quiet={quietRows}
-                        query={q}
-                        onMenu={setRoomMenu}
-                      />
-                    ))}
-                    {id === PINNED_SECTION_ID ? (
-                      <PinnedBotRoster
-                        bots={sectionBotItems}
-                        density={density}
-                        circles={pinnedCircles}
-                        row={botRow}
-                        listItem={BotListItem}
-                      />
-                    ) : sectionBotItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
-                    {!remoteClient && sectionName && layoutInteractive && (!simple || sectionChiefItems.length + sectionGroupItems.length + sectionBotItems.length === 0) && (
-                      <button onClick={() => setMoveToTeam(sectionName)} aria-label={t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBotsIn" : "team.addBotsTo", { name: sectionName })}
-                        className="mx-3 my-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink">
-                        <Plus size={13} /> {t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBots" : "team.addBots")}
-                      </button>
-                    )}
-                  </>
-                )}
-                {dropTarget?.id === id && dropTarget.place === "after" && draggingSectionId !== id && (
-                  <div className="mx-2 h-0.5 rounded-full bg-accent" />
-                )}
-              </div>
-            );
-          })}
-          <SearchResults query={query} onLanded={() => { setQuery(""); setSearchOpen(false); }} />
-          {showPinnedCircleThreads && (
-            <PinnedCircleThreadSection
-              bots={pinnedBots}
-              collapsed={pinnedCircleThreadsCollapsed}
-              onToggle={() => setPinnedCircleThreadsCollapsed((collapsed) => !collapsed)}
-              row={botRow}
-            />
-          )}
-        </div>
-      </GlassScroller>
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {reorderAnnouncement}
-      </p>
-
-      <GlassBar edge="bottom">
+  );
+  const footerContent = <>
       <LiveCallPill
         currentBotId={state.activeView === "chat" ? state.selectedId : null}
         onOpen={(botId, threadId) => openThread(dispatch, { botId, threadId }, state, showThreads)}
@@ -2132,6 +1799,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
       /> : <div className={cn("pb-3 pt-2", density === "icons" ? "flex flex-col items-center gap-1 px-2" : "px-3")}>
         <SidebarFooterNav
           density={density}
+          compactNavigation={navigatorVisible}
           collapsed={sectionCollapsed(TOOLS_SECTION_ID)}
           onToggleCollapsed={layoutInteractive ? () => toggleSection(TOOLS_SECTION_ID) : undefined}
         />
@@ -2156,8 +1824,73 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           </div>
         )}
       </div>}
-      </GlassBar>
-      </GlassScrollFrame>
+  </>;
+
+  return (
+    <aside
+      ref={sidebarRef}
+      tabIndex={-1}
+      aria-label={t("sidebar.aria")}
+      data-native-view-overlay
+      data-sidebar
+      style={{ "--sidebar-width": `${sizing.width}px` } as CSSProperties}
+      className={cn(
+        "relative flex h-full shrink-0 flex-col border-r border-hairline/40 bg-panel",
+        sizing.resizing ? "transition-none" : "transition-[width] duration-200",
+        density === "icons" ? rail ? "w-[92px]" : "w-[80px]" : density === "compact" ? "w-[272px] md:w-[var(--sidebar-width)]" : advanced ? "w-[320px] md:w-[var(--sidebar-width)]" : "w-[288px] md:w-[var(--sidebar-width)]",
+        sidePanelOpen ? density === "compact" ? "md:max-w-[272px]" : advanced ? "md:max-w-[320px]" : "md:max-w-[288px]" : "md:max-w-[calc(100vw-320px)]",
+        // max-md: rather than an md: cancel: Tailwind v4 emits the native `translate`, and any value but `none` makes
+        // this a containing block for its `fixed` descendants.
+        "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40",
+        "max-md:transition-transform max-md:duration-200",
+        open ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+      )}
+    >
+      {navigatorVisible ? <SidebarNavigator
+        state={state}
+        chrome={<>{topChrome}<OrganizationIdentity compact={false} /></>}
+        footer={footerContent}
+        autoFocusSearch={searchOpen}
+        onSearchFocused={() => setSearchOpen(false)}
+        resize={<><SidebarResizeHandle sizing={sizing} sidebarRef={sidebarRef} style={windowNoDragStyle} />
+          {!advanced && !collapseToIcons && <SidebarEdgeToggle collapsed={false} onToggle={toggleCollapsed} style={windowNoDragStyle} anchorRef={sidebarRef} />}</>}
+        panels={<>
+          {attentionPinned && <SidebarAttentionPanel entries={attention} density={density} onUnpin={() => setAttentionPinned(false)} onJump={entry => dispatch(attentionJumpAction(entry))} collapsed={sectionCollapsed(ATTENTION_SECTION_ID)} onToggle={() => toggleSection(ATTENTION_SECTION_ID)} />}
+          <SidebarPinnedThreadsPanel entries={pinnedThreads} density={density} now={now} onJump={entry => dispatch(attentionJumpAction(entry))} onUnpin={entry => dispatch(attentionUnpinAction(entry))} collapsed={sectionCollapsed(PINNED_THREADS_SECTION_ID)} onToggle={() => toggleSection(PINNED_THREADS_SECTION_ID)} />
+        </>}
+        renderBot={(bot, options) => <BotListItem {...botRowProps(state, dispatch, bot, { density, quiet: true, query: options.query, onMenu: setMenu })} navigationSubtitle={options.subtitle} />}
+        renderGroup={(group, query) => <GroupListItem group={group} density={density} quiet={quietRows} query={query} onMenu={setRoomMenu} />}
+        onTeamMenu={!remoteClient ? (name, button) => { const rect = button.getBoundingClientRect(); openTeamMenu(name, rect.right - 256, rect.bottom + 4, button); } : undefined}
+        onManageTeam={!remoteClient ? setMoveToTeam : undefined}
+      /> : <GlassScrollFrame className="flex-1">
+        <GlassBar edge="top">
+          {topChrome}
+          {!rail && <DesktopWorkspaceSwitcher compact cloudHome={state.config?.cloudHome === true} owner={cloudOwner} howTo={state.cloudHowTo} onMenuClosed={endHowTo} />}
+          <OrganizationIdentity compact />
+          <SidebarTodayNav density={density} />
+          {universalPins && pinnedBots.length > 0 && <div data-sidebar-universal-pins className="max-h-[min(40vh,280px)] overflow-y-auto border-b border-hairline/40 px-2 pb-2">
+            <PinnedBotRoster bots={pinnedBots} density={density} circles={pinnedCircles} row={botRow} listItem={BotListItem} />
+          </div>}
+        </GlassBar>
+        {!advanced && !collapseToIcons && <SidebarEdgeToggle collapsed={rail} onToggle={toggleCollapsed} style={windowNoDragStyle} anchorRef={sidebarRef} />}
+        <GlassScroller className={rail ? "[scrollbar-gutter:stable_both-edges]" : "px-2"}>
+          {globalChiefs.map(bot => <div key={bot.id} data-global-chief={bot.id}><BotListItem {...botRow(bot)} /></div>)}
+          {unsectionedChief && <BotListItem {...botRow(unsectionedChief)} />}
+          {sectionIds.map((id, index) => {
+            const sectionName = userSectionName(id);
+            const members = id === PINNED_SECTION_ID ? pinnedBots : id === BOTS_SECTION_ID ? unsectionedBots : sectionedBots.filter(bot => bot.section === sectionName);
+            const chiefs = sectionChiefs.filter(bot => bot.section === sectionName);
+            const groups = id === CHANNELS_SECTION_ID ? unsectionedRooms : id === BOT_CHATS_SECTION_ID ? botChats : sectionedRooms.filter(group => group.section === sectionName);
+            return <div key={id} data-sidebar-section-id={id}>
+              {rail && index > 0 && <SidebarRailSeparator />}
+              {chiefs.map(bot => <BotListItem key={bot.id} {...botRow(bot)} />)}
+              {groups.map(group => <GroupListItem key={group.id} group={group} density={density} quiet={quietRows} onMenu={setRoomMenu} />)}
+              {id === PINNED_SECTION_ID ? <PinnedBotRoster bots={members} density={density} circles={pinnedCircles} row={botRow} listItem={BotListItem} /> : members.map(bot => <BotListItem key={bot.id} {...botRow(bot)} />)}
+            </div>;
+          })}
+        </GlassScroller>
+        <GlassBar edge="bottom">{footerContent}</GlassBar>
+      </GlassScrollFrame>}
 
       <BotContextMenu
           menu={menu}

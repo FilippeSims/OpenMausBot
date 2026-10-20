@@ -2,6 +2,7 @@ import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Bot as BotIcon, MessageSquare, Search, Users } from "lucide-react";
 import { api, openBot, useStore, type Bot, type Group } from "@/state/store";
+import { focusSidebarNavigationSearch } from "@/lib/sidebar-navigation";
 import { rankByName } from "@/lib/palette-rank";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { cn } from "@/lib/cn";
@@ -32,6 +33,7 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k" && !e.shiftKey && !e.altKey) {
         e.preventDefault();
+        if (!open && focusSidebarNavigationSearch()) return;
         setOpen((o) => !o);
       }
     };
@@ -42,7 +44,7 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(OPEN_EVENT, onOpen);
     };
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

@@ -140,7 +140,7 @@ describe("sidebar top row", () => {
     expect(html.match(/Switch server:/g)).toHaveLength(1);
   });
 
-  it("in Simple mode keeps the server pill, a round search and a round + together on the right of one macOS row, with the collapse bump on the edge", () => {
+  it("in Simple mode keeps the server pill and + together with the persistent search below the macOS row", () => {
     fixture.advanced = false;
     fixture.windowChrome = "mac-inset";
     desktop();
@@ -154,9 +154,10 @@ describe("sidebar top row", () => {
     expect(slot).toBeGreaterThan(lights);
     expect(switcher).toBeGreaterThan(slot);
     expect(buttons).toBeGreaterThan(switcher);
-    expect(search).toBeGreaterThan(buttons);
+    expect(search).toBe(-1);
+    expect(html).toContain("data-sidebar-navigation-search");
     expect(row).not.toContain("data-sidebar-collapse-toggle");
-    expect(row.slice(buttons).match(/<button/g)).toHaveLength(2);
+    expect(row.slice(buttons).match(/<button/g)).toHaveLength(1);
     expect(classesOf(row, "data-sidebar-top-slot")).toEqual(["@container/sidebar-top", "flex", "min-w-0", "flex-1", "items-center", "justify-end"]);
     expect(classesOf(row, "data-sidebar-top-switcher")).not.toContain("max-w-[140px]");
     expect(classesOf(row, "data-sidebar-top-buttons")).toEqual(expect.arrayContaining(["shrink-0", "gap-1", "pl-0.5"]));
@@ -164,7 +165,6 @@ describe("sidebar top row", () => {
     expect(row).toMatch(/aria-label="Switch server: Servers"[^>]*class="[^"]*\bh-8\b[^"]*\brounded-full\b[^"]*\bbg-raised\/50\b[^"]*\btext-\[13px\][^"]*" style="-webkit-app-region:no-drag"/);
     expect(row).toContain('<span class="min-w-0 truncate @max-[124px]/sidebar-top:hidden">Servers</span>');
     expect(row).toContain('class="lucide lucide-laptop hidden shrink-0 text-ink-secondary @max-[124px]/sidebar-top:block"');
-    expect(row).toMatch(/data-sidebar-search-toggle="true" aria-label="Search bots and messages" aria-expanded="false" title="Search bots and messages" class="[^"]*\bsize-\[30px\][^"]*\brounded-full\b/);
     expect(html).toMatch(/aria-label="New or share" class="[^"]*\bsize-\[30px\][^"]*\brounded-full\b/);
     expect(html).not.toContain('title="Active Threads"');
     expect(html).not.toContain("data-sidebar-search-pill");
@@ -261,7 +261,7 @@ describe("sidebar glass head and foot", () => {
       };
       const head = at('data-glass-bar="top"');
       const topRow = at("data-sidebar-top-row");
-      const search = at('aria-label="Search bots and messages"');
+      const search = at(density === "icons" ? 'aria-label="Search bots and messages"' : "data-sidebar-navigation-search");
       const list = at('class="glass-scroller ');
       const foot = at('data-glass-bar="bottom"');
       const automations = at('data-sidebar-nav="automations"');

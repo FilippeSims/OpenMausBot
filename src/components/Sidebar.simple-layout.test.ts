@@ -15,6 +15,7 @@ vi.mock("react", async (original) => ({
       fixture.values[index] = typeof next === "function" ? (next as (value: unknown) => unknown)(fixture.values[index]) : next;
     }];
   },
+  useId: () => "sidebar-fixture",
   useRef: (initial: unknown) => {
     const index = fixture.index++;
     if (!(index in fixture.values)) fixture.values[index] = { current: initial };
@@ -42,8 +43,9 @@ vi.mock("@/state/store", async (importOriginal) => {
 });
 
 import { initialState } from "@/state/store";
-import { BOTS_SECTION_ID, CHANNELS_SECTION_ID, PINNED_SECTION_ID, userSectionId } from "@/lib/sidebar-layout";
-import { SIDEBAR_COLLAPSED_SECTIONS_KEY, SIDEBAR_DENSITY_KEY, SIDEBAR_SECTION_ORDER_KEY, SIDEBAR_WIDTH_KEY, SIMPLE_SIDEBAR_WIDTH_KEY, setSidebarDensity } from "@/lib/sidebar-preferences";
+import { BOTS_SECTION_ID, CHANNELS_SECTION_ID, userSectionId } from "@/lib/sidebar-layout";
+import { SIDEBAR_DENSITY_KEY, SIDEBAR_WIDTH_KEY, SIMPLE_SIDEBAR_WIDTH_KEY, setSidebarDensity } from "@/lib/sidebar-preferences";
+import { SidebarNavigator } from "./SidebarNavigator";
 import { Sidebar, TeamMenuItems } from "./Sidebar";
 import { SidebarResizeHandle } from "./SidebarResizeHandle";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
@@ -63,6 +65,10 @@ type Props = { children?: ReactNode; className?: string; style?: Record<string, 
 function nodes(value: ReactNode): ReactElement<Props>[] {
   return Children.toArray(value).flatMap((child) => {
     if (!isValidElement<Props>(child)) return [];
+    if (child.type === SidebarNavigator) {
+      const result = SidebarNavigator(child.props as Parameters<typeof SidebarNavigator>[0]);
+      return [child, result, ...nodes(result.props.children)];
+    }
     return [child, ...nodes(child.props.children)];
   });
 }
@@ -75,7 +81,6 @@ function render(collapseToIcons = false) {
 const sectionOrder = (tree: ReactElement<Props>[]) => tree.map((node) => node.props["data-sidebar-section-id"]).filter(Boolean);
 const headers = (tree: ReactElement<Props>[]) => tree.filter((node) => node.type === SidebarSectionHeader) as ReactElement<Parameters<typeof SidebarSectionHeader>[0]>[];
 const listedBots = (tree: ReactElement<Props>[]) => tree.map((node) => (node.props.bot as Bot | undefined)?.id).filter(Boolean);
-const labelled = (tree: ReactElement<Props>[], label: string) => tree.some((node) => node.props["aria-label"] === label);
 
 beforeEach(() => {
   fixture.values = [];
@@ -101,106 +106,80 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("Simple-mode sidebar layout", () => {
-  it("lists ungrouped bots first with no heading, then Group chats and teams as thin lines", () => {
-    const { tree } = render();
-    expect(sectionOrder(tree)).toEqual([BOTS_SECTION_ID, CHANNELS_SECTION_ID, userSectionId("Work")]);
-    expect(listedBots(tree)).toEqual(["atlas", "bea", "dodo"]);
-    const lines = headers(tree);
-    expect(lines.map((header) => header.props.name)).toEqual(["Group chats", "Work"]);
-    for (const header of lines) {
-      expect(header.props.line).toBe(true);
-      expect(header.props.onDelete).toBeUndefined();
-    }
-    expect(lines[0]!.props.onMenu).toBeUndefined();
-    expect(lines[1]!.props.onMenu).toBeTypeOf("function");
-    expect(labelled(tree, "Add or remove bots in Work")).toBe(false);
+describe("Focused sidebar navigation", () => {
+  const click = (node: ReactElement<Props>, event?: unknown) => (node.props.onClick as (event?: unknown) => void)(event);
+  const tab = (name: string) => render().tree.find(node => node.props.role === "tab" && node.props.children === name)!;
+  const button = (name: string) => render().tree.find(node => node.type === "button" && node.props["aria-label"] === name)!;
+  const search = (query: string) => {
+    const input = render().tree.find(node => node.props["data-sidebar-navigation-search"] !== undefined)!;
+    (input.props.onChange as (event: unknown) => void)({ target: { value: query } });
+  };
+
+  it("keeps global search and all three views visible beside the recent bots", () => {
+    expect(button("Search team, bot or role…")).toBeUndefined();
+    expect(render().tree.some(node => node.type === "input" && node.props["aria-label"] === "Search team, bot or role…")).toBe(true);
+    expect(["Recent", "Teams", "Bots"].map(name => Boolean(tab(name)))).toEqual([true, true, true]);
+    expect(listedBots(render().tree)).toEqual(["atlas", "bea", "dodo"]);
+    expect(sectionOrder(render().tree)).toEqual([]);
   });
 
-  it("names the bots with a thin line only when pinned bots sit above them", () => {
-    fixture.state = { ...fixture.state, bots: [bot("atlas", { pinned: true }), bot("bea"), bot("dodo", { section: "Work" })] };
-    const { tree } = render();
-    expect(sectionOrder(tree)).toEqual([PINNED_SECTION_ID, BOTS_SECTION_ID, CHANNELS_SECTION_ID, userSectionId("Work")]);
-    const lines = headers(tree);
-    expect(lines.map((header) => header.props.name)).toEqual(["Pinned", "Bots", "Group chats", "Work"]);
-    expect(lines.map((header) => header.props.reorderable)).toEqual([false, false, true, true]);
+  it("focuses one team and goes back without expanding a tree of teams", () => {
+    click(tab("Teams"));
+    expect(listedBots(render().tree)).toEqual([]);
+    click(button("Open Work team"));
+    expect(listedBots(render().tree)).toEqual(["dodo"]);
+    const back = render().tree.find(node => node.type === "button" && Children.toArray(node.props.children).includes("All teams"))!;
+    click(back);
+    expect(button("Open Work team")).toBeDefined();
+    expect(listedBots(render().tree)).toEqual([]);
   });
 
-  it("still offers Add bots under an empty team", () => {
-    fixture.state = { ...fixture.state, sections: ["Work", "Empty"] };
-    const { tree } = render();
-    expect(headers(tree).map((header) => header.props.name)).toEqual(["Group chats", "Work", "Empty"]);
-    expect(labelled(tree, "Add bots to Empty")).toBe(true);
-    expect(labelled(tree, "Add or remove bots in Work")).toBe(false);
+  it("finds a bot by team and role from any focused team", () => {
+    fixture.state.bots[1] = bot("bea", { section: "Finance", title: "Invoice reviewer" });
+    click(tab("Teams")); click(button("Open Work team"));
+    search("finance invoice");
+    expect(listedBots(render().tree)).toEqual(["bea"]);
+    search("");
+    expect(listedBots(render().tree)).toEqual(["dodo"]);
   });
 
-  it("keeps Advanced's headings, trash button and order", () => {
-    fixture.advanced = true;
-    const { tree } = render();
-    expect(sectionOrder(tree)).toEqual([CHANNELS_SECTION_ID, BOTS_SECTION_ID, userSectionId("Work")]);
-    const all = headers(tree);
-    expect(all.map((header) => header.props.name)).toEqual(["Group chats", "Bots", "Work"]);
-    for (const header of all) {
-      expect(header.props.line).toBe(false);
-      expect(header.props.onMenu).toBeUndefined();
-    }
-    expect(all[2]!.props.onDelete).toBeTypeOf("function");
-    expect(labelled(tree, "Add or remove bots in Work")).toBe(true);
+  it("keeps the Global Chief accessible outside the focused team", () => {
+    fixture.state.bots.push(bot("boss", { globalChief: true, chiefOfStaff: true }));
+    click(tab("Teams")); click(button("Open Work team"));
+    expect(listedBots(render().tree)).toEqual(["boss", "dodo"]);
+    expect(render().tree.some(node => node.props["data-global-chief"] === "boss")).toBe(true);
   });
 
-  it("opens the team menu from the line's ⋯ button, under it, with every team action", () => {
-    const work = () => headers(render().tree).find((header) => header.props.name === "Work")!;
-    const button = { getBoundingClientRect: () => ({ right: 280, bottom: 300 }), focus: vi.fn(), isConnected: true } as unknown as HTMLButtonElement;
-    expect(work().props.menuOpen).toBe(false);
-    work().props.onMenu!(button);
-    const { tree } = render();
-    expect(work().props.menuOpen).toBe(true);
-    const menu = tree.find((node) => node.props.role === "menu")!;
+  it("does not expose archived bots when searching or switching views", () => {
+    fixture.state.bots.push(bot("hidden", { hidden: true, title: "private" }));
+    search("hidden"); expect(listedBots(render().tree)).toEqual([]);
+    click(tab("Bots")); expect(listedBots(render().tree)).not.toContain("hidden");
+  });
+
+  it("offers empty teams and keeps their management action", () => {
+    fixture.state.sections = ["Work", "Empty"];
+    click(tab("Teams")); click(button("Open Empty team"));
+    expect(listedBots(render().tree)).toEqual([]);
+    expect(render().tree.some(node => node.type === "button" && node.props.children === "Add or remove bots")).toBe(true);
+  });
+
+  it("opens the existing team menu from the focused team's actions", () => {
+    click(tab("Teams")); click(button("Open Work team"));
+    const currentTarget = { getBoundingClientRect: () => ({ right: 280, bottom: 300 }), focus: vi.fn(), isConnected: true };
+    click(button("Actions for Work team"), { currentTarget });
+    const menu = render().tree.find(node => node.props.role === "menu")!;
     expect(menu.props["aria-label"]).toBe("Work");
     expect(menu.props.style).toEqual({ left: 24, top: 304 });
-    const items = tree.find((node) => node.type === TeamMenuItems)!.props as Parameters<typeof TeamMenuItems>[0];
-    for (const action of ["onAddBots", "onRename", "onShare", "onDelete"] as const) expect(items[action]).toBeTypeOf("function");
+    const items = render().tree.find(node => node.type === TeamMenuItems)!;
+    expect(items.props.onRename).toBeTypeOf("function");
+    expect(items.props.onDelete).toBeTypeOf("function");
   });
 
-  it("keeps a saved order for the other sections and writes a Simple move back without moving Bots", () => {
-    const saved = [userSectionId("Work"), CHANNELS_SECTION_ID, BOTS_SECTION_ID];
-    fixture.storage.set(SIDEBAR_SECTION_ORDER_KEY, JSON.stringify(saved));
-    expect(sectionOrder(render().tree)).toEqual([BOTS_SECTION_ID, userSectionId("Work"), CHANNELS_SECTION_ID]);
-    const channels = () => headers(render().tree).find((header) => header.props.name === "Group chats")!;
-    expect(channels().props.reorderable).toBe(true);
-    channels().props.onMove!(-1);
-    expect(JSON.parse(fixture.storage.get(SIDEBAR_SECTION_ORDER_KEY)!)).toEqual([CHANNELS_SECTION_ID, userSectionId("Work"), BOTS_SECTION_ID]);
-    expect(sectionOrder(render().tree)).toEqual([BOTS_SECTION_ID, CHANNELS_SECTION_ID, userSectionId("Work")]);
-    channels().props.onMove!(-1);
-    expect(JSON.parse(fixture.storage.get(SIDEBAR_SECTION_ORDER_KEY)!)).toEqual([CHANNELS_SECTION_ID, userSectionId("Work"), BOTS_SECTION_ID]);
-  });
-
-  it("never hides the heading-less bots behind a collapse saved in Advanced", () => {
-    fixture.storage.set(SIDEBAR_COLLAPSED_SECTIONS_KEY, JSON.stringify([BOTS_SECTION_ID, userSectionId("Work")]));
-    const { tree } = render();
-    expect(listedBots(tree)).toEqual(["atlas", "bea"]);
-    expect(headers(tree).find((header) => header.props.name === "Work")!.props.collapsed).toBe(true);
-  });
-
-  it("toggles a search pill from the round search button, and closing it clears the filter", () => {
-    const toggle = () => render().tree.find((node) => node.type === SidebarSearchToggle)!.props as Parameters<typeof SidebarSearchToggle>[0];
-    const pill = () => render().tree.find((node) => node.type === SidebarSearchPill)?.props as Parameters<typeof SidebarSearchPill>[0] | undefined;
-    expect(render().tree.some((node) => node.props["aria-label"] === "Search bots and messages" && node.type === "input")).toBe(false);
-    expect(pill()).toBeUndefined();
-    expect(toggle().open).toBe(false);
-    toggle().onToggle();
-    expect(toggle().open).toBe(true);
-    pill()!.onQuery("bea");
-    expect(pill()!.query).toBe("bea");
-    expect(listedBots(render().tree)).toEqual(["bea"]);
-    pill()!.onClose();
-    expect(pill()).toBeUndefined();
-    expect(listedBots(render().tree)).toEqual(["atlas", "bea", "dodo"]);
-    toggle().onToggle();
-    pill()!.onQuery("atlas");
-    toggle().onToggle();
-    expect(pill()).toBeUndefined();
-    expect(listedBots(render().tree)).toHaveLength(3);
+  it("favors teams in the list without moving their bots", () => {
+    click(tab("Teams"));
+    click(button("Favorite Work"));
+    expect(button("Unfavorite Work").props["aria-pressed"]).toBe(true);
+    expect(fixture.state.bots.find(bot => bot.id === "dodo")?.section).toBe("Work");
   });
 
   it("opens at 288px in Simple and 320px in Advanced, each remembering its own resized width", () => {
@@ -256,13 +235,13 @@ describe("Simple-mode sidebar layout", () => {
     expect(render().tree.some((node) => node.type === SimpleRailFooter)).toBe(false);
   });
 
-  it("opens the search pill from the rail's search button by expanding the sidebar", () => {
+  it("focuses global search from the rail by expanding the sidebar", () => {
     setSidebarDensity("icons");
     expect(render().tree.some((node) => node.type === SidebarSearchPill)).toBe(false);
     (render().tree.find((node) => node.type === SimpleRailFooter)!.props as Parameters<typeof SimpleRailFooter>[0]).onSearch();
     const { tree } = render();
     expect(tree.some((node) => node.type === SimpleRailFooter)).toBe(false);
-    expect(tree.some((node) => node.type === SidebarSearchPill)).toBe(true);
+    expect(tree.some((node) => node.props["data-sidebar-navigation-search"] !== undefined)).toBe(true);
   });
 
   it("opens the command palette instead when a side panel holds the sidebar collapsed", () => {

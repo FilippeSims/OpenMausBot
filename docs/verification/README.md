@@ -208,6 +208,10 @@ service. It does not drive the People settings UI through `control-omb`.
 The [sidebar fixture](sidebar.md) checks archive and delete confirmations, their
 default focus, keyboard wrapping and focus return against two disposable bots.
 
+The [sidebar navigation fixture](sidebar-navigation.md) checks global search,
+focused teams, favorites, recent bots, pagination and responsive geometry
+through the real renderer in a disposable workspace.
+
 The [sidebar attention geometry fixture](sidebar-attention.md) measures the
 Active Threads popover's width and inset at each expanded sidebar density in a
 headless Electron window, including the compact-density case where the menu

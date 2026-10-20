@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { resolveAgentBrowserBinary } from "../../server/browser-engine.ts";
 import { removeTempDir, waitForExit } from "../../server/testing/cleanup.ts";
@@ -105,10 +105,13 @@ const refsNamed = (snapshot: Record<string, any>, name: string, role?: string) =
 describe("control-omb ui drives the real renderer", () => {
   let launched: Launched | undefined;
 
-  afterAll(async () => {
+  afterEach(async () => {
     if (launched && launched.child.exitCode === null && launched.child.signalCode === null) {
       await waitForExit(launched.child, { signal: "SIGINT", graceMs: 30_000 });
     }
+    launched = undefined;
+  });
+  afterAll(async () => {
     if (ownsEvidenceDir) await removeTempDir(evidenceDir);
   });
 
@@ -144,7 +147,8 @@ describe("control-omb ui drives the real renderer", () => {
     await ui("type", info.ui, "--name", "Find in this conversation", "--text", "fake claude");
     await expect.poll(highlighted, { timeout: 10_000 }).toBe("fake claude");
     await ui("press", info.ui, "--keys", "Escape");
-    await ui("type", info.ui, "--name", "Search bots and messages", "--text", "zebra");
+    await ui("type", info.ui, "--name", "Search team, bot or role…", "--text", "zebra");
+    await ui("click", info.ui, "--name", "Search conversation history");
     await expect.poll(async () => (await ui("eval", info.ui, "--js", "[...document.querySelectorAll('mark')].some(mark => mark.textContent === 'zebra')")).result, { timeout: 10_000 }).toBe(true);
     await ui("eval", info.ui, "--js", "[...document.querySelectorAll('mark')].find(mark => mark.textContent === 'zebra').closest('button').click(); true");
     await expect.poll(highlighted, { timeout: 10_000 }).toBe("zebra");
