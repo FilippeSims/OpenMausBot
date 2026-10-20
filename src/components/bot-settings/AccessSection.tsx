@@ -17,6 +17,8 @@ import { ConfirmDialog } from "../ConfirmDialog";
 import { Switch } from "../SettingsPrimitives";
 import { ProposalStatus } from "./ProposalStatus";
 import { ToolSelectionCard } from "./ToolSelectionCard";
+import { useCloudPlan } from "../ProIntroduction";
+import { xResearchAction } from "@/lib/cloud-plan";
 import { HIGHLEVEL_SLUG } from "@/lib/highlevel-sign-in";
 import { useBotApps } from "./useBotApps";
 import {
@@ -33,7 +35,7 @@ import type { useBotSettingsDerived } from "./useBotSettingsDerived";
  * Claude keeps sessions per project folder, so the server pins each task's folder on its first turn. PATCHed directly,
  * not via updateBot: the server validates the path, and a rejected folder must not stick in local state.
  */
-function WorkingFolder({ bot }: { bot: Bot }) {
+export function WorkingFolder({ bot }: { bot: Bot }) {
   const { request: api } = useBotEditor();
   const { capabilities } = useDesktopCapabilities();
   const home = capabilities.host.homeDir;
@@ -64,18 +66,21 @@ function WorkingFolder({ bot }: { bot: Bot }) {
 
   return (
     <div className="rounded-xl bg-card p-4">
-      <div className="text-[15px] font-medium text-ink">{uiText("commandAllowlist.folder")}</div>
-      <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.AccessSection.111b59461e")}</div>
+      <div className="text-[15px] font-medium text-ink">{t("botAccess.folder.title")}</div>
+      <div className="mt-0.5 text-[13px] text-ink-secondary">{t("botAccess.folder.description")}</div>
       <ProposalStatus bot={bot} kind="chief" />
       {canPick ? (
         <div className="mt-3 flex items-center gap-2">
           <div className="min-w-0 flex-1 truncate rounded-lg border border-hairline/40 bg-inset px-3 py-2 font-mono text-[12.5px] text-ink" title={bot.cwd}>
-            {bot.cwd ? shortPath(bot.cwd, home) : <span className="text-ink-secondary">{uiText("ui.AccessSection.8e254be531")}</span>}
+            {bot.cwd ? shortPath(bot.cwd, home) : <span className="text-ink-secondary">{t("botAccess.folder.private")}</span>}
           </div>
           <button onClick={() => void pick()} disabled={saving} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50">
-            <FolderOpen size={14} />{uiText("room.folder.choose")}</button>
+            <FolderOpen size={14} /> {t("botAccess.folder.choose")}
+          </button>
           {bot.cwd && (
-            <button onClick={() => void save(null)} disabled={saving} className="shrink-0 rounded-lg px-2 py-2 text-[13px] text-ink-secondary hover:text-ink disabled:opacity-50">{uiText("task.bulk.clear")}</button>
+            <button onClick={() => void save(null)} disabled={saving} className="shrink-0 rounded-lg px-2 py-2 text-[13px] text-ink-secondary hover:text-ink disabled:opacity-50">
+              {t("botAccess.folder.clear")}
+            </button>
           )}
         </div>
       ) : (
@@ -88,16 +93,20 @@ function WorkingFolder({ bot }: { bot: Bot }) {
         >
           <input
             className={cn(inputCls, "font-mono text-[12.5px]")}
-            placeholder={uiText("ui.AccessSection.3a6a678755")}
+            placeholder={t("botAccess.folder.placeholder")}
             value={draft ?? bot.cwd ?? ""}
             onChange={(e) => setDraft(e.target.value)}
           />
-          <button type="submit" disabled={saving || draft === null} className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50">{uiText("common.save")}</button>
+          <button type="submit" disabled={saving || draft === null} className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50">
+            {t("botAccess.folder.save")}
+          </button>
         </form>
       )}
       {error && <div className="mt-2 text-[12px] text-danger">{error}</div>}
       {pinnedElsewhere && (
-        <div className="mt-2 text-[12px] text-ink-secondary">{uiText("ui.AccessSection.20c489f785")} {pinned ? <span className="font-mono">{shortPath(pinned, home)}</span> : uiText("ui.AccessSection.01c44482b7")} {uiText("ui.AccessSection.bb1223de36")}</div>
+        <div className="mt-2 text-[12px] text-ink-secondary">
+          {t("botAccess.folder.pinned", { path: pinned ? shortPath(pinned, home) : t("botAccess.folder.home") })}
+        </div>
       )}
     </div>
   );
@@ -107,7 +116,7 @@ function WorkingFolder({ bot }: { bot: Bot }) {
  * Absent list = all enabled; the first flip writes an explicit list so servers added later never silently reach this
  * bot.
  */
-function McpServersCard({ bot, patch }: { bot: Bot; patch: (patch: { mcpServers: string[] | null }) => void }) {
+export function McpServersCard({ bot, patch }: { bot: Bot; patch: (patch: { mcpServers: string[] | null }) => void }) {
   const { dispatch } = useStore();
   const { servers, error, refresh } = useMcpServers();
   const mounted = new Set((servers ? mcpServersForBot(servers, bot.mcpServers) : []).map((server) => server.name));
@@ -487,6 +496,38 @@ function ConnectorToolsGrants({
   );
 }
 
+/** Research through treg (the X tools and the general research tools): on for every bot whenever this server holds a
+ * treg key or a Cloud plan's research credential, and switchable off per bot. */
+function ResearchCard({ bot, patch }: { bot: Bot; patch: (patch: { xResearch: boolean }) => void }) {
+  const { state, dispatch } = useStore();
+  const connecting = xResearchAction(useCloudPlan()?.view ?? null) === "connecting" && state.config?.xResearch?.unavailable !== true;
+  const ownKey = state.config?.treg?.configured === true, included = state.config?.xResearch?.included === true;
+  const available = ownKey || included;
+  const on = bot.xResearch !== false;
+  const line = !available ? t(connecting ? "research.connecting" : "research.addKey")
+    : !on ? t("research.off") : t(ownKey ? "research.ownOn" : "research.planOn");
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4" data-testid="access-x-research">
+      <div>
+        <div className="text-[15px] font-medium text-ink">{t("research.title")}</div>
+        <div className="mt-0.5 text-[13px] text-ink-secondary">{line}</div>
+        {!available && !connecting && (
+          <button type="button" className="ui-button mt-2" onClick={() => dispatch({ type: "toggleAppSettings", open: true, section: "connections" })}>
+            {t("research.openKeys")}
+          </button>
+        )}
+      </div>
+      <Switch
+        checked={available && on}
+        aria-label={t("research.switch")}
+        disabled={!available}
+        onClick={() => patch({ xResearch: !on })}
+        className="disabled:cursor-not-allowed"
+      />
+    </div>
+  );
+}
+
 function RecordStepsRow({ on, browserOn, myChrome, onChange }: { on: boolean; browserOn: boolean; myChrome: boolean; onChange: (on: boolean) => void }) {
   return (
     <div className="mt-3 flex items-center justify-between gap-4 border-t border-hairline/40 pt-3">
@@ -508,12 +549,54 @@ function RecordStepsRow({ on, browserOn, myChrome, onChange }: { on: boolean; br
   );
 }
 
+export function cloudPreferenceShown(bot: Pick<Bot, "computer">, config: { cloudHome?: boolean } | null | undefined): boolean {
+  return (!bot.computer || bot.computer === "cloud") && !config?.cloudHome;
+}
+
+export function CloudPreference({ bot, patch }: { bot: Bot; patch: ReturnType<typeof useBotSettingsDerived>["patch"] }) {
+  const { state } = useStore();
+  if (!cloudPreferenceShown(bot, state.config)) return null;
+  return (
+    <>
+      {!bot.computer && (
+        <div className="mt-3 rounded-lg bg-inset px-3 py-2.5 text-[11.5px] leading-relaxed text-ink-secondary">
+          <span className="font-medium text-ink">{t("botAccess.cloud.autoTitle")}</span>{" "}
+          {t("botAccess.cloud.autoDescription")}
+        </div>
+      )}
+      <CloudBackendPicker
+        value={bot.cloudBackend ?? "box"}
+        onChange={(backend) => patch({ cloudBackend: backend })}
+      />
+      {!bot.computer && bot.cloudBackend === "vps" && (
+        <div className="mt-3 flex items-center justify-between gap-4 rounded-lg bg-inset px-3 py-2.5">
+          <div className="min-w-0">
+            <div className="text-[13px] text-ink">{t("botAccess.cloud.startVps")}</div>
+            <div className="mt-0.5 text-[11.5px] text-ink-secondary">
+              {t("botAccess.cloud.startVpsDescription")}
+            </div>
+          </div>
+          <Switch
+            checked={Boolean(bot.autoStartVps)}
+            aria-label={t("botAccess.cloud.startVps")}
+            onClick={() => patch({ autoStartVps: !bot.autoStartVps })}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+export type AccessPart = "worksOn" | "folder" | "apps" | "xResearch" | "mcp" | "tools" | "browser" | "webhooks" | "always";
+
 export function AccessSection({
   bot,
   derived,
+  parts,
 }: {
   bot: Bot;
   derived: ReturnType<typeof useBotSettingsDerived>;
+  parts?: readonly AccessPart[];
 }) {
   const { draft } = useBotEditor();
   const { state, dispatch } = useStore();
@@ -544,10 +627,11 @@ export function AccessSection({
 
   const webhooks = state.webhooks.filter((webhook) => webhook.botId === bot.id);
   const alwaysAllow = bot.alwaysAllow ?? [];
+  const shows = (part: AccessPart) => !parts || parts.includes(part);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl bg-card p-4" data-testid="access-works-on">
+      {shows("worksOn") && <div className="rounded-xl bg-card p-4" data-testid="access-works-on">
         <div className="text-[15px] font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
         <ProposalStatus bot={bot} kind="owner" />
         <button
@@ -560,66 +644,42 @@ export function AccessSection({
         >
           {t("place.action.openComputerPanel")}
         </button>
-        {(!bot.computer || bot.computer === "cloud") && !state.config?.cloudHome && (
-          <>
-            {!bot.computer && (
-              <div className="mt-3 rounded-lg bg-inset px-3 py-2.5 text-[11.5px] leading-relaxed text-ink-secondary">
-                <span className="font-medium text-ink">{uiText("ui.AccessSection.396b58a086")}</span>{" "} {uiText("ui.AccessSection.97f7a318a0")} </div>
-            )}
-            <CloudBackendPicker
-              value={bot.cloudBackend ?? "box"}
-              onChange={(backend) => patch({ cloudBackend: backend })}
-            />
-            {!bot.computer && bot.cloudBackend === "vps" && (
-              <div className="mt-3 flex items-center justify-between gap-4 rounded-lg bg-inset px-3 py-2.5">
-                <div className="min-w-0">
-                  <div className="text-[13px] text-ink">{uiText("ui.AccessSection.c9ec447407")}</div>
-                  <div className="mt-0.5 text-[11.5px] text-ink-secondary">{uiText("ui.AccessSection.02b9fdfe70")}</div>
-                </div>
-                <Switch
-                  checked={Boolean(bot.autoStartVps)}
-                  aria-label={uiText("ui.AccessSection.c9ec447407")}
-                  onClick={() => patch({ autoStartVps: !bot.autoStartVps })}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </div>
+        <CloudPreference bot={bot} patch={patch} />
+      </div>}
 
-      <WorkingFolder bot={bot} />
+      {shows("folder") && <WorkingFolder bot={bot} />}
 
-      <div className="rounded-xl bg-card p-4">
+      {shows("apps") && <div className="rounded-xl bg-card p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-[15px] font-medium text-ink">{uiText("sidebar.nav.connectedApps")}</div>
+            <div className="text-[15px] font-medium text-ink">{t("botAccess.apps.title")}</div>
             <div className="mt-0.5 text-[13px] text-ink-secondary">
               {!connectedAppsConfigured
-                ? uiText("ui.AccessSection.c205480802")
+                ? t("botAccess.apps.connectInSettings")
                 : !canUseConnectedApps
-                  ? uiText("ui.AccessSection.e6b3f13f75")
+                  ? t("botAccess.apps.modelUnsupported")
                   : connectedAppsEnabled
                     ? connectorGrantState === "partial"
-                      ? uiText("ui.AccessSection.1efc847dd2")
+                      ? t("botAccess.apps.partial")
                       : connectorGrantState === "none"
-                        ? uiText("ui.AccessSection.69f5f60948")
-                        : uiText("ui.AccessSection.7bef6a893f")
-                    : uiText("ui.AccessSection.cf2631de1d")}
+                        ? t("botAccess.apps.none")
+                        : t("botAccess.apps.enabled")
+                    : t("botAccess.apps.disabled")}
             </div>
             <ProposalStatus bot={bot} kind="owner" />
           </div>
           <Switch
             checked={connectedAppsEnabled}
-            aria-label={uiText("ui.AccessSection.7469a35fac")}
+            aria-label={t("botAccess.apps.allow")}
             disabled={
               !connectedAppsEnabled && (!connectedAppsConfigured || !canUseConnectedApps)
             }
             onClick={() => patch({ composio: !connectedAppsEnabled })}
             title={
               !connectedAppsEnabled && !connectedAppsConfigured
-                ? uiText("ui.AccessSection.b56e323294")
+                ? t("botAccess.apps.connectFirst")
                 : !connectedAppsEnabled && !canUseConnectedApps
-                  ? uiText("ui.AccessSection.03299308a9")
+                  ? t("botAccess.apps.modelUnsupportedShort")
                   : undefined
             }
             className="disabled:cursor-not-allowed"
@@ -644,41 +704,41 @@ export function AccessSection({
             <Plus size={14} /> {t("botAccess.connectApp")}
           </button>
         )}
-      </div>
+      </div>}
 
-      <McpServersCard bot={bot} patch={patch} />
-      <ToolSelectionCard key={bot.id} bot={bot} engineKind={derived.engine?.driverKind} />
+      {shows("mcp") && <McpServersCard bot={bot} patch={patch} />}
+      {shows("tools") && <ToolSelectionCard key={bot.id} bot={bot} engineKind={derived.engine?.driverKind} />}
 
-      <div className="rounded-xl bg-card p-4">
+      {shows("browser") && <div className="rounded-xl bg-card p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-[15px] font-medium text-ink">{uiText("settings.profiles.browserLabel")}</div>
+            <div className="text-[15px] font-medium text-ink">{t("botAccess.browser.title")}</div>
             <div className="mt-0.5 text-[13px] text-ink-secondary">
               {!desktopBrowser
                 ? browserBlockedOnWindows && !browserInstallable
-                  ? uiText("settings.experimental.browserWindows")
+                  ? t("botAccess.browser.windowsUnavailable")
                   : browserUnavailableReason(state.config)
                 : !browserFeature
-                  ? uiText("ui.AccessSection.2eb6aef966")
+                  ? t("botAccess.browser.disabledInSettings")
                   : !canUseBrowser
-                    ? uiText("ui.AccessSection.8035f56c6e")
+                    ? t("botAccess.browser.modelUnsupported")
                     : bot.computer === "off"
-                      ? uiText("ui.AccessSection.0c9e28c52f")
+                      ? t("botAccess.browser.off")
                       : browserEnabled
-                        ? uiText("ui.AccessSection.f8b0339d74")
-                        : uiText("ui.AccessSection.d35749f6e1")}
+                        ? t("botAccess.browser.enabled")
+                        : t("botAccess.browser.disabled")}
             </div>
             <ProposalStatus bot={bot} kind="owner" />
           </div>
           <Switch
             checked={browserEnabled && bot.computer !== "off"}
-            aria-label={uiText("ui.AccessSection.f15dc99265")}
+            aria-label={t("botAccess.browser.allow")}
             disabled={
               bot.computer === "off" ||
               (!browserEnabled && ((!desktopBrowser && !browserInstallable) || !browserFeature || !canUseBrowser))
             }
             onClick={() => patch({ browser: !browserAllowed })}
-            title={bot.computer === "off" ? uiText("ui.AccessSection.8334300af2") : undefined}
+            title={bot.computer === "off" ? t("botAccess.browser.offShort") : undefined}
             className="disabled:cursor-not-allowed"
           />
         </div>
@@ -690,14 +750,16 @@ export function AccessSection({
             onChange={(recordBrowserSteps) => patch({ recordBrowserSteps })}
           />
         )}
-      </div>
+      </div>}
 
-      {!draft && <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("activity.what.webhook")}</div>
-        <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.AccessSection.51a3ee517a")}</div>
+      {!draft && shows("xResearch") && <ResearchCard bot={bot} patch={patch} />}
+
+      {!draft && shows("webhooks") && <div className="rounded-xl bg-card p-4">
+        <div className="text-[15px] font-medium text-ink">{t("botAccess.webhooks.title")}</div>
+        <div className="mt-0.5 text-[13px] text-ink-secondary">{t("botAccess.webhooks.description")}</div>
         <ProposalStatus bot={bot} kind="owner" />
         {webhooks.length === 0 ? (
-          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{uiText("ui.AccessSection.af7c63df19")}</div>
+          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{t("botAccess.webhooks.empty")}</div>
         ) : (
           <div className="mt-3 divide-y divide-hairline/40 overflow-hidden rounded-lg border border-hairline/40">
             {webhooks.map((webhook) => (
@@ -709,22 +771,23 @@ export function AccessSection({
                     webhook.enabled ? "bg-accent/15 text-accent-text" : "bg-control text-ink-secondary",
                   )}
                 >
-                  {webhook.enabled ? uiText("routines.activeSchedule") : uiText("vm.state.paused")}
+                  {webhook.enabled ? t("botAccess.webhooks.active") : t("botAccess.webhooks.paused")}
                 </span>
                 <span className="shrink-0 text-[11.5px] tabular-nums text-ink-secondary">
-                  {webhook.deliveryCount} {uiText("ui.AccessSection.f69b1725bd")} </span>
+                  {t("botAccess.webhooks.deliveries", { count: webhook.deliveryCount })}
+                </span>
               </div>
             ))}
           </div>
         )}
       </div>}
 
-      {!draft && <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("ui.AccessSection.94387772bc")}</div>
-        <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.AccessSection.1abda3bd6d")}</div>
+      {!draft && shows("always") && <div className="rounded-xl bg-card p-4">
+        <div className="text-[15px] font-medium text-ink">{t("botAccess.always.title")}</div>
+        <div className="mt-0.5 text-[13px] text-ink-secondary">{t("botAccess.always.description")}</div>
         <ProposalStatus bot={bot} kind="owner" />
         {alwaysAllow.length === 0 ? (
-          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{uiText("ui.AccessSection.ff4185ec7d")}</div>
+          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{t("botAccess.always.empty")}</div>
         ) : (
           <div className="mt-3 divide-y divide-hairline/40 overflow-hidden rounded-lg border border-hairline/40">
             {alwaysAllow.map((entry) => (
@@ -732,10 +795,12 @@ export function AccessSection({
                 <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-ink">{entry}</span>
                 <button
                   type="button"
-                  aria-label={uiText("ui.AccessSection.c4d8d201a4", { value1: String(entry) })}
+                  aria-label={t("botAccess.always.remove", { entry })}
                   onClick={() => patch({ alwaysAllow: alwaysAllow.filter((key) => key !== entry) })}
                   className="shrink-0 rounded-md px-2 py-1 text-[12px] text-ink-secondary hover:bg-danger/10 hover:text-danger"
-                >{uiText("settings.profile.learned.remove")}</button>
+                >
+                  {t("botAccess.always.removeButton")}
+                </button>
               </div>
             ))}
           </div>
@@ -764,16 +829,16 @@ function ConnectorScopesControl({ connectedSlugs, labels = {}, scopes, onChange 
   return <div className="mt-3">
     <div className="flex items-center justify-between gap-4">
       <div className="text-[13px] text-ink-secondary">
-        {limited ? uiText("ui.AccessSection.a752a1f26e") : uiText("ui.AccessSection.4743b093d3")}
+        {limited ? t("botAccess.scopes.limited") : t("botAccess.scopes.unlimited")}
       </div>
-      <Switch checked={limited} aria-label={uiText("ui.AccessSection.6a32097b36")} onClick={() => onChange(limited ? null : { apps: {} })} />
+      <Switch checked={limited} aria-label={t("botAccess.scopes.limitLabel")} onClick={() => onChange(limited ? null : { apps: {} })} />
     </div>
     {limited && <div className="mt-2 flex flex-col divide-y divide-hairline/20 rounded-lg bg-inset">
-      {!slugs.length && <div className="px-3 py-2 text-[11.5px] text-ink-secondary">{uiText("ui.AccessSection.2b968e7568")}</div>}
+      {!slugs.length && <div className="px-3 py-2 text-[11.5px] text-ink-secondary">{t("botAccess.scopes.empty")}</div>}
       {slugs.map((slug) => <div key={slug} className="flex flex-wrap items-center justify-between gap-3 px-3 py-1.5">
-        <span className="min-w-0 text-[13px] text-ink">{labels[slug] ?? slug}{!connectedSlugs.includes(slug) && <span className="ml-2 text-[10.5px] text-ink-secondary">{uiText("ui.AccessSection.98b1024757")}</span>}</span>
-        <div className="flex shrink-0 gap-0.5 rounded-md bg-card p-0.5" role="group" aria-label={uiText("ui.AccessSection.11d814fcc5", { value1: String(slug) })}>
-          {([[null, "Off", uiText("ui.AccessSection.166eac5c31")], ["read", "Read", uiText("ui.AccessSection.63c49696db")], ["write", "Read & write", uiText("ui.AccessSection.87d52367e9")]] as const).map(([value, label, hint]) =>
+        <span className="min-w-0 text-[13px] text-ink">{labels[slug] ?? slug}{!connectedSlugs.includes(slug) && <span className="ml-2 text-[10.5px] text-ink-secondary">{t("botAccess.scopes.notConnected")}</span>}</span>
+        <div className="flex shrink-0 gap-0.5 rounded-md bg-card p-0.5" role="group" aria-label={t("botAccess.scopes.accessLabel", { app: slug })}>
+          {([[null, t("botAccess.scopes.off"), t("botAccess.scopes.offHint")], ["read", t("botAccess.scopes.read"), t("botAccess.scopes.readHint")], ["write", t("botAccess.scopes.readWrite"), t("botAccess.scopes.readWriteHint")]] as const).map(([value, label, hint]) =>
             <button key={label} type="button" title={hint} aria-pressed={(scopes?.apps[slug] ?? null) === value} onClick={() => setScope(slug, value)}
               className={cn("rounded px-2 py-0.5 text-[11.5px] font-medium", (scopes?.apps[slug] ?? null) === value ? "bg-raised text-ink" : "text-ink-secondary hover:text-ink")}>{label}</button>)}
         </div>

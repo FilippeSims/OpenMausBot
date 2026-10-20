@@ -1,4 +1,3 @@
-import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ListChecks, RefreshCw, X } from "lucide-react";
 import { useStore, type Bot } from "@/state/store";
@@ -12,6 +11,7 @@ import {
   type ChipTone,
 } from "@/lib/activity";
 import { listenLiveFrames } from "@/lib/live-events";
+import { t } from "@/lib/i18n";
 
 const LIMIT = 300;
 
@@ -94,23 +94,24 @@ export function ActivityPanel({ bot }: { bot: Bot }) {
   };
 
   return (
-    <aside aria-label={uiText("ui.ActivityPanel.ae9d926586", { value1: String(bot.name) })} className="animate-panel-in flex h-full w-[400px] max-w-full shrink-0 flex-col border-l border-hairline/40 bg-panel max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-30">
+    <aside aria-label={t("activity.panel.aria", { name: bot.name })} className="animate-panel-in flex h-full w-[400px] max-w-full shrink-0 flex-col border-l border-hairline/40 bg-panel max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-30">
       <div {...dragProps} className={cn("flex items-center justify-between px-4 py-3", padClass)}>
         <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-          <ListChecks size={16} className="text-ink-secondary" />{uiText("settings.section.activity")}</span>
+          <ListChecks size={16} className="text-ink-secondary" /> {t("activity.panel.title")}
+        </span>
         <span className="flex items-center gap-1">
           <button
             onClick={() => void load()}
             className="rounded-md p-1 text-ink-secondary hover:bg-raised hover:text-ink"
-            title={uiText("screenLoad.reload")}
-            aria-label={uiText("ui.ActivityPanel.10d39b0ca3")}
+            title={t("activity.panel.reload")}
+            aria-label={t("activity.panel.reload")}
           >
             <RefreshCw size={14} />
           </button>
           <button
             onClick={() => dispatch({ type: "toggleActivity", open: false })}
-            aria-label={uiText("ui.ActivityPanel.9bf43d5ad7")}
-            title={uiText("ui.ActivityPanel.9bf43d5ad7")}
+            aria-label={t("activity.panel.close")}
+            title={t("activity.panel.close")}
             className="rounded-md p-1 text-ink-secondary hover:bg-raised hover:text-ink"
           >
             <X size={18} />
@@ -118,14 +119,18 @@ export function ActivityPanel({ bot }: { bot: Bot }) {
         </span>
       </div>
 
-      <p className="border-b border-hairline/40 px-4 pb-3 text-[12px] text-ink-secondary">{uiText("ui.ActivityPanel.5ee9f82311")} {bot.name} {uiText("ui.ActivityPanel.de50eddf54")}</p>
+      <p className="border-b border-hairline/40 px-4 pb-3 text-[12px] text-ink-secondary">
+        {t("activity.panel.subtitle", { name: bot.name })}
+      </p>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {error && <div className="px-4 py-3 text-[13px] text-danger">{uiText("ui.ActivityPanel.9de6ea1763")} {error}</div>}
+        {error && <div className="px-4 py-3 text-[13px] text-danger">{t("activity.panel.error", { message: error })}</div>}
         {rows && rows.length === 0 && !error && (
-          <div className="px-4 py-6 text-[13px] text-ink-secondary">{uiText("ui.ActivityPanel.f205751213")} {bot.name} {uiText("ui.ActivityPanel.bcca30675f")}</div>
+          <div className="px-4 py-6 text-[13px] text-ink-secondary">
+            {t("activity.panel.empty", { name: bot.name })}
+          </div>
         )}
-        {!rows && !error && <div className="px-4 py-6 text-[13px] text-ink-secondary">{uiText("skills.library.loading")}</div>}
+        {!rows && !error && <div className="px-4 py-6 text-[13px] text-ink-secondary">{t("activity.panel.loading")}</div>}
         {days.map((day) => (
           <section key={day.key}>
             <h3 className="sticky top-0 bg-panel px-4 pt-3 pb-1 text-[11px] font-semibold tracking-wide text-ink-secondary uppercase">
@@ -148,7 +153,7 @@ function ActivityLine({ row, current, onJump }: { row: ActivityRow; current: boo
       type="button"
       onClick={onJump}
       className="flex w-full items-start gap-3 border-b border-hairline/20 px-4 py-2 text-left hover:bg-raised/60"
-      title={current ? row.tool : uiText("ui.ActivityPanel.cc5186569a", { value1: String(row.tool) })}
+      title={current ? row.tool : t("activity.panel.openOtherTask", { tool: row.tool })}
     >
       <span className="mt-[2px] shrink-0 tabular-nums text-[11px] text-ink-secondary">{formatActivityTime(row.at)}</span>
       <span className="min-w-0 flex-1">

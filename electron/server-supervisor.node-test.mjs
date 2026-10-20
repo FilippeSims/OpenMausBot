@@ -1,3 +1,4 @@
+import { desktopText } from "./desktop-i18n.mjs";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -254,6 +255,7 @@ function runForget(state) {
     slog: () => {},
     session: { defaultSession: { fetch: async () => ({ ok: true }), clearStorageData: async () => {} } },
   };
+  ctx.desktopText = desktopText;
   const context = vm.createContext(ctx);
   vm.runInContext(`${MAIN_SOURCE.slice(start, end)}; this.forgetEnvironment = forgetEnvironment;`, context);
   return { calls, context, rmOptions };
@@ -326,7 +328,7 @@ function switchFixture(t, { startResults = [], releaseLeaseThrows = false, stopU
   t.after(() => rmSync(targetDir, { recursive: true, force: true }));
   const forks = [];
   let forkIndex = 0;
-  const context = vm.createContext({
+  const context = vm.createContext({ desktopText,
     app: { isPackaged: true },
     localSwitchInFlight: false,
     runningDataDir: null,
@@ -406,5 +408,5 @@ test("boot reads the environment decision before the boot lease and never create
   const lease = boot.indexOf("acquireDataDirLease(");
   assert.ok(decision > 0 && decision < lease, "the missing-dir decision must precede the boot lease");
   assert.match(boot, /activeId: LOCAL_ID/);
-  assert.match(boot, /showErrorBox\(\s*"[^"]*missing[^"]*"/i);
+  assert.match(boot, /showErrorBox\(\s*desktopText\("[^"]*missing[^"]*"\)/i);
 });

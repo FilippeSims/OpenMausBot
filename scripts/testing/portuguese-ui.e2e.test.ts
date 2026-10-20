@@ -44,7 +44,7 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
     const saved = async () => (await api("/api/bots?messages=0")).bots.find((bot: { id: string }) => bot.id === fixture.botId);
     await api(`/api/bots/${fixture.botId}`, { name: "Locale Bot", description: "Keep this exact English note" });
     await api("/api/config", { language: "pt-br" });
-    await ui("eval", "--js", "location.reload(); true");
+    await ui("eval", "--js", "localStorage.setItem('omb-advanced-mode', '1'); location.reload(); true");
     await expect.poll(() => evaluate("document.documentElement.lang"), { timeout: 15_000 }).toBe("pt-BR");
     await expect.poll(snapshot, { timeout: 15_000 }).toContain("Locale Bot Renomear Locale Bot");
     await click("button", /^Locale Bot Renomear Locale Bot(?: |$)/);
@@ -88,6 +88,19 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
     expect(settings).not.toMatch(/App language|All settings|Model providers/);
     await ui("screenshot", "--out", fixture.logPath + ".portuguese-settings.png");
     expect((await saved()).description).toBe("Keep this exact English note");
+    await evaluate("localStorage.setItem('omb-advanced-mode', '0'); location.reload(); true");
+    await expect.poll(snapshot, { timeout: 15_000 }).toContain("Locale Bot Renomear Locale Bot");
+    await click("button", /^Locale Bot Renomear Locale Bot(?: |$)/);
+    await click("button", /Abrir o perfil de Locale Bot/);
+    await click("tab", "Configurações");
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain('switch "Chefe Geral"');
+    await click("switch", "Chefe Geral");
+    await expect.poll(async () => (await saved()).globalChief, { timeout: 10_000 }).toBe(true);
+    const simplePermissions = await snapshot();
+    expect(simplePermissions).not.toContain('switch "Chefe do time"');
+    await ui("screenshot", "--out", fixture.logPath + ".portuguese-simple.png");
+    await click("switch", "Chefe Geral");
+    await expect.poll(async () => (await saved()).globalChief, { timeout: 10_000 }).toBe(false);
     writeFileSync(fixture.logPath + ".portuguese.json", JSON.stringify({ permissions, identity, settings, screenshot, final: await saved(), logPath: fixture.logPath }, null, 2));
     console.log("Portuguese UI evidence:", fixture.logPath + ".portuguese.json");
   } catch (failure) {

@@ -42,11 +42,12 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
     const general = (await api("/api/bots", { name: "General Chief" }, "POST")).bot;
     await api(`/api/bots/${general.id}`, { chiefOfStaff: true });
     await api(`/api/bots/${info.botId}`, { name: "Director", section: "Leadership" });
-    await ui("eval", "--js", "location.reload(); true");
+    await ui("eval", "--js", "localStorage.setItem('omb-advanced-mode', '1'); location.reload(); true");
     await expect.poll(snapshot, { timeout: 15_000 }).toContain("Actions for Director");
     await clickRole("button", /^Director Rename Director /);
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Open Director's profile");
     await clickRole("button", "Open Director's profile");
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain('button "Permissions"');
     await clickRole("button", "Permissions");
     await expect.poll(snapshot, { timeout: 10_000 }).toContain('switch "Global Chief"');
     await clickRole("switch", "Global Chief");

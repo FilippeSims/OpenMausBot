@@ -18,6 +18,7 @@ import {
 import { api, useStore, type Action, type Bot } from "@/state/store";
 import { useCaptionChrome } from "@/components/DesktopCapabilities";
 import { cn } from "@/lib/cn";
+import { t } from "@/lib/i18n";
 import { parseComputerHelp, transitionComputerControlLease } from "@/lib/computer-control";
 import {
   initialLocalVmWorkspaceSlots,
@@ -259,7 +260,7 @@ function LocalVmPane({
 }: LocalVmPaneProps) {
   const contextId = SLOT_CONTEXTS[index];
   const botId = bot?.id ?? null;
-  const botName = bot?.name ?? uiText("settings.section.computer");
+  const botName = bot?.name ?? t("vm.workspace.localVm");
   const viewportRef = useRef<HTMLDivElement>(null);
   const operationRef = useRef<Promise<void>>(Promise.resolve());
   const obscuredRef = useRef(obscured);
@@ -311,7 +312,7 @@ function LocalVmPane({
       if (bridge) await bridge.close(contextId).catch(() => {});
       if (!alive || !botId) return;
       if (!bridge) {
-        setError(uiText("ui.LocalVmWorkspace.2ba652df31"));
+        setError(t("vm.workspace.desktopRequired"));
         return;
       }
       try {
@@ -359,8 +360,8 @@ function LocalVmPane({
         if (!alive || controller.signal.aborted) return;
         setError(
           cause instanceof Error && cause.message === "layout-unavailable"
-            ? uiText("ui.LocalVmWorkspace.14f6af07d5")
-            : uiText("ui.LocalVmWorkspace.64f6e378c8"),
+            ? t("vm.workspace.layoutUnavailable")
+            : t("vm.workspace.connectFailed"),
         );
       }
     };
@@ -393,7 +394,7 @@ function LocalVmPane({
     if (!bridge || !bounds || !nativeState.open) return;
     void bridge
       .layout([{ contextId, bounds, visible: !obscured }])
-      .catch(() => setError(uiText("ui.LocalVmWorkspace.4a1203257d")));
+      .catch(() => setError(t("vm.workspace.positionFailed")));
   }, [contextId, nativeState.open, obscured]);
 
   useEffect(() => {
@@ -430,7 +431,7 @@ function LocalVmPane({
             onChange={(event) => onSelect(event.target.value || null)}
             disabled={controlPending}
           >
-            <option value="">{uiText("ui.LocalVmWorkspace.f649cc74b8")}</option>
+            <option value="">{t("vm.workspace.chooseBot")}</option>
             {bots.map((candidate) => (
               <option key={candidate.id} value={candidate.id} disabled={candidate.id === otherBotId}>
                 {candidate.name}
@@ -450,7 +451,7 @@ function LocalVmPane({
                       : "bg-ink-secondary/50",
               )}
             />
-            {active ? uiText("ui.LocalVmWorkspace.c5d7d8b78b") : heldElsewhere ? uiText("ui.LocalVmWorkspace.f88ff1923e") : label}
+            {active ? t("vm.workspace.youHaveControl") : heldElsewhere ? t("vm.workspace.controlElsewhere") : label}
           </div>
         </div>
         {bot && active ? (
@@ -460,17 +461,19 @@ function LocalVmPane({
             disabled={controlPending}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-2.5 py-2 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50"
           >
-            {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />} {uiText("browser.control.handBack")} </button>
+            {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />}
+            {t("vm.workspace.handBack")}
+          </button>
         ) : bot ? (
           <button
             type="button"
             onClick={() => onTake(bot.id)}
             disabled={!canDrive || controlPending || heldElsewhere}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-raised px-2.5 py-2 text-[12px] text-ink hover:bg-raised-hover disabled:opacity-45"
-            title={uiText("ui.LocalVmWorkspace.5ce7302ff4")}
+            title={t("vm.workspace.takeControlTitle")}
           >
             {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />}
-            {heldElsewhere ? uiText("ui.LocalVmWorkspace.34eabad2bf") : uiText("browser.control.take")}
+            {heldElsewhere ? t("vm.workspace.heldElsewhere") : t("vm.workspace.takeControl")}
           </button>
         ) : null}
       </div>
@@ -484,24 +487,26 @@ function LocalVmPane({
           {!bot ? (
             <div className="flex max-w-[260px] flex-col items-center gap-2 text-ink-secondary">
               <Monitor size={22} />
-              <span className="text-[12px]">{uiText("ui.LocalVmWorkspace.58dca820c4")}</span>
+              <span className="text-[12px]">{t("vm.workspace.chooseAnother")}</span>
             </div>
           ) : !status && !error ? (
             <div className="flex items-center gap-2 text-[12px] text-ink-secondary">
-              <Loader2 size={15} className="animate-spin" />{uiText("ui.LocalVmWorkspace.0dfe1d63c9")} {bot.name}{uiText("ui.LocalVmWorkspace.862a17ed95")}</div>
+              <Loader2 size={15} className="animate-spin" /> {t("vm.workspace.checking", { name: bot.name })}
+            </div>
           ) : status?.ready && nativeState.status !== "error" && !error ? (
             <div className="flex items-center gap-2 text-[12px] text-ink-secondary">
-              <Loader2 size={15} className="animate-spin" />{uiText("ui.LocalVmWorkspace.596d4040b5")}</div>
+              <Loader2 size={15} className="animate-spin" /> {t("vm.workspace.connecting")}
+            </div>
           ) : (
             <div className="flex max-w-[300px] flex-col items-center gap-3 text-ink-secondary">
               <AlertTriangle size={21} className="text-warning" />
               <div className="text-[12px] leading-relaxed">
                 {error ??
                   (status?.container === "missing"
-                    ? uiText("ui.LocalVmWorkspace.8fcc5be5ed", { value1: String(bot.name) })
+                    ? t("vm.workspace.notCreated", { name: bot.name })
                     : status?.container === "stopped"
-                      ? uiText("ui.LocalVmWorkspace.2b0564b8c5", { value1: String(bot.name) })
-                      : uiText("ui.LocalVmWorkspace.2d5536f0a9", { value1: String(bot.name) }))}
+                      ? t("vm.workspace.stopped", { name: bot.name })
+                      : t("vm.workspace.notReady", { name: bot.name }))}
               </div>
               <div className="flex gap-2">
                 <button
@@ -509,12 +514,15 @@ function LocalVmPane({
                   onClick={() => setRetry((value) => value + 1)}
                   className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-2 text-[12px] text-ink hover:bg-raised-hover"
                 >
-                  <RefreshCw size={13} />{uiText("ui.LocalVmWorkspace.bd13bebaa8")}</button>
+                  <RefreshCw size={13} /> {t("vm.workspace.retryStatus")}
+                </button>
                 <button
                   type="button"
                   onClick={() => onOpenComputer(bot.id)}
                   className="rounded-lg bg-raised px-3 py-2 text-[12px] text-ink hover:bg-raised-hover"
-                >{uiText("ui.LocalVmWorkspace.a2b6428e3c")}</button>
+                >
+                  {t("vm.workspace.openComputer")}
+                </button>
               </div>
             </div>
           )}
@@ -583,7 +591,7 @@ export function LocalVmWorkspace({
       },
       async setInteractive(contextId) {
         const bridge = window.ogb?.desktopWorkspace;
-        if (!bridge) throw new Error(uiText("ui.LocalVmWorkspace.effdfa7e30"));
+        if (!bridge) throw new Error(t("vm.workspace.bridgeUnavailable"));
         return bridge.setInteractive(contextId);
       },
     }),
@@ -625,7 +633,7 @@ export function LocalVmWorkspace({
         setControlledBotId(null);
       })
       .catch(() => {
-        setControlError(uiText("ui.LocalVmWorkspace.aba48dfe94"));
+        setControlError(t("vm.workspace.handoffFailed"));
       });
   }, [controlPort, slots]);
 
@@ -692,7 +700,7 @@ export function LocalVmWorkspace({
           ...controlPort,
           async setInteractive(nextContextId) {
             if (nextContextId && contextForBot(botId) !== nextContextId) {
-              throw new Error(uiText("ui.LocalVmWorkspace.0e894102c6"));
+              throw new Error(t("vm.workspace.paneChanged"));
             }
             return controlPort.setInteractive(nextContextId);
           },
@@ -705,7 +713,7 @@ export function LocalVmWorkspace({
         );
         setControlledBotId(null);
         if (result.status === "held-elsewhere") {
-          setControlError(uiText("ui.LocalVmWorkspace.464dcf0296"));
+          setControlError(t("vm.workspace.alreadyControlled"));
           return;
         }
         if (!mountedRef.current) {
@@ -758,8 +766,10 @@ export function LocalVmWorkspace({
           <Monitor size={18} />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[14px] font-semibold text-ink">{uiText("ui.LocalVmWorkspace.938153ddd0")}</h1>
-          <p className="truncate text-[11.5px] text-ink-secondary">{uiText("ui.LocalVmWorkspace.f519bbc57b")}</p>
+          <h1 className="truncate text-[14px] font-semibold text-ink">{t("vm.workspace.viewTitle")}</h1>
+          <p className="truncate text-[11.5px] text-ink-secondary">
+            Two live desktops · one active controller · watch-only by default
+          </p>
         </div>
         <button
           type="button"

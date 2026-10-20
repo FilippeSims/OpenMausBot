@@ -2,7 +2,7 @@ import { activeMemoryText, type MemoryIndexDocument, type MemoryIndexScope, type
 import { memoryOverview, readMemoryDoc } from "./memory-store.ts";
 import { sectionContextKey } from "./section-context.ts";
 import type { TeamMemory } from "./team-memory.ts";
-import { memoryDate, MEMORY_SEED } from "./workspace.ts";
+import { memoryDate, isMemorySeed } from "./workspace.ts";
 import { redactSecretsInText } from "./redact.ts";
 import { recallTerms } from "./message-db.ts";
 
@@ -12,7 +12,7 @@ export function botMemoryScope(botId: string, metadata: (path: string, hash: str
   const documents: MemoryIndexDocument[] = [];
   for (const path of paths) {
     const document = readMemoryDoc(botId, path);
-    if (path === "MEMORY.md" && document.text === MEMORY_SEED) continue;
+    if (path === "MEMORY.md" && isMemorySeed(document.text)) continue;
     if (Buffer.byteLength(document.text, "utf8") > 256 * 1_024) continue;
     const text = activeMemoryText(document.text, memoryDate());
     if (text) documents.push({ id: path, text, source: path, metadata: { bot_id: botId, ...metadata(path, document.hash) } });

@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { roomThreadsWorkingElsewhere } from "@/lib/room-threads";
 import { useMenuMotion } from "./MenuMotion";
 import { t } from "@/lib/i18n";
+import { localizedTaskTitle } from "@/lib/task-title";
 import { COMPACT_BUBBLE } from "@/lib/compact-chip";
 import { formatTaskTokens, headlineTokens, usageDetail } from "@/lib/usage";
 import { nextRename } from "@/lib/rename";
@@ -344,7 +345,7 @@ function ConversationTaskPicker({
                       className="min-w-0 flex-1 text-left"
                       title={t("task.renameHint")}
                     >
-                      <div dir="auto" className="truncate text-[13px] text-ink">{task.title}</div>
+                      <div dir="auto" className="truncate text-[13px] text-ink">{localizedTaskTitle(task.title)}</div>
                       <div className="text-[11px] text-ink-secondary">
                         {task.activity === "waiting-on-you" ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.waiting")) }) : task.waitingForTeammates ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.waitingOnTeammate")) }) : task.busy ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("chat.activity.working")) }) : task.unread ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.unread")) }) : ""}
                         <TaskUpdatedTime task={task} now={now} />

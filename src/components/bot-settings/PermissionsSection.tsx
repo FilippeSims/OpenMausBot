@@ -1,4 +1,3 @@
-import { t as uiText } from "@/lib/i18n";
 // LocalComputerAutoWarning remembers its bot, so a bot switch while it is up never applies the choice to the new bot.
 import { useEffect, useState } from "react";
 import { Crown } from "lucide-react";
@@ -18,19 +17,25 @@ import { ProposalStatus } from "./ProposalStatus";
 import type { useBotSettingsDerived } from "./useBotSettingsDerived";
 import { useBotEditor } from "./BotEditorContext";
 
+export type PermissionsPart = "chief" | "globalChief" | "peers" | "approval" | "outbound";
+
 export function PermissionsSection({
   bot,
   derived,
+  parts,
 }: {
   bot: Bot;
   derived: ReturnType<typeof useBotSettingsDerived>;
+  parts?: readonly PermissionsPart[];
 }) {
   const { patch, engine, canCoordinate, approvalMode, trustedModesAvailable, sectionName, currentChief } = derived;
   const { state, dispatch } = useStore();
   const ownerOrAdmin = useOwnerOrAdmin();
   const { draft } = useBotEditor();
+  const displaySectionName = sectionName === "General" ? t("botAccess.teams.general") : sectionName;
   const [localAutoWarning, setLocalAutoWarning] = useState<string | null>(null);
   const [commandAllowlistTarget, setCommandAllowlistTarget] = useState<{ botId: string; botName: string } | null>(null);
+  const shows = (part: PermissionsPart) => !parts || parts.includes(part);
   const applyFullEverywhere = () =>
     dispatch({ type: "updateBot", botId: bot.id, patch: { approvalMode: "full", applyToAllThreads: true } });
   const setApprovalMode = (mode: ApprovalMode) => {
@@ -48,7 +53,7 @@ export function PermissionsSection({
 
   return (
     <div className="flex flex-col gap-4">
-      {ownerOrAdmin && !draft && <div className={cn("rounded-xl border p-4", bot.globalChief ? "border-accent/40 bg-accent/10" : "border-hairline/40 bg-card")}>
+      {(shows("globalChief") || shows("chief")) && ownerOrAdmin && !draft && <div className={cn("rounded-xl border p-4", bot.globalChief ? "border-accent/40 bg-accent/10" : "border-hairline/40 bg-card")}>
         <div className="flex items-center gap-3">
           <Crown size={20} className="text-accent" />
           <div className="min-w-0 flex-1">
@@ -63,7 +68,7 @@ export function PermissionsSection({
         <p className="mt-2 text-[12px] leading-relaxed text-ink-secondary">{t("globalChief.privacy")}</p>
         {!bot.globalChief && state.bots.some(member => member.globalChief) && <p className="mt-2 text-[12px] text-ink-secondary">{t("globalChief.handover")}</p>}
       </div>}
-      {!bot.globalChief && <div
+      {shows("chief") && !bot.globalChief && <div
         className={cn(
           "rounded-xl border p-4",
           bot.chiefOfStaff ? "border-accent/40 bg-accent/10" : "border-hairline/40 bg-card",
@@ -79,28 +84,28 @@ export function PermissionsSection({
             <Crown size={17} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-medium text-ink">{uiText("teamShare.part.leader")}</div>
-            <div className="text-[11.5px] text-ink-secondary">{uiText("ui.PermissionsSection.19facd6350")} {sectionName}</div>
+            <div className="text-[15px] font-medium text-ink">{t("permissions.chief.title")}</div>
+            <div className="text-[11.5px] text-ink-secondary">{t("permissions.chief.oneFor", { section: displaySectionName })}</div>
           </div>
           <Switch
             checked={Boolean(bot.chiefOfStaff)}
-            aria-label={uiText("teamShare.part.leader")}
+            aria-label={t("permissions.chief.title")}
             disabled={!bot.chiefOfStaff && !canCoordinate}
             onClick={() => patch({ chiefOfStaff: !bot.chiefOfStaff })}
-            title={!bot.chiefOfStaff && !canCoordinate ? uiText("ui.PermissionsSection.2a02ec6dd5") : undefined}
+            title={!bot.chiefOfStaff && !canCoordinate ? t("permissions.cannotCoordinate") : undefined}
             className="disabled:cursor-not-allowed"
           />
         </div>
         <div className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
           {bot.chiefOfStaff && !canCoordinate
-            ? uiText("ui.PermissionsSection.cdb55f1b7c")
+            ? t("permissions.chief.unsupportedCurrent")
             : bot.chiefOfStaff
-              ? uiText("ui.PermissionsSection.c82f803642", { value1: String(sectionName) })
+              ? t("permissions.chief.active", { section: displaySectionName })
               : !canCoordinate
-                ? uiText("ui.PermissionsSection.e6fd08fc36")
+                ? t("permissions.chief.unsupported")
                 : currentChief
-                  ? uiText("ui.PermissionsSection.4b7ed11594", { value1: String(sectionName), value2: String(currentChief.name) })
-                  : uiText("ui.PermissionsSection.cfda74d20d", { value1: String(sectionName) })}
+                  ? t("permissions.chief.replace", { section: displaySectionName, current: currentChief.name })
+                  : t("permissions.chief.make", { section: displaySectionName })}
         </div>
         <ProposalStatus bot={bot} kind="chief" />
         {bot.chiefOfStaff && <ManagedTeamsSettings
@@ -113,30 +118,30 @@ export function PermissionsSection({
         {bot.chiefOfStaff && <ProposalStatus bot={bot} kind="owner" />}
       </div>}
 
-      <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
+      {shows("peers") && <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
         <div>
-          <div className="text-[15px] font-medium text-ink">{uiText("ui.PermissionsSection.9450910319")}</div>
+          <div className="text-[15px] font-medium text-ink">{t("permissions.peers.title")}</div>
           <div className="mt-0.5 text-[13px] text-ink-secondary">
             {bot.approvePeerComms
-              ? uiText("ui.PermissionsSection.61164d47cf")
-              : uiText("ui.PermissionsSection.8c759157e0")}
+              ? t("permissions.peers.on")
+              : t("permissions.peers.off")}
           </div>
           <ProposalStatus bot={bot} kind="owner" />
         </div>
         <Switch
           checked={Boolean(bot.approvePeerComms)}
-          aria-label={uiText("ui.PermissionsSection.9450910319")}
+          aria-label={t("permissions.peers.title")}
           disabled={!bot.approvePeerComms && !canCoordinate}
           onClick={() => patch({ approvePeerComms: !bot.approvePeerComms })}
-          title={!bot.approvePeerComms && !canCoordinate ? uiText("ui.PermissionsSection.2a02ec6dd5") : undefined}
+          title={!bot.approvePeerComms && !canCoordinate ? t("permissions.cannotCoordinate") : undefined}
           className="disabled:cursor-not-allowed"
         />
-      </div>
+      </div>}
 
-      <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("teamSettings.tab.approval")}</div>
+      {shows("approval") && <div className="rounded-xl bg-card p-4">
+        <div className="text-[15px] font-medium text-ink">{t("permissions.approval.title")}</div>
         <div className="mt-0.5 text-[13px] text-ink-secondary">
-          {draft ? uiText("ui.PermissionsSection.2011b58393") : uiText("ui.PermissionsSection.2399bf45b1")}
+          {draft ? t("permissions.approval.draft") : t("permissions.approval.help")}
         </div>
         <ProposalStatus bot={bot} kind="owner" />
         <div className="mt-3">
@@ -157,20 +162,20 @@ export function PermissionsSection({
           type="button" disabled={Boolean(bot.busy)}
           className="mt-3 text-[13px] text-accent hover:underline disabled:opacity-40"
           onClick={applyFullEverywhere}
-        >{uiText("ui.PermissionsSection.b2db906c8a")}</button>}
+        >{t("permissions.approval.applyFull")}</button>}
         {!draft && ownerOrAdmin === true && <button
           type="button"
           className="mt-3 block text-[13px] text-accent hover:underline"
           onClick={() => setCommandAllowlistTarget({ botId: bot.id, botName: bot.name })}
         >{t("commandAllowlist.manage")}</button>}
-      </div>
+      </div>}
 
       {commandAllowlistTarget && <CommandAllowlistDialog
         key={`command-allowlist:${commandAllowlistTarget.botId}`}
         {...commandAllowlistTarget}
         onClose={() => setCommandAllowlistTarget(null)}
       />}
-      {!draft && <OutboundControl key={bot.id} bot={bot} onChange={(outbound) => patch({ outbound })} />}
+      {!draft && shows("outbound") && <OutboundControl key={bot.id} bot={bot} onChange={(outbound) => patch({ outbound })} />}
       <LocalComputerAutoWarning
         open={localAutoWarning !== null}
         onCancel={() => setLocalAutoWarning(null)}
@@ -218,13 +223,15 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
 
   return (
     <div className="rounded-xl bg-card p-4">
-      <div className="text-[15px] font-medium text-ink">{uiText("ui.PermissionsSection.38c45167f7")}</div>
-      <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.PermissionsSection.2967fc7efe")}</div>
+      <div className="text-[15px] font-medium text-ink">{t("permissions.outbound.title")}</div>
+      <div className="mt-0.5 text-[13px] text-ink-secondary">
+        {t("permissions.outbound.help")}
+      </div>
       <div className="mt-3 flex gap-1 rounded-lg bg-inset p-0.5">
         {(
           [
-            ["ask", uiText("ui.PermissionsSection.91da6bc629"), uiText("ui.PermissionsSection.3d5ff01e52")],
-            ["allow", uiText("ui.PermissionsSection.ab8b05e8b6"), uiText("ui.PermissionsSection.2ae5244868")],
+            ["ask", t("permissions.outbound.ask"), t("permissions.outbound.askHint")],
+            ["allow", t("permissions.outbound.allow"), t("permissions.outbound.allowHint")],
           ] as const
         ).map(([value, label, hint]) => (
           <button
@@ -246,7 +253,9 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
       </div>
       {policy.policy === "allow" && (
         <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-ink-secondary">
-          <label className="flex items-center gap-2"> {uiText("ui.PermissionsSection.3e2884632c")} <input
+          <label className="flex items-center gap-2">
+            {t("permissions.outbound.upTo")}
+            <input
               type="number"
               min={1}
               max={1000}
@@ -256,11 +265,13 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
               onKeyDown={(event) => {
                 if (event.key === "Enter") (event.target as HTMLInputElement).blur();
               }}
-              aria-label={uiText("ui.PermissionsSection.9408c89b8d")}
+              aria-label={t("permissions.outbound.dailyLimit")}
               className="w-20 rounded-md bg-inset px-2 py-1 text-[13px] text-ink tabular-nums outline-none focus:ring-1 focus:ring-accent"
-            />{uiText("ui.PermissionsSection.4ed042e01c")}</label>
+            />
+            {t("permissions.outbound.perDay")}
+          </label>
           <span className="tabular-nums">
-            {today === null ? "" : uiText("ui.PermissionsSection.e364d13fc3", { value1: String(today), value2: String(policy.dailyCap) })}
+            {today === null ? "" : t("permissions.outbound.usedToday", { today, cap: policy.dailyCap })}
           </span>
         </div>
       )}

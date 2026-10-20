@@ -540,7 +540,7 @@ describe("Store", () => {
   });
 
   it("createBot seeds a greeting without promising engine-specific tools", () => {
-    const store = new Store(selection);
+    const store = new Store(selection, undefined, undefined, "en");
     const bot = store.createBot();
 
     const messages = store.messagesFor(bot.threadId);
@@ -551,6 +551,15 @@ describe("Store", () => {
       text: `Hi, I'm ${bot.name}. What would you like me to do?`,
     });
     expect(bot.modelSelection).toEqual(selection());
+  });
+
+  it("reads the current language when creating a bot", () => {
+    let language = "en";
+    const store = new Store(selection, undefined, undefined, () => language);
+    language = "pt-BR";
+
+    const bot = store.createBot();
+    expect(store.messagesFor(bot.threadId)[0]?.text).toBe(`Oi, eu sou ${bot.name}. O que você gostaria que eu fizesse?`);
   });
 
   it("clears provider-owned voice ids as one durable mutation", () => {
@@ -1818,7 +1827,7 @@ describe("Store change stream", () => {
     const titled = store.titleGroupTaskFromFirstMessage(group.id, "Audit the payroll", task.threadId);
     expect(titled?.threadId).toBe(task.threadId);
     expect(titled?.title).toBe("Audit the payroll");
-    store.renameGroupTask(group.id, task.threadId, "Payroll audit");
+    store.patchGroupTask(group.id, task.threadId, { title: "Payroll audit" });
     expect(store.retitleGroupTask(group.id, task.threadId, "Audit the payroll", "Payroll checks")).toBeNull();
     expect(store.activeGroupTask(group.id)!.title).toBe("Payroll audit");
     const fresh = store.createGroupTask(group.id)!.threadId;

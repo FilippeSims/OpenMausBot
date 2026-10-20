@@ -65,7 +65,7 @@ export function offersLocalModels(instance: InstanceInfo | undefined, localCount
 }
 
 export function effortLabel(level: EffortLevel): string {
-  return level === "xhigh" ? "X-High" : level[0].toUpperCase() + level.slice(1);
+  return t(`model.effort.${level}` as Parameters<typeof t>[0]);
 }
 
 /**
@@ -99,10 +99,10 @@ export function EffortRow({
   if (compact) return (
     <label className={cn("flex items-center justify-between gap-3", className)}>
       {label}
-      <Select size="sm" className="max-w-[65%]" aria-label={uiText("model.simple.effort")} value={selection.effort ?? ""}
+      <Select size="sm" className="max-w-[65%]" aria-label={t("model.effort.label")} value={selection.effort ?? ""}
         onChange={(event) => dispatch({ type: "setModel", botId: bot.id, threadId, ...(updateBotDefault ? { updateBotDefault: true } : {}),
           selection: { ...selection, effort: levels.find((level) => level === event.target.value) } })}>
-        <option value="">{uiText("botSettings.replyStyle.default")}</option>
+        <option value="">{t("model.effort.default")}</option>
         {levels.map((level) => <option key={level} value={level}>{effortLabel(level)}</option>)}
       </Select>
     </label>
@@ -111,7 +111,7 @@ export function EffortRow({
   return (
     <div className={className}>
       {label}
-      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={uiText("model.simple.effort")}>
+      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={t("model.effort.label")}>
         {[undefined, ...levels].map((level) => (
           <button
             key={level ?? "default"}
@@ -119,8 +119,8 @@ export function EffortRow({
             aria-pressed={selection.effort === level}
             title={
               level === undefined
-                ? uiText("ui.ModelPicker.8619e981c1")
-                : uiText("ui.ModelPicker.414eaeb99c", { value1: String(effortLabel(level)) })
+                ? t("model.effort.noLevel")
+                : t("model.effort.ask", { level: effortLabel(level) })
             }
             onClick={() => dispatch({ type: "setModel", botId: bot.id, threadId, ...(updateBotDefault ? { updateBotDefault: true } : {}), selection: { ...selection, effort: level } })}
             className={cn(
@@ -130,7 +130,7 @@ export function EffortRow({
                 : "border-hairline/40 text-ink-secondary hover:bg-control/60 hover:text-ink",
             )}
           >
-            {level === undefined ? uiText("botSettings.replyStyle.default") : effortLabel(level)}
+            {level === undefined ? t("model.effort.default") : effortLabel(level)}
           </button>
         ))}
       </div>
@@ -139,7 +139,7 @@ export function EffortRow({
 }
 
 function variantLabel(option: ModelVariantOption): string {
-  return option.id === "default" ? uiText("ui.ModelPicker.394bb010a6") : option.label;
+  return option.id === "default" ? t("model.variant.openCodeDefault") : option.label;
 }
 
 /** ACP variant ids are opaque; their model/session declares the available choices. */
@@ -172,15 +172,15 @@ export function ModelVariantRow({ bot, threadId, updateBotDefault, className, la
     <div className={className}>
       <label className="flex items-center justify-between gap-3">
         {label}
-        <Select size="sm" aria-label={uiText("ui.ModelPicker.a9945f16f4")} disabled={bot.busy} className={wide ? "flex-1" : "max-w-[65%]"}
+        <Select size="sm" aria-label={t("model.variant.label")} disabled={bot.busy} className={wide ? "flex-1" : "max-w-[65%]"}
           value={selection.variant === undefined ? "unset" : missing ? "missing" : String(options.findIndex((option) => option.id === selection.variant))}
           onChange={(event) => choose(options[Number(event.target.value)]?.id)}>
-          <option value="unset">{uiText("ui.ModelPicker.30241b4860")}</option>
-          {missing && <option value="missing" disabled>{selection.variant} ({unavailable ? uiText("ui.ModelPicker.ba691ba042") : uiText("ui.ModelPicker.97b7e2db79")})</option>}
+          <option value="unset">{t("model.variant.session")}</option>
+          {missing && <option value="missing" disabled>{selection.variant} ({unavailable ? t("model.variant.unavailable") : t("model.variant.unverified")})</option>}
           {options.map((option, index) => <option key={option.id} value={String(index)}>{variantLabel(option)}</option>)}
         </Select>
       </label>
-      {missing && <p className="mt-1 text-[11px] text-ink-secondary">{unavailable ? uiText("ui.ModelPicker.d89f8ddb5c") : uiText("ui.ModelPicker.cc222cf0c0")}</p>}
+      {missing && <p className="mt-1 text-[11px] text-ink-secondary">{unavailable ? t("model.variant.unavailableHelp") : t("model.variant.unverifiedHelp")}</p>}
     </div>
   );
   return (
@@ -188,25 +188,27 @@ export function ModelVariantRow({ bot, threadId, updateBotDefault, className, la
       {label}
       {(selection.variant === undefined || missing) && (
         <p className="mt-2 text-[12px] text-ink-secondary">
-          {unavailable ? uiText("ui.ModelPicker.64cd46f7d4", { value1: String(selection.variant) })
-            : missing ? uiText("ui.ModelPicker.67bdf0600f", { value1: String(selection.variant) }) : uiText("ui.ModelPicker.933a8045dd")}
-          {current !== undefined && uiText("ui.ModelPicker.3cbef69de0", { value1: String(variantLabel(options.find((option) => option.id === current) ?? { id: current, label: current })) })}
+          {unavailable ? t("model.variant.unavailableChoice", { variant: selection.variant ?? "" })
+            : missing ? t("model.variant.unverifiedChoice", { variant: selection.variant ?? "" }) : t("model.variant.none")}
+          {current !== undefined && ` ${t("model.variant.sessionValue", { variant: variantLabel(options.find((option) => option.id === current) ?? { id: current, label: current }) })}`}
         </p>
       )}
       {selection.variant !== undefined && (
         <button type="button" disabled={bot.busy} onClick={() => choose()}
-          title={uiText("ui.ModelPicker.1267e3ec8d")}
-          className="mt-2 block text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink disabled:opacity-50">{uiText("ui.ModelPicker.0c17f853e9")}</button>
+          title={t("model.variant.clearHint")}
+          className="mt-2 block text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink disabled:opacity-50">
+          {t("model.variant.clear")}
+        </button>
       )}
       {options.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={uiText("ui.ModelPicker.a9945f16f4")}>
+        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={t("model.variant.label")}>
           {options.map((option) => (
             <button
               key={option.id}
               type="button"
               disabled={bot.busy}
               aria-pressed={selection.variant === option.id}
-              title={uiText("ui.ModelPicker.9152d811e3", { value1: String(variantLabel(option)) })}
+              title={t("model.variant.use", { variant: variantLabel(option) })}
               onClick={() => choose(option.id)}
               className={cn(
                 "rounded-full border px-2.5 py-1 text-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:opacity-50",
@@ -265,10 +267,10 @@ function ModelRow({
           </span>
         )}
         {option.id === defaultId && (
-          <span className="shrink-0 rounded bg-inset px-1.5 py-px text-[10px] text-ink-secondary">{uiText("botSettings.replyStyle.default")}</span>
+          <span className="shrink-0 rounded bg-inset px-1.5 py-px text-[10px] text-ink-secondary">{t("model.effort.default")}</span>
         )}
         {option.loaded && (
-          <span className="shrink-0 rounded bg-accent/10 px-1.5 py-px text-[10px] text-accent">{uiText("teamMemory.loaded")}</span>
+          <span className="shrink-0 rounded bg-accent/10 px-1.5 py-px text-[10px] text-accent">{t("model.loadedNow")}</span>
         )}
         {botModel && <span data-bot-model className="shrink-0 text-[11px] text-ink-secondary">{t("model.botModelTag")}</span>}
       </span>
@@ -758,7 +760,7 @@ export function ModelPicker({
   const summary = active
     ? `${active.displayName} · ${modelLabel(active, selection.model)}${
         modelProvider(active, selection.model) ? ` · ${modelProvider(active, selection.model)}` : ""
-      }${selectedVariantLabel ? ` · ${selectedVariantLabel}` : selection.effort ? ` · ${effortLabel(selection.effort)} effort` : ""}`
+      }${selectedVariantLabel ? ` · ${selectedVariantLabel}` : selection.effort ? ` · ${t("model.effort.summary", { level: effortLabel(selection.effort) })}` : ""}`
     : selection.model;
   const followLine = follows === true ? `\n${t("model.followsBot", { name: profile.name })}` : follows === false ? `\n${t("model.ownModel")}` : "";
 
@@ -913,16 +915,16 @@ export function ModelPicker({
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
             {threadId && (
               <div className="shrink-0 border-b border-hairline/40 px-3 py-2">
-                <div role="group" aria-label={uiText("ui.ModelPicker.a32914db34")} className="flex gap-1">
+                <div role="group" aria-label={t("model.scope.label")} className="flex gap-1">
                   {(["thread", "bot"] as const).map((value) => (
                     <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)}
                       className={cn("rounded-lg px-2 py-1 text-[12px]", scope === value ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/60")}>
-                      {value === "bot" ? uiText("ui.ModelPicker.d8dbd94252") : uiText("ui.ModelPicker.5090b79730")}
+                      {value === "bot" ? t("model.scope.bot") : t("model.scope.thread")}
                     </button>
                   ))}
                 </div>
                 <p className="mt-1 text-[11px] text-ink-secondary">
-                  {scope === "bot" ? uiText("ui.ModelPicker.68fe68862f") : uiText("ui.ModelPicker.6003effce7")}
+                  {scope === "bot" ? t("model.scope.botHelp") : t("model.scope.threadHelp")}
                 </p>
               </div>
             )}
@@ -1116,7 +1118,7 @@ export function ModelPicker({
                     threadId={threadId}
                     updateBotDefault={Boolean(threadId && scope === "bot")}
                     className="shrink-0 border-t border-hairline/40 px-4 py-2"
-                    label={<span className="text-[12.5px] font-medium text-ink">{active?.capabilities?.modelVariants ? uiText("model.simple.reasoning") : uiText("teamSettings.effort")}</span>}
+                    label={<span className="text-[12.5px] font-medium text-ink">{active?.capabilities?.modelVariants ? t("model.simple.reasoning") : t("model.section.effort")}</span>}
                   />
                 )}
 

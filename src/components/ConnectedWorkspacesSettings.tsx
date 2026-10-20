@@ -70,7 +70,7 @@ export function ConnectedWorkspacesSettings() {
   if (!bridge) return <p className="text-[13px] text-ink-secondary">{uiText("ui.ConnectedWorkspacesSettings.5cd10df866")}</p>;
   const confirmAction = (message: string) => window.ogb?.confirm ? window.ogb.confirm(message) : window.confirm(message);
   const connected = saved?.environments.find(entry => entry.id === computerId);
-  const computerWorkspace = connected?.origin ? { id: connected.id, name: connected.name, origin: connected.origin } : undefined;
+  const computerWorkspace = connected?.origin && !connected.home ? { id: connected.id, name: connected.name, origin: connected.origin } : undefined;
   const locals = saved?.environments.filter(entry => entry.kind === "local") ?? [];
   const forgetEntry = locals.find(entry => entry.id === envForget);
   return <>
@@ -147,13 +147,15 @@ export function ConnectedWorkspacesSettings() {
             return <li key={entry.id} className="flex items-center gap-3 py-3">
               {cloudColor(entry.color) ? <CloudTile color={entry.color} size={20} /> : <Icon size={18} className="shrink-0 text-ink-secondary" />}
               <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-medium text-ink">{entry.name}</div>
-                <div className="break-all text-[12px] text-ink-secondary">{entry.origin || uiText("ui.ConnectedWorkspacesSettings.c38c6013cc")}</div></div>
-              {active ? <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-secondary"><Check size={13} />{uiText("ui.ConnectedWorkspacesSettings.e0d1b68224")}</span> :
-                <button type="button" disabled={busy} aria-label={uiText("ui.ConnectedWorkspacesSettings.429aa8abc9", { value1: String(entry.name) })} onClick={() => void perform(async () => { await bridge.switch(entry.id); return true; })}
-                  className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-50">{uiText("ui.ConnectedWorkspacesSettings.39921a740b")}</button>}
-              {entry.id !== "local" && copyOffered && <button type="button" disabled={busy} aria-label={uiText("ui.ConnectedWorkspacesSettings.efae3eb968", { value1: String(uiText("cloudMove.here")), value2: String(entry.name) })} onClick={() => setCopyId(entry.id)} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">{t("cloudMove.here")}</button>}
-              {entry.id !== "local" && sharingOffered && <button type="button" disabled={busy} aria-label={uiText("ui.ConnectedWorkspacesSettings.a522a14d32", { value1: String(entry.name) })} onClick={() => setComputerId(entry.id)} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">{uiText("ui.ConnectedWorkspacesSettings.4eae04ef42")}</button>}
-              {entry.id !== "local" && <button type="button" disabled={busy} aria-label={uiText("ui.ConnectedWorkspacesSettings.5492466ecf", { value1: String(entry.name) })} title={uiText("ui.ConnectedWorkspacesSettings.5492466ecf", { value1: String(entry.name) })}
+                <div className="break-all text-[12px] text-ink-secondary">{entry.origin || "Local bots and conversations"}</div></div>
+              {active ? <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-secondary"><Check size={13} />Current</span> :
+                <button type="button" disabled={busy} aria-label={`Switch to ${entry.name}`} onClick={() => void perform(async () => { await bridge.switch(entry.id); return true; })}
+                  className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-50">Switch</button>}
+              {entry.id !== "local" && copyOffered && <button type="button" disabled={busy} aria-label={`${t("cloudMove.here")}: ${entry.name}`} onClick={() => setCopyId(entry.id)} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">{t("cloudMove.here")}</button>}
+              {/* My Cloud has one control for what it may use: Let My Cloud use this computer, in Settings → MausBot Cloud. */}
+              {entry.id !== "local" && "home" in entry && entry.home && window.ogb?.cloudLending && <button type="button" disabled={busy} data-cloud-lending-link onClick={() => void window.ogb?.cloudLending?.open().catch(() => {})} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">{t("lending.title")}</button>}
+              {entry.id !== "local" && !("home" in entry && entry.home) && sharingOffered && <button type="button" disabled={busy} aria-label={`Computer access for ${entry.name}`} onClick={() => setComputerId(entry.id)} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">Computer access</button>}
+              {entry.id !== "local" && <button type="button" disabled={busy} aria-label={`Forget ${entry.name}`} title={`Forget ${entry.name}`}
                 onClick={() => void perform(() => bridge.forget(entry.id))} className="rounded-md p-1.5 text-ink-secondary hover:bg-control hover:text-danger disabled:opacity-50"><Trash2 size={14} /></button>}
             </li>;
           })}

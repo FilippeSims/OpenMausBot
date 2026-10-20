@@ -60,6 +60,7 @@ function profiles(): Record<string, Record<string, string>> {
     all[`${name}+cloud-home`] = { ...all[name]!, OMB_CLOUD_HOME: "1" };
   }
   all["skills+shared+voice+escalations"] = { ...all["skills+shared+voice"]!, OMB_ESCALATIONS: "1" };
+  all["skills+shared+voice+escalations+x"] = { ...all["skills+shared+voice+escalations"]!, OMB_X_RESEARCH: "1" };
   all["default+legacy-switches"] = { ...all.default!, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1" };
   return all;
 }
@@ -68,33 +69,34 @@ const PROFILES = profiles();
 /** Refused by the server to every bot that is not a Chief of Staff. */
 const CHIEF_ONLY_TOOLS = ["create_bot", "list_team_setup", "propose_team_setup", "propose_bot_deletion", "create_room", "manage_room", "retry_thread"];
 /** The profile that mounts the most: its bridged list is checked in whole. */
-const FULL = "skills+shared+voice+escalations";
+const FULL = "skills+shared+voice+escalations+x";
 
 /** Bytes of each bridged list when its budget was last set. A list may not
  * exceed this by more than 2%, and may not undercut it by more than 2%
  * either: lock a saving in by lowering the number. A Chief's list is longer
  * than another bot's only by the Chief-only names in find_tool's description. */
 const BUDGET_BASELINE: Record<string, number> = {
-  "default": 15539,
-  "voice": 16280,
-  "shared": 15579,
-  "shared+voice": 16320,
-  "skills": 15566,
-  "skills+voice": 16307,
-  "skills+shared": 15606,
-  "skills+shared+voice": 16347,
-  "non-chief": 15428,
-  "voice+non-chief": 16169,
-  "shared+non-chief": 15468,
-  "shared+voice+non-chief": 16209,
-  "skills+non-chief": 15455,
-  "skills+voice+non-chief": 16196,
-  "skills+shared+non-chief": 15495,
-  "skills+shared+voice+non-chief": 16236,
-  "skills+shared+voice+cloud-home": 15419,
-  "skills+shared+voice+non-chief+cloud-home": 15308,
-  "skills+shared+voice+escalations": 16593,
-  "default+legacy-switches": 15539,
+  "default": 16120,
+  "voice": 16861,
+  "shared": 16160,
+  "shared+voice": 16901,
+  "skills": 16147,
+  "skills+voice": 16888,
+  "skills+shared": 16187,
+  "skills+shared+voice": 16928,
+  "non-chief": 16009,
+  "voice+non-chief": 16750,
+  "shared+non-chief": 16049,
+  "shared+voice+non-chief": 16790,
+  "skills+non-chief": 16036,
+  "skills+voice+non-chief": 16777,
+  "skills+shared+non-chief": 16076,
+  "skills+shared+voice+non-chief": 16817,
+  "skills+shared+voice+cloud-home": 16000,
+  "skills+shared+voice+non-chief+cloud-home": 15889,
+  "skills+shared+voice+escalations": 16946,
+  "skills+shared+voice+escalations+x": 17040,
+  "default+legacy-switches": 16120,
 };
 
 type RpcAnswer = { id: number; result?: { tools?: unknown[]; content?: Array<{ text: string }>; isError?: boolean }; error?: { code: number; message: string } };
@@ -333,7 +335,7 @@ describe("agents proxy with the tool bridge on, from the packaged bundle", () =>
     const env = { ...PROFILES["non-chief"]!, ...BRIDGE_ON };
     const fromSource = await proxyAnswers(PROXY_SOURCE, env, BRIDGE_REQUESTS);
     const [found, shapeless, outside] = await proxyAnswers(bundled, env, BRIDGE_REQUESTS);
-    expect((JSON.parse(found!.result!.content![0]!.text) as { matches: Tool[] }).matches[0]!.name).toBe("propose_routine");
+    expect((JSON.parse(found!.result!.content![0]!.text) as { matches: Tool[] }).matches[0]!.name).toBe("create_trigger");
     expect(shapeless!.result!.isError).toBe(true);
     expect(shapeless!.result!.content![0]!.text).toContain('use_tool needs { "name": ');
     // a bot that is not a Chief: create_bot is not one of its tools

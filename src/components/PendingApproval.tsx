@@ -42,7 +42,8 @@ export function isProfileApproval(pending: Pending): boolean {
 
 export function pendingApprovals(messages: Message[]): Pending[] {
   return messages
-    .filter((m) => m.kind === "options" && m.card?.requestId && m.card.tool && !m.card.answered && !m.card.dismissed && !m.card.expired)
+    // A routine card left open from before Triggers v2 can't be confirmed: trigger changes apply on their own.
+    .filter((m) => m.kind === "options" && m.card?.requestId && m.card.tool && !m.card.answered && !m.card.dismissed && !m.card.expired && !m.card.routineRequest)
     .map((m) => ({
       message: m,
       requestId: m.card!.requestId!,
@@ -57,8 +58,7 @@ export function pendingApprovals(messages: Message[]): Pending[] {
 }
 
 export function spokenApprovalPrompt(pending: Pending, requester: string): string {
-  if (pending.message.card?.teamSetupRequest) return uiText("ui.PendingApproval.dc72e037b1", { value1: String(requester), value2: String(pending.message.card.title), value3: String(pending.message.card.options[0]), value4: String(pending.message.card.options[1] ?? "Cancel") });
-  const isRoutineRequest = isRoutineApproval(pending);
+  if (pending.message.card?.teamSetupRequest) return `${requester}: ${pending.message.card.title} Review the details and choose ${pending.message.card.options[0]} or ${pending.message.card.options[1] ?? "Cancel"}.`;
   const isSkillRequest = isSkillApproval(pending);
   const isProfileRequest = isProfileApproval(pending);
   if (isSkillRequest) {
@@ -76,14 +76,7 @@ export function spokenApprovalPrompt(pending: Pending, requester: string): strin
     const title = pending.message.card?.title.trim() || t("approval.voice.defaultUpdateProfile");
     return t("approval.voice.profile", { requester, title });
   }
-  if (!isRoutineRequest) {
-    return t("approval.voice.command", { requester, tool: toolLabel(pending.tool), detail: pending.detail });
-  }
-  const title = pending.message.card?.title.trim() || t("approval.voice.defaultConfirmRoutine");
-  return t("approval.voice.routine", {
-    requester,
-    title: uiText("ui.PendingApproval.9989fa2d2c", { value1: String(title), value2: String(/[.!?]$/.test(title) ? "" : ".") }),
-  });
+  return t("approval.voice.command", { requester, tool: toolLabel(pending.tool), detail: pending.detail });
 }
 
 function label(pending: Pending): string {
@@ -95,11 +88,6 @@ function label(pending: Pending): string {
   }
   if (isProfileApproval(pending)) {
     return t("approval.label.confirmProfileChange");
-  }
-  if (isRoutineApproval(pending)) {
-    return pending.message.card?.routineRequest?.operation.action === "create"
-      ? t("approval.label.confirmRoutine")
-      : t("approval.label.confirmRoutineChange");
   }
   const nice: ApprovalLabels = {
     Bash: "approval.label.commandRequested",
@@ -124,7 +112,7 @@ function firstLine(text: string): string {
 
 function isDurable(pending: Pending): boolean {
   const card = pending.message.card;
-  return isSkillApproval(pending) || isRoutineApproval(pending) || isProfileApproval(pending) ||
+  return isSkillApproval(pending) || isProfileApproval(pending) ||
     Boolean(card?.teamSetupRequest) || Boolean(card?.modelRequest);
 }
 

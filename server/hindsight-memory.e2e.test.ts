@@ -6,7 +6,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 import type { WireBot } from "../shared/wire.ts";
 
-it("indexes native memory, recalls it through a real tool, shares explicitly and preserves reviewed team memory", async () => {
+it("indexes native memory, recalls it through a real tool, shares explicitly and preserves accepted team memory", async () => {
   type Item = { content: string; document_id: string; tags: string[]; metadata: Record<string, string> };
   const banks = new Map<string, Map<string, Item>>();
   const requests: Array<{ bank: string; path: string; body: Record<string, unknown> }> = [];
@@ -70,10 +70,10 @@ it("indexes native memory, recalls it through a real tool, shares explicitly and
       { tool: "memory_search", arguments: { query: "launch timing" } },
       { tool: "memory_share", arguments: { target_bot_id: writer.id, source_path: "memory/project.md", text: "The launch is on Friday." } },
       { tool: "memory_share", arguments: { target_bot_id: outsider.id, source_path: "memory/project.md", text: "The launch is on Friday." }, expectError: true },
-      { tool: "propose_team_memory", arguments: { kind: "decision", name: "TEAM_PENDING_MARKER", detail: "Launch approval is pending" } },
+      { tool: "propose_team_memory", arguments: { kind: "decision", name: "TEAM_ACCEPTED_MARKER", detail: "The team agreed on Friday" } },
     ], reply: "Memory tools completed", expectContextIncludes: ["Relevant memory retrieved by Hindsight"] };
     plan[writer.id] = { reply: "Received" };
-    await turn(scout, "Search memory and share the launch timing with Writer.", "needs-user");
+    await turn(scout, "Search memory and share the launch timing with Writer.");
     await expect.poll(() => evidence().some(item => item.botId === scout.id), { timeout: 10_000 }).toBe(true);
     const first = evidence().find(item => item.botId === scout.id);
     const search = first.evidence.find((item: { step?: { tool: string } }) => item.step?.tool === "memory_search");
@@ -84,9 +84,7 @@ it("indexes native memory, recalls it through a real tool, shares explicitly and
     expect(copy.text).toContain("The launch is on Friday.");
     expect(copy.text).not.toContain("$500");
     const team = await api<{ entries: Array<{ id: string; status: string; revision: string }> }>("/api/team-memory?section=Marketing");
-    expect(team.entries).toMatchObject([{ status: "proposed" }]);
-    expect(values().some(item => item.content.includes("TEAM_PENDING_MARKER"))).toBe(false);
-    await api(`/api/team-memory/${team.entries[0].id}?section=Marketing`, "PATCH", { accept: true, expectedRevision: team.entries[0].revision });
+    expect(team.entries).toMatchObject([{ status: "accepted" }]);
     await expect.poll(() => values().some(item => item.document_id === team.entries[0].id), { timeout: 10_000 }).toBe(true);
     const teamBank = [...banks].find(([, records]) => records.has(team.entries[0].id))![0];
     await api("/api/sidebar-sections?section=Marketing", "PATCH", { name: "Growth" });

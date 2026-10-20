@@ -378,7 +378,7 @@ export function SkillsSection({ bot }: { bot: Bot }) {
       <div className="rounded-xl bg-card p-4">
         <div className="flex items-center gap-2">
           <BookOpen size={16} className="text-ink-secondary" />
-          <div className="text-[15px] font-medium text-ink">{uiText("ui.SkillsSection.875d017caf")}</div>
+          <div className="text-[15px] font-medium text-ink">{t("skills.learned.title")}</div>
         </div>
         <div className="mt-1 text-[12px] leading-relaxed text-ink-secondary">
           {featureEnabled ? t("skills.learned.hintOn") : t("skills.learned.hintOff")}
@@ -389,12 +389,12 @@ export function SkillsSection({ bot }: { bot: Bot }) {
             {libraryPool.length > 0 ? (
               <div className="flex items-center gap-2">
                 <Select size="lg" className="flex-1"
-                  aria-label={uiText("ui.SkillsSection.1cd3fa5ce3")}
+                  aria-label={t("skills.library.addLabel")}
                   value={addFromLibrary}
                   disabled={Boolean(working)}
                   onChange={(e) => setAddFromLibrary(e.target.value)}
                 >
-                  <option value="">{uiText("ui.SkillsSection.d0d756bbd9")}</option>
+                  <option value="">{t("skills.library.addPlaceholder")}</option>
                   {libraryPool.map((skill) => (
                     <option key={skill.name} value={skill.name}>{skill.name}</option>
                   ))}
@@ -404,12 +404,14 @@ export function SkillsSection({ bot }: { bot: Bot }) {
                   disabled={!addFromLibrary || Boolean(working)}
                   onClick={() => void addToBot()}
                   className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
-                >{uiText("orgLibrary.add")}</button>
+                >
+                  {t("common.add")}
+                </button>
               </div>
             ) : (
-              <div className="text-[12px] text-ink-secondary">{uiText("ui.SkillsSection.32792ae50e")}</div>
+              <div className="text-[12px] text-ink-secondary">{t("skills.library.allAssigned")}</div>
             )}
-            <div className="text-[11.5px] text-ink-secondary">{uiText("ui.SkillsSection.21c54e5deb")}</div>
+            <div className="text-[11.5px] text-ink-secondary">{t("skills.library.manageHint")}</div>
           </div>
         ) : (
           <>
@@ -422,8 +424,8 @@ export function SkillsSection({ bot }: { bot: Bot }) {
             >
               <input
                 className={inputCls}
-                placeholder={uiText("ui.SkillsSection.7a7d61b4a4")}
-                aria-label={uiText("skills.library.importTitle")}
+                placeholder={t("skills.import.placeholder")}
+                aria-label={t("skills.import.label")}
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
               />
@@ -432,7 +434,7 @@ export function SkillsSection({ bot }: { bot: Bot }) {
                 disabled={importing || !source.trim()}
                 className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
               >
-                {importing ? uiText("skills.library.importing") : uiText("ui.SkillsSection.2cff9baabf")}
+                {importing ? t("skills.import.importing") : t("skills.import.button")}
               </button>
             </form>
             {importMessage && <div className="mt-1 text-[12px] text-ink-secondary">{importMessage}</div>}
@@ -440,9 +442,9 @@ export function SkillsSection({ bot }: { bot: Bot }) {
         )}
 
         {loading ? (
-          <div className="mt-3 text-[12px] text-ink-secondary">{uiText("skills.library.loading")}</div>
+          <div className="mt-3 text-[12px] text-ink-secondary">{t("skills.loading")}</div>
         ) : skills.length === 0 ? (
-          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{uiText("ui.SkillsSection.53c7b7a359")}</div>
+          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{t("skills.empty")}</div>
         ) : (
           <div className="mt-3 divide-y divide-hairline/40 overflow-hidden rounded-lg border border-hairline/40">
             {skills.map((skill) => (

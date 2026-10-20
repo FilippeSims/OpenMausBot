@@ -1,18 +1,19 @@
-import { t as uiText } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+
 export type CallCapabilityHelp = {
   label: string;
   reason: string;
 };
 
-const TURNS_NEED_MAC: CallCapabilityHelp = {
-  get label() { return uiText("ui.call-capability.d4f9c9b487"); },
-  get reason() { return uiText("ui.call-capability.3eb8eda104"); },
-};
+const turnsNeedMac = (): CallCapabilityHelp => ({
+  label: t("call.capability.turnsNeedMac"),
+  reason: t("call.capability.turnsNeedMacReason"),
+});
 
-const TURNS_ON_THIS_COMPUTER: CallCapabilityHelp = {
-  get label() { return uiText("ui.call-capability.fef2e15e27"); },
-  get reason() { return uiText("ui.call-capability.4d181ddc4a"); },
-};
+const turnsOnThisComputer = (): CallCapabilityHelp => ({
+  label: t("call.capability.turnsOnThisComputer"),
+  reason: t("call.capability.turnsOnThisComputerReason"),
+});
 
 export function callCapabilityHelp(
   capabilities: DesktopCapabilities,
@@ -21,21 +22,21 @@ export function callCapabilityHelp(
   if (!capabilities.dictation.available) {
     switch (capabilities.dictation.reasonCode) {
       case "remote-server":
-        return capabilities.host.platform === "darwin" ? TURNS_ON_THIS_COMPUTER : TURNS_NEED_MAC;
+        return capabilities.host.platform === "darwin" ? turnsOnThisComputer() : turnsNeedMac();
       case "desktop-app-required":
       case "unsupported-platform":
-        return TURNS_NEED_MAC;
+        return turnsNeedMac();
       default:
         return {
-          label: uiText("ui.call-capability.1ebe33ecf7"),
-          reason: uiText("ui.call-capability.50439a92f7"),
+          label: t("call.capability.unavailable"),
+          reason: t("call.capability.unavailableReason"),
         };
     }
   }
   if (!speechServiceAvailable) {
     return {
-      label: uiText("ui.call-capability.61aef0b7da"),
-      reason: uiText("ui.call-capability.25f2a4d344"),
+      label: t("call.capability.serviceUnavailable"),
+      reason: t("call.capability.serviceUnavailableReason"),
     };
   }
   return null;

@@ -10,12 +10,12 @@ import {
   fetchMemoryDoc,
   fetchMemoryJournal,
   fetchMemoryOverview,
-  fileManagerLabel,
   formatBytes,
+  localizedRelativeTime,
   journalSource,
-  journalSummary,
+  journalSourceKey,
+  fileLabel,
   openMemoryLocation,
-  relativeTime,
   revertMemoryChange,
   saveMemoryDoc,
   fetchUpkeepStatus,
@@ -32,7 +32,7 @@ import {
   markMemoryReviewed,
 } from "@/lib/memory";
 import { shortPath } from "@/lib/short-path";
-import { t } from "@/lib/i18n";
+import { activeLocale, t } from "@/lib/i18n";
 import { roomMemoryCaptureEnabled } from "@/lib/feature-flags";
 import { api, ApiError, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { Switch } from "../SettingsPrimitives";
@@ -57,6 +57,31 @@ interface Conflict {
 }
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+function localizedTidySummary(report: Parameters<typeof tidySummary>[0]): string {
+  const parts: string[] = [];
+  const add = (count: number | undefined, one: "memory.upkeep.summary.archived.one" | "memory.upkeep.summary.merged.one" | "memory.upkeep.summary.crossed.one" | "memory.upkeep.summary.filed.one", many: "memory.upkeep.summary.archived.many" | "memory.upkeep.summary.merged.many" | "memory.upkeep.summary.crossed.many" | "memory.upkeep.summary.filed.many") => {
+    if (count) parts.push(t(count === 1 ? one : many, { count }));
+  };
+  add(report.expired, "memory.upkeep.summary.archived.one", "memory.upkeep.summary.archived.many");
+  add(report.duplicates, "memory.upkeep.summary.merged.one", "memory.upkeep.summary.merged.many");
+  add(report.superseded, "memory.upkeep.summary.crossed.one", "memory.upkeep.summary.crossed.many");
+  add(report.organized, "memory.upkeep.summary.filed.one", "memory.upkeep.summary.filed.many");
+  const summary = parts.length ? parts.join(", ") : t("memory.upkeep.summary.none");
+  return summary.charAt(0).toUpperCase() + summary.slice(1);
+}
+
+function localizedJournalSummary(row: MemoryJournalRow, botName: string): string {
+  const who = row.actor === "bot" ? botName : row.actor === "import" ? t("memory.journal.actor.import") : row.actor === "upkeep" ? t("memory.journal.actor.upkeep") : t("memory.journal.actor.you");
+  const file = fileLabel(row.path);
+  const topic = row.path === MEMORY_INDEX ? file : row.path.startsWith("memory/log/") ? t("memory.journal.log", { file }) : t("memory.journal.topic", { file });
+  const lines = (count: number) => t(count === 1 ? "memory.journal.line.one" : "memory.journal.line.many", { count });
+  if (row.kind === "created") return t("memory.journal.created", { who, topic, detail: row.added ? t("memory.journal.withLines", { lines: lines(row.added) }) : "" });
+  if (row.kind === "deleted") return t("memory.journal.deleted", { who, topic });
+  if (row.added && !row.removed) return t("memory.journal.added", { who, lines: lines(row.added), topic });
+  if (row.removed && !row.added) return t("memory.journal.removed", { who, lines: lines(row.removed), topic });
+  return t("memory.journal.rewrote", { who, lines: lines(Math.max(row.added, row.removed)), topic });
+}
 
 export function LendingReviewNotice({ changed, stale, busy, onReviewed }: { changed: readonly string[]; stale: boolean; busy: boolean; onReviewed: () => void }) {
   return (
@@ -171,7 +196,7 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
   };
 
   const remove = async (file: MemoryFileInfo) => {
-    if (!window.confirm(uiText("ui.MemorySection.f6632eb4e5", { value1: String(file.name) }))) return;
+    if (!window.confirm(t("memory.confirmDelete", { name: file.name }))) return;
     setError(null);
     try {
       const { overview: next } = await deleteMemoryDoc(bot.id, file.path);
@@ -186,7 +211,7 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
   const createTopic = async () => {
     const name = topicFileName(newTopic);
     if (!name) {
-      setError(uiText("ui.MemorySection.7629ad3c23"));
+      setError(t("memory.topicNameError"));
       return;
     }
     setNewTopic("");
@@ -204,7 +229,7 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
       if (editing?.path === row.path && !editing.dirty) {
         setEditing({ ...editing, text: result.text, hash: result.hash });
       }
-      setNotice(uiText("ui.MemorySection.5ef7f98547", { value1: String(row.path) }));
+      setNotice(t("memory.restored", { path: row.path }));
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -255,7 +280,7 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
       setJournal(await fetchMemoryJournal(bot.id));
       setUpkeep(await fetchUpkeepStatus(bot.id));
       if (editing && !editing.dirty) await open(editing.path);
-      setNotice(uiText("ui.MemorySection.0554290db3", { value1: String(tidySummary(report)), value2: String(report.note ? ` ${report.note}` : "") }));
+      setNotice(`${localizedTidySummary(report)}.${report.note ? ` ${report.note}` : ""}`);
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -268,10 +293,17 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("botSettings.simple.memory")}</div>
+        <div className="text-[15px] font-medium text-ink">{t("memory.title")}</div>
         <label className="mt-3 flex items-center gap-2 text-[13px] text-ink">
-          <input type="checkbox" checked={bot.memoryEnabled !== false} disabled={bot.busy} onChange={(event) => onToggle(event.target.checked)} />{uiText("ui.MemorySection.7dea3e320c")}</label>
-        <p className="mt-1 text-[12.5px] text-ink-secondary"> {uiText("ui.MemorySection.1f4b07e18d")} {bot.busy ? uiText("ui.MemorySection.2603dcf898") : ""}
+          <input type="checkbox" checked={bot.memoryEnabled !== false} disabled={bot.busy} onChange={(event) => onToggle(event.target.checked)} />
+          {t("memory.enable")}
+        </label>
+        <p className="mt-1 text-[12.5px] text-ink-secondary">
+          {t("memory.enableHelp")}
+          {bot.busy ? ` ${t("memory.busyHelp")}` : ""}
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">
+          {t("memory.notesHelp")}
         </p>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{uiText("ui.MemorySection.41fcda3a5c")}</p>
         {overview && (
@@ -279,10 +311,12 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
             <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-ink-secondary" title={overview.workspacePath}>
               {shortPath(overview.workspacePath, home)}
             </span>
-            <button type="button" className={buttonCls} onClick={() => void openLocation("obsidian")}>{uiText("ui.MemorySection.1a4d2fc397")}</button>
+            <button type="button" className={buttonCls} onClick={() => void openLocation("obsidian")}>
+              {t("memory.openObsidian")}
+            </button>
             <button type="button" className={cn(buttonCls, "inline-flex items-center gap-1.5")} onClick={() => void openLocation("folder")}>
               <FolderOpen size={14} />
-              {fileManagerLabel(capabilities.host.platform)}
+              {t("memory.showFileManager")}
             </button>
           </div>
         )}
@@ -325,7 +359,9 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
           <div className="flex items-center justify-between gap-2">
             <span className="truncate font-mono text-[12.5px] text-ink">{editing.path}</span>
             {editing.path !== MEMORY_INDEX && (
-              <button type="button" className={quietButtonCls} onClick={() => void open(MEMORY_INDEX)}>{uiText("ui.MemorySection.9177bba92a")}</button>
+              <button type="button" className={quietButtonCls} onClick={() => void open(MEMORY_INDEX)}>
+                {t("memory.backToIndex")}
+              </button>
             )}
           </div>
           {conflict && (
@@ -342,31 +378,35 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
             readOnly={editing.readOnly}
             placeholder={
               editing.path === MEMORY_INDEX
-                ? uiText("ui.MemorySection.6ac68d4b06")
-                : uiText("ui.MemorySection.9e2cbd786c")
+                ? t("memory.indexPlaceholder")
+                : t("memory.notePlaceholder")
             }
-            aria-label={editing.path === MEMORY_INDEX ? uiText("ui.MemorySection.53e95141e0") : uiText("ui.MemorySection.d13aee9650", { value1: String(editing.path) })}
+            aria-label={editing.path === MEMORY_INDEX ? t("memory.botMemory") : t("memory.fileLabel", { path: editing.path })}
             onChange={(e) => setEditing({ ...editing, text: e.target.value, dirty: true })}
           />
           {editing.readOnly ? (
-            <p className="mt-2 text-[12px] text-ink-secondary">{uiText("ui.MemorySection.77d93f0eb3")}</p>
+            <p className="mt-2 text-[12px] text-ink-secondary">{t("memory.logsReadOnly")}</p>
           ) : (
             <div className="mt-2 flex items-center gap-3">
               <button type="button" onClick={() => void save(editing.hash)} disabled={saving || !editing.dirty} className={buttonCls}>
-                {saving ? uiText("settings.profile.saving") : uiText("common.save")}
+                {saving ? t("memory.saving") : t("memory.save")}
               </button>
               {editing.dirty && (
-                <button type="button" className={quietButtonCls} disabled={saving} onClick={() => void open(editing.path)}>{uiText("ui.MemorySection.f9bfa3dc7c")}</button>
+                <button type="button" className={quietButtonCls} disabled={saving} onClick={() => void open(editing.path)}>
+                  {t("memory.discard")}
+                </button>
               )}
             </div>
           )}
           {savedDraft !== null && (
             <div className="mt-3">
-              <div className="mb-1 text-[12px] text-ink-secondary">{uiText("ui.MemorySection.2f55379f51")}</div>
+              <div className="mb-1 text-[12px] text-ink-secondary">{t("memory.unsavedDraft")}</div>
               <pre className="max-h-[160px] overflow-auto whitespace-pre-wrap rounded-lg border border-hairline/40 bg-inset p-3 font-mono text-[12px] leading-relaxed text-ink">
                 {savedDraft}
               </pre>
-              <button type="button" className={cn(quietButtonCls, "mt-1")} onClick={() => setSavedDraft(null)}>{uiText("ui.MemorySection.01e456eeb9")}</button>
+              <button type="button" className={cn(quietButtonCls, "mt-1")} onClick={() => setSavedDraft(null)}>
+                {t("memory.dismissDraft")}
+              </button>
             </div>
           )}
         </div>
@@ -375,8 +415,8 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
       {overview && (
         <div className="rounded-xl bg-card p-4">
           <MemoryFileRows
-            title={uiText("ui.MemorySection.942638e708")}
-            hint={uiText("ui.MemorySection.2d6d08aa4b")}
+            title={t("memory.topicFiles")}
+            hint={t("memory.topicFilesHint")}
             files={overview.topics}
             selected={editing?.path}
             onOpen={(file) => void open(file.path)}
@@ -386,20 +426,22 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
             <input
               className={cn(inputCls, "py-1.5 text-[13px]")}
               value={newTopic}
-              placeholder={uiText("ui.MemorySection.5d849e35c8")}
-              aria-label={uiText("ui.MemorySection.a141cb5e8f")}
+              placeholder={t("memory.newTopicPlaceholder")}
+              aria-label={t("memory.newTopicLabel")}
               onChange={(e) => setNewTopic(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void createTopic();
               }}
             />
-            <button type="button" className={buttonCls} disabled={!newTopic.trim()} onClick={() => void createTopic()}>{uiText("ui.MemorySection.ed7c2b116c")}</button>
+            <button type="button" className={buttonCls} disabled={!newTopic.trim()} onClick={() => void createTopic()}>
+              {t("memory.newTopic")}
+            </button>
           </div>
           {overview.logs.length > 0 && (
             <div className="mt-4">
               <MemoryFileRows
-                title={uiText("ui.MemorySection.0d8ce7a017")}
-                hint={uiText("ui.MemorySection.9e8f0fcd1c")}
+                title={t("memory.dailyLogs")}
+                hint={t("memory.dailyLogsHint")}
                 files={overview.logs}
                 selected={editing?.path}
                 onOpen={(file) => void open(file.path)}
@@ -411,8 +453,10 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
       )}
 
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("ui.MemorySection.bbd4b6a86b")}</div>
-        <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{uiText("ui.MemorySection.1aae566906")}</p>
+        <div className="text-[15px] font-medium text-ink">{t("memory.changes")}</div>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">
+          {t("memory.changesHelp")}
+        </p>
         <div className="mt-3">
           <MemoryJournalList rows={journal} botName={bot.name} reverting={reverting} onRevert={(row) => void revert(row)} />
         </div>
@@ -449,10 +493,10 @@ export function MemoryUpkeepCard({
     <div className="rounded-xl bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[15px] font-medium text-ink">{uiText("ui.MemorySection.96b7c58507")}</div>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{uiText("ui.MemorySection.491a88c685")}</p>
+          <div className="text-[15px] font-medium text-ink">{t("memory.upkeep.title")}</div>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("memory.upkeep.help")}</p>
         </div>
-        <Switch checked={enabled} aria-label={uiText("ui.MemorySection.96b7c58507")} onClick={onToggle} />
+        <Switch checked={enabled} aria-label={t("memory.upkeep.title")} onClick={onToggle} />
       </div>
       {enabled && rooms && (
         <div className="mt-3 flex items-start justify-between gap-3 border-t border-hairline/40 pt-3">
@@ -479,11 +523,11 @@ export function MemoryUpkeepCard({
       {enabled && (
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button type="button" className={buttonCls} disabled={tidying} onClick={onTidy}>
-            {tidying ? uiText("ui.MemorySection.55c9429ba5") : uiText("ui.MemorySection.255e585dbf")}
+            {tidying ? t("memory.upkeep.tidying") : t("memory.upkeep.tidyNow")}
           </button>
           <span className="text-[12.5px] text-ink-secondary">
-            {status?.lastTidy ? uiText("ui.MemorySection.ff6697ae26", { value1: String(relativeTime(status.lastTidy.at)), value2: String(tidySummary(status.lastTidy).toLowerCase()) }) : uiText("ui.MemorySection.c2cd79efea")}
-            {status?.lastCapture && noticedCount(status.lastCapture) ? uiText("ui.MemorySection.d4ce716a8a", { value1: String(noticedCount(status.lastCapture)), value2: String(noticedCount(status.lastCapture) === 1 ? "" : "s"), value3: String(relativeTime(status.lastCapture.at)) }) : ""}
+            {status?.lastTidy ? t("memory.upkeep.lastTidy", { time: localizedRelativeTime(status.lastTidy.at, activeLocale()), summary: localizedTidySummary(status.lastTidy).toLowerCase() }) : t("memory.upkeep.notTidied")}
+            {status?.lastCapture && noticedCount(status.lastCapture) ? ` ${t(noticedCount(status.lastCapture) === 1 ? "memory.upkeep.lastNoticed.one" : "memory.upkeep.lastNoticed.many", { count: noticedCount(status.lastCapture), time: localizedRelativeTime(status.lastCapture.at, activeLocale()) })}` : ""}
           </span>
         </div>
       )}
@@ -497,17 +541,17 @@ export function MemoryGauge({ index }: { index: MemoryCapacity }) {
   return (
     <div className={cn("rounded-xl p-4", status.level === "over" ? "border border-danger/30 bg-danger/10" : "bg-card")}>
       <div className="flex items-center justify-between gap-3 text-[13px]">
-        <span className="font-medium text-ink">{uiText("ui.MemorySection.f2739926ed")}</span>
+        <span className="font-medium text-ink">{t("memory.capacity.title")}</span>
         <span className={cn("text-[12px]", status.level === "over" ? "text-danger" : "text-ink-secondary")}>
           {index.lines} / {index.maxLines} {uiText("ui.MemorySection.e877133d7d")} {formatBytes(index.bytes)} / {formatBytes(index.maxBytes)}
         </span>
       </div>
-      <GaugeBar label={uiText("ui.MemorySection.3b26a54274")} share={status.lineShare} fill={fill} />
-      <GaugeBar label={uiText("ui.MemorySection.1af8519073")} share={status.byteShare} fill={fill} />
+      <GaugeBar label={t("memory.capacity.lines")} share={status.lineShare} fill={fill} />
+      <GaugeBar label={t("memory.capacity.size")} share={status.byteShare} fill={fill} />
       <p className={cn("mt-2 text-[12.5px] leading-relaxed", status.level === "over" ? "text-danger" : "text-ink-secondary")}>
-        {status.warning ?? status.sentence}
+          {status.warning ?? t("memory.capacity.sentence", { lines: index.lines, maxLines: index.maxLines, bytes: formatBytes(index.bytes), maxBytes: formatBytes(index.maxBytes), maxLoaded: index.maxLines })}
       </p>
-      {status.warning && <p className="mt-1 text-[12px] text-ink-secondary">{status.sentence}</p>}
+      {status.warning && <p className="mt-1 text-[12px] text-ink-secondary">{t("memory.capacity.sentence", { lines: index.lines, maxLines: index.maxLines, bytes: formatBytes(index.bytes), maxBytes: formatBytes(index.maxBytes), maxLoaded: index.maxLines })}</p>}
     </div>
   );
 }
@@ -520,7 +564,7 @@ function GaugeBar({ label, share, fill }: { label: string; share: number; fill: 
       <div
         className="h-1.5 flex-1 overflow-hidden rounded-full bg-inset"
         role="meter"
-        aria-label={uiText("ui.MemorySection.8706714b03", { value1: String(label) })}
+        aria-label={t("memory.capacity.used", { label })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.min(100, Math.round(share * 100))}
@@ -544,11 +588,17 @@ export function ConflictNotice({
 }) {
   return (
     <div className="mt-2 rounded-lg border border-warning/25 bg-warning/10 p-3 text-[12.5px] leading-relaxed text-ink">
-      <div className="font-medium">{botName} {uiText("ui.MemorySection.b468157bd0")}</div>
-      <div className="mt-0.5 text-ink-secondary">{uiText("ui.MemorySection.65cde9b510")} {botName}{uiText("ui.MemorySection.bfa8d29b16")}</div>
+      <div className="font-medium">{t("memory.conflict.title", { name: botName })}</div>
+      <div className="mt-0.5 text-ink-secondary">
+        {t("memory.conflict.help", { name: botName })}
+      </div>
       <div className="mt-2 flex gap-2">
-        <button type="button" className={buttonCls} disabled={busy} onClick={onReload}>{uiText("screenLoad.reload")}</button>
-        <button type="button" className={buttonCls} disabled={busy} onClick={onOverwrite}>{uiText("ui.MemorySection.f36fb48180")}</button>
+        <button type="button" className={buttonCls} disabled={busy} onClick={onReload}>
+          {t("memory.reload")}
+        </button>
+        <button type="button" className={buttonCls} disabled={busy} onClick={onOverwrite}>
+          {t("memory.overwrite")}
+        </button>
       </div>
     </div>
   );
@@ -574,7 +624,7 @@ export function MemoryFileRows({
       <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{title}</div>
       <div className="mt-0.5 text-[12px] text-ink-secondary">{hint}</div>
       {files.length === 0 ? (
-        <div className="mt-2 text-[12.5px] text-ink-secondary">{uiText("ui.MemorySection.bd3ce63349")}</div>
+        <div className="mt-2 text-[12.5px] text-ink-secondary">{t("memory.noneYet")}</div>
       ) : (
         <div className="mt-2 overflow-hidden rounded-lg border border-hairline/40">
           {files.map((file) => (
@@ -589,14 +639,14 @@ export function MemoryFileRows({
                 <FileText size={14} className="shrink-0 text-ink-secondary" />
                 <span className="truncate font-mono text-[12.5px] text-ink">{file.name}</span>
                 <span className="shrink-0 text-[11.5px] text-ink-secondary">
-                  {formatBytes(file.bytes)} · {relativeTime(file.modifiedAt)}
+                  {formatBytes(file.bytes)} · {localizedRelativeTime(file.modifiedAt, activeLocale())}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => onDelete(file)}
-                aria-label={uiText("ui.MemorySection.ff5250d441", { value1: String(file.name) })}
-                title={uiText("common.delete")}
+                aria-label={t("memory.deleteFile", { name: file.name })}
+                title={t("memory.delete")}
                 className="shrink-0 rounded-md p-1 text-ink-secondary hover:bg-control hover:text-danger"
               >
                 <Trash2 size={14} />
@@ -622,23 +672,24 @@ export function MemoryJournalList({
   onRevert: (row: MemoryJournalRow) => void;
   now?: number;
 }) {
-  if (!rows) return <div className="text-[13px] text-ink-secondary">{uiText("skills.library.loading")}</div>;
-  if (rows.length === 0) return <div className="text-[13px] text-ink-secondary">{uiText("ui.MemorySection.0dbc9c4de6")}</div>;
+  if (!rows) return <div className="text-[13px] text-ink-secondary">{t("memory.loading")}</div>;
+  if (rows.length === 0) return <div className="text-[13px] text-ink-secondary">{t("memory.noChanges")}</div>;
   return (
     <div className="flex flex-col gap-2">
       {rows.map((row) => {
         const source = journalSource(row);
+        const sourceKey = journalSourceKey(row);
         return (
           <div key={row.id} className="rounded-lg bg-inset px-3 py-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1 text-[13px] leading-relaxed text-ink">
-                <span>{journalSummary(row, botName)}</span>
+                <span>{localizedJournalSummary(row, botName)}</span>
                 {" · "}
-                <span className="text-ink-secondary">{relativeTime(row.at, now)}</span>
+                <span className="text-ink-secondary">{localizedRelativeTime(row.at, activeLocale(), now)}</span>
                 {source && (
                   <>
                     {" · "}
-                    <span className="text-ink-secondary">{source}</span>
+                    <span className="text-ink-secondary">{sourceKey ? t(sourceKey, row.threadTitle ? { title: row.threadTitle } : undefined) : source}</span>
                   </>
                 )}
               </div>
@@ -650,16 +701,19 @@ export function MemoryJournalList({
                   className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-accent-text hover:bg-accent/10 disabled:opacity-50"
                 >
                   <RotateCcw size={12} />
-                  {reverting === row.id ? uiText("approval.applied.undoing") : uiText("approval.applied.undo")}
+                  {reverting === row.id ? t("memory.undoing") : t("memory.undo")}
                 </button>
               ) : (
-                <span className="shrink-0 text-[11.5px] text-ink-secondary" title={row.revertUnavailableReason}>{uiText("ui.MemorySection.a4c59bb643")}</span>
+                <span className="shrink-0 text-[11.5px] text-ink-secondary" title={row.revertUnavailableReason}>
+                  {t("memory.cantUndo")}
+                </span>
               )}
             </div>
             {row.diff && (
               <details className="mt-1">
                 <summary className="cursor-pointer text-[12px] text-ink-secondary">
-                  +{row.added} −{row.removed} {uiText("ui.MemorySection.ff6c82b2d7")} </summary>
+                  +{row.added} −{row.removed} · {t("memory.showChanged")}
+                </summary>
                 <pre className="mt-1 max-h-[240px] overflow-auto whitespace-pre-wrap rounded-md bg-card p-2 font-mono text-[11.5px] leading-relaxed text-ink">
                   {row.diff}
                 </pre>

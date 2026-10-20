@@ -24,6 +24,14 @@ afterEach(() => {
 });
 
 describe("explicit memory sharing", () => {
+  it.each(["en", "pt-br", "es"])("keeps the untouched %s memory template out of semantic recall", language => {
+    rmSync(workspaceDir(recipient.id), { recursive: true, force: true });
+    ensureWorkspace(recipient.id, language);
+    expect(botMemoryScope(recipient.id).documents).toEqual([]);
+    writeMemoryDoc(recipient.id, "memory/project.md", "The launch is on Friday.");
+    expect(botMemoryScope(recipient.id).documents).toMatchObject([{ id: "memory/project.md", text: "The launch is on Friday." }]);
+  });
+
   it("copies only the selected passage with durable provenance and no automatic synchronization", () => {
     const file = join(directory, "shares.json");
     const sharing = new MemorySharing(file);

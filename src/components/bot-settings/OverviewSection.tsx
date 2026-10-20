@@ -1,4 +1,3 @@
-import { t as uiText } from "@/lib/i18n";
 import { useState } from "react";
 import { Circle, Sparkles } from "lucide-react";
 
@@ -26,16 +25,31 @@ export function OverviewSection({
   const [promptOpen, setPromptOpen] = useState(false);
 
   if (!overview) {
-    return <div className="text-[13px] text-ink-secondary">{uiText("skills.library.loading")}</div>;
+    return <div className="text-[13px] text-ink-secondary">{t("botOverview.loading")}</div>;
   }
 
   const setup = overview.setup ?? [];
   const remaining = setup.filter((step) => !step.done);
+  const setupLabel = (id: string, fallback: string) => t(`botOverview.setup.${id}` as never) || fallback;
+  const overviewLine = (line: string) => {
+    if (line === "Works in its private workspace.") return t("botOverview.line.privateWorkspace");
+    if (line === "Has the built-in browser.") return t("botOverview.line.browser");
+    if (line === "Has no connected apps.") return t("botOverview.line.noApps");
+    if (line === "Won't act on a schedule.") return t("botOverview.line.noSchedule");
+    const computer = line.match(/^Computer preference: (.+)\.$/);
+    if (computer) {
+      const preference = computer[1] === "Auto; availability is checked when a task starts" ? t("botOverview.preference.auto") : computer[1] === "cloud computer" ? t("botOverview.preference.cloud") : computer[1] === "Local VM" ? t("botOverview.preference.vm") : computer[1] === "this computer" ? t("botOverview.preference.local") : computer[1] === "browser only" ? t("botOverview.preference.browser") : computer[1];
+      return t("botOverview.line.computer", { preference });
+    }
+    return line;
+  };
 
   return (
     <div className="flex flex-col gap-4">
       {refreshError && (
-        <div className="rounded-lg bg-inset px-3 py-2 text-[12.5px] text-ink-secondary">{uiText("ui.OverviewSection.57f9e41961")}</div>
+        <div className="rounded-lg bg-inset px-3 py-2 text-[12.5px] text-ink-secondary">
+          {t("botOverview.refreshError")}
+        </div>
       )}
 
       {remaining.length > 0 && (
@@ -48,7 +62,7 @@ export function OverviewSection({
                 {!step.section ? (
                   <div className="flex items-center gap-2.5 px-1 py-1 text-[13px] text-ink">
                     <Circle aria-hidden="true" size={14} className="shrink-0 text-ink-secondary" />
-                    <span>{step.label}</span>
+                    <span>{setupLabel(step.id, step.label)}</span>
                   </div>
                 ) : (
                   <button
@@ -57,7 +71,7 @@ export function OverviewSection({
                     className="flex w-full items-center gap-2.5 rounded-lg px-1 py-1 text-left text-[13px] text-ink hover:bg-inset"
                   >
                     <Circle aria-hidden="true" size={14} className="shrink-0 text-ink-secondary" />
-                    <span className="flex-1">{step.label}</span>
+                    <span className="flex-1">{setupLabel(step.id, step.label)}</span>
                     <span className="text-[12px] text-ink-secondary">→</span>
                   </button>
                 )}
@@ -90,42 +104,44 @@ export function OverviewSection({
               type="button"
               onClick={() => onOpen("soul")}
               className="mt-1.5 rounded-md text-[12px] font-medium text-accent-text hover:underline"
-            >{uiText("ui.OverviewSection.dbf0e2ddf8")}</button>
+            >
+              {t("botOverview.readAll")}
+            </button>
           </div>
         )}
       </div>
 
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("ui.OverviewSection.c3c2585748")}</div>
+        <div className="text-[15px] font-medium text-ink">{t("botOverview.does")}</div>
         {overview.does.length === 0 ? (
-          <p className="mt-2 text-[13px] text-ink-secondary">{uiText("ui.OverviewSection.ddacb6ce3d")}</p>
+          <p className="mt-2 text-[13px] text-ink-secondary">{t("botOverview.doesEmpty")}</p>
         ) : (
           <ul className="mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed text-ink">
             {overview.does.map((line, i) => (
-              <li key={i}>{line}</li>
+              <li key={i}>{overviewLine(line)}</li>
             ))}
           </ul>
         )}
       </div>
 
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("ui.OverviewSection.ce503633c2")}</div>
+        <div className="text-[15px] font-medium text-ink">{t("botOverview.canReach")}</div>
         {overview.reaches.length === 0 ? (
-          <p className="mt-2 text-[13px] text-ink-secondary">{uiText("notifications.empty")}</p>
+          <p className="mt-2 text-[13px] text-ink-secondary">{t("botOverview.reachEmpty")}</p>
         ) : (
           <ul className="mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed text-ink">
             {overview.reaches.map((line, i) => (
-              <li key={i}>{line}</li>
+              <li key={i}>{overviewLine(line)}</li>
             ))}
           </ul>
         )}
       </div>
 
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">{uiText("ui.OverviewSection.826764c1ac")}</div>
+        <div className="text-[15px] font-medium text-ink">{t("botOverview.wont")}</div>
         <ul className="mt-2 flex flex-col gap-1.5 text-[13px] leading-relaxed text-ink">
           {overview.wont.map((line, i) => (
-            <li key={i}>{line}</li>
+            <li key={i}>{overviewLine(line)}</li>
           ))}
         </ul>
       </div>
@@ -139,15 +155,17 @@ export function OverviewSection({
 
       <div className="rounded-xl bg-card p-4">
         <div className="flex items-baseline justify-between gap-3">
-          <div className="text-[15px] font-medium text-ink">{uiText("ui.OverviewSection.f66a12ef4f")}</div>
+          <div className="text-[15px] font-medium text-ink">{t("botOverview.recentChanges")}</div>
           <button
             type="button"
             onClick={() => onOpen("history")}
             className="shrink-0 text-[12px] text-ink-secondary hover:text-ink"
-          >{uiText("ui.OverviewSection.9a780508de")}</button>
+          >
+            {t("botOverview.viewAll")} →
+          </button>
         </div>
         {overview.recent.length === 0 ? (
-          <p className="mt-2 text-[13px] text-ink-secondary">{uiText("ui.OverviewSection.0b9f681ead")}</p>
+          <p className="mt-2 text-[13px] text-ink-secondary">{t("botOverview.recentEmpty")}</p>
         ) : (
           <ul className="mt-2 flex flex-col gap-1.5 text-[13px] text-ink">
             {overview.recent.map((entry, i) => (

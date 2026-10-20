@@ -41,7 +41,7 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
     const saved = async () => (await api("/api/bots?messages=0")).bots.find((bot: any) => bot.id === info.botId);
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     await api(`/api/bots/${info.botId}`, { name: "Layer Bot" });
-    await ui("eval", "--js", "location.reload(); true");
+    await ui("eval", "--js", "localStorage.setItem('omb-advanced-mode', '1'); location.reload(); true");
     await expect.poll(() => evaluate("document.documentElement.lang"), { timeout: 10_000 }).toBe("en");
     await expect.poll(snapshot, { timeout: 15_000 }).toContain("Actions for Layer Bot");
     await clickRole("button", /^Layer Bot Rename Layer Bot /);
@@ -84,6 +84,19 @@ const enabled = process.env.OMB_UI_E2E === "1" || Boolean(resolveAgentBrowserBin
     await clickRole("button", "Reset mascot");
     await expect.poll(async () => (await saved()).mascotAppearance, { timeout: 10_000 }).toBeNull();
     expect((await saved()).mascotBody).toBe("cursor");
+    await evaluate("localStorage.setItem('omb-advanced-mode', '0'); location.reload(); true");
+    await expect.poll(snapshot, { timeout: 15_000 }).toContain("Layer Bot");
+    await clickRole("button", /^Layer Bot Rename Layer Bot /);
+    await clickRole("button", "Open Layer Bot's profile");
+    await clickRole("button", "Edit avatar");
+    await clickRole("button", "Build a character");
+    await clickRole("button", "Use body: Kitten");
+    await clickRole("button", "Use face: Wink");
+    await clickRole("button", "Toggle accessory: Crown");
+    await expect.poll(async () => (await saved()).mascotAppearance, { timeout: 10_000 }).toMatchObject({ body: "17-gatinho", face: "04-piscadinha", accessories: [{ id: "01-coroa" }] });
+    await ui("screenshot", "--out", info.logPath + ".bot-kit-simple.png");
+    await clickRole("button", "Reset");
+    await expect.poll(async () => (await saved()).mascotAppearance, { timeout: 10_000 }).toBeNull();
     writeFileSync(info.logPath + ".bot-kit.json", JSON.stringify({ customized, final: await saved(), screenshot, logPath: info.logPath }, null, 2));
     console.log("Bot character kit evidence:", info.logPath + ".bot-kit.json");
   } catch (failure) {
