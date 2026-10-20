@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { memo, useState, type ReactNode } from "react";
 import { ChevronDown, Send, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useStore, type Bot, type Message } from "@/state/store";
@@ -56,7 +57,7 @@ export function pendingApprovals(messages: Message[]): Pending[] {
 }
 
 export function spokenApprovalPrompt(pending: Pending, requester: string): string {
-  if (pending.message.card?.teamSetupRequest) return `${requester}: ${pending.message.card.title} Review the details and choose ${pending.message.card.options[0]} or ${pending.message.card.options[1] ?? "Cancel"}.`;
+  if (pending.message.card?.teamSetupRequest) return uiText("ui.PendingApproval.dc72e037b1", { value1: String(requester), value2: String(pending.message.card.title), value3: String(pending.message.card.options[0]), value4: String(pending.message.card.options[1] ?? "Cancel") });
   const isRoutineRequest = isRoutineApproval(pending);
   const isSkillRequest = isSkillApproval(pending);
   const isProfileRequest = isProfileApproval(pending);
@@ -67,7 +68,7 @@ export function spokenApprovalPrompt(pending: Pending, requester: string): strin
     );
     return t("approval.voice.skill", {
       requester,
-      title: `${title}${/[.!?]$/.test(title) ? "" : "."}`,
+      title: uiText("ui.PendingApproval.9989fa2d2c", { value1: String(title), value2: String(/[.!?]$/.test(title) ? "" : ".") }),
       action: t(updating ? "approval.voice.actionUpdate" : "approval.voice.actionEnable"),
     });
   }
@@ -81,7 +82,7 @@ export function spokenApprovalPrompt(pending: Pending, requester: string): strin
   const title = pending.message.card?.title.trim() || t("approval.voice.defaultConfirmRoutine");
   return t("approval.voice.routine", {
     requester,
-    title: `${title}${/[.!?]$/.test(title) ? "" : "."}`,
+    title: uiText("ui.PendingApproval.9989fa2d2c", { value1: String(title), value2: String(/[.!?]$/.test(title) ? "" : ".") }),
   });
 }
 

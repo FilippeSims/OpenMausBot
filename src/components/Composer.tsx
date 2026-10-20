@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { directMessageSent, roomMessageSent } from "@/lib/product-events";
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import { ArrowUp, BookOpen, Clock, Mic, Paperclip, Sparkles, Square, Target, Users, X } from "lucide-react";
@@ -623,7 +624,7 @@ export function Composer({
               if (result.status === "rejected") {
                 dispatch({
                   type: "error",
-                  message: result.reason instanceof Error ? result.reason.message : "image upload failed",
+                  message: result.reason instanceof Error ? result.reason.message : uiText("ui.Composer.e31314eb3a"),
                 });
               }
             }
@@ -1116,7 +1117,7 @@ export function Composer({
                   ? t("composer.send.steer")
                   : busy
                     ? t("composer.send.queueHint")
-                    : `${t("chat.send")} (${sendLabel})`
+                    : uiText("ui.Composer.48e56a2411", { value1: String(uiText("chat.send")), value2: String(sendLabel) })
             }
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-full text-white",

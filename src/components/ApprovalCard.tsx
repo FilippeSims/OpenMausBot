@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useContext, useState, type ReactNode } from "react";
 import { Check, ShieldCheck, Undo2, X } from "lucide-react";
 import { api, ApiError, StoreContext, type Bot, type Message, type OptionCardData } from "@/state/store";
@@ -61,7 +62,7 @@ export function approvalCardOutcome(card: OptionCardData): string | undefined {
   if (card.undone === true) return t("approval.status.undone");
   const isProposal = Boolean(card.routineRequest || card.skillRequest || card.profileRequest || card.modelRequest || card.teamSetupRequest);
   if (card.answered !== "allow") return card.teamSetupRequest?.suggestion ? t("approval.status.notNow") : isProposal ? t("approval.status.cancelled") : t("approval.status.denied");
-  if (card.teamSetupRequest) return card.teamSetupRequest.deletion ? "Bot deleted" : "Team setup applied";
+  if (card.teamSetupRequest) return card.teamSetupRequest.deletion ? uiText("ui.ApprovalCard.0c34d99b3b") : uiText("ui.ApprovalCard.19517d9291");
   const routineAction = card.routineRequest?.operation.action;
   if (routineAction) return t(ROUTINE_SETTLED_LABEL[routineAction]);
   const skillAction = card.skillRequest?.action;
@@ -310,7 +311,7 @@ function CompactApprovalRow({
   if (waiting && answeredBelow) {
     return (
       <div data-approval-row="pending" className="sr-only">
-        {header}{summary ? ` ${summary}` : ""}{detail && showDetailInline ? ` ${firstLineOf(detail)}` : ""}. {t("approval.status.waitingAnswer")}
+        {header}{summary ? uiText("ui.ApprovalCard.50843318c9", { value1: String(summary) }) : ""}{detail && showDetailInline ? uiText("ui.ApprovalCard.50843318c9", { value1: String(firstLineOf(detail)) }) : ""}. {t("approval.status.waitingAnswer")}
       </div>
     );
   }
@@ -327,7 +328,7 @@ function CompactApprovalRow({
             ? <Check size={14} className="shrink-0 self-center text-success" aria-hidden="true" />
             : <X size={14} className="shrink-0 self-center" aria-hidden="true" />}
         <span className={cn("min-w-0 break-words", waiting && "text-ink")}>{header}</span>
-        {summary && <span className="min-w-0 break-words">{waiting ? summary : `· ${summary}`}</span>}
+        {summary && <span className="min-w-0 break-words">{waiting ? summary : uiText("ui.ApprovalCard.d610afc356", { value1: String(summary) })}</span>}
         {detail && showDetailInline && (
           <span role="group" aria-label={t("approval.aria.details")} className="min-w-0 max-w-full">
             <button

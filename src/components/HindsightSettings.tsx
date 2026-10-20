@@ -1,8 +1,10 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import { Card, SettingRow, Switch } from "./SettingsPrimitives";
+import { Select } from "./Select";
 
 type Draft = { mode: "embedded" | "external"; enabled: boolean; url: string; recallTimeoutMs: string; retainTimeoutMs: string; maxTokens: string };
 type Verdict = { ok: true; latencyMs: number } | { ok: false; reason: "http" | "malformed" | "unreachable"; status?: number };
@@ -76,16 +78,16 @@ export function HindsightSettings() {
   };
   const disabled = !available || busy !== null;
   const status = !saved?.enabled ? t("hindsight.disabled") : saved.runtimeState === "starting" && saved.mode === "embedded" ? t("hindsight.starting") : saved.error ? t("hindsight.indexError") : saved.pending ? t("hindsight.indexing") : t("hindsight.enabled");
-  return <Card title="Hindsight" subtitle={t("hindsight.subtitle")}>
+  return <Card title={uiText("ui.HindsightSettings.311f044bde")} subtitle={t("hindsight.subtitle")}>
     {!available && <p role="status" className="mb-4 text-[13px] text-ink-secondary">{state.config?.cloudHome || saved?.available === false ? t("hindsight.cloudUnavailable") : t("hindsight.unavailable")}</p>}
     <fieldset disabled={disabled} className="min-w-0 space-y-4">
       {saved?.embeddedAvailable && <div>
         <label htmlFor="hindsight-mode" className="mb-1 block text-[13px] font-medium text-ink">{t("hindsight.mode")}</label>
-        <select id="hindsight-mode" value={draft.mode} onChange={e => edit("mode", e.target.value as Draft["mode"])}
-          className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink">
+        <Select id="hindsight-mode" value={draft.mode} onChange={e => edit("mode", e.target.value as Draft["mode"])}
+          className="w-full">
           <option value="embedded">{t("hindsight.embedded")}</option>
           <option value="external">{t("hindsight.external")}</option>
-        </select>
+        </Select>
       </div>}
       <SettingRow title={t("hindsight.enable")} subtitle={t("hindsight.enableHelp")}>
         <Switch checked={draft.enabled} disabled={disabled} aria-label={t("hindsight.enable")} onClick={() => edit("enabled", !draft.enabled)} />

@@ -6,6 +6,7 @@ vi.mock("electron", () => ({
 }));
 
 import { buildApplicationMenu } from "./menu.mjs";
+import { setDesktopLanguage } from "./desktop-i18n.mjs";
 
 describe("buildApplicationMenu", () => {
   const originalPlatform = process.platform;
@@ -72,4 +73,28 @@ describe("buildApplicationMenu", () => {
     expect(onAddCloud).toHaveBeenCalledOnce();
     expect(submenu.find(entry => entry.id === "add-cloud").label).toBe("Add a Cloud…");
   });
+});
+
+it("uses Portuguese for native menus and returns to English without changing server identities", () => {
+  const originalPlatform = process.platform;
+  Object.defineProperty(process, "platform", { value: "darwin", configurable: true });
+  try {
+    setDesktopLanguage("pt-br");
+    const onSwitch = vi.fn();
+    const input = { environments: [{ id: "literal", name: "English Server Name", origin: "https://example.test" }], activeId: "literal", onSwitch, onOpenSettings: vi.fn() };
+    const menu = buildApplicationMenu(input);
+    const server = menu.find(item => item.label === "Servidor");
+    expect(server).toBeDefined();
+    expect(server.submenu[0].label).toBe("Este computador");
+    expect(server.submenu[1].label).toContain("English Server Name");
+    server.submenu[0].click();
+    expect(onSwitch).toHaveBeenCalledExactlyOnceWith("local");
+    expect(menu.find(item => item.role === "editMenu").label).toBe("Editar");
+    expect(menu[0].submenu.find(item => item.role === "quit").label).toBe("Sair do OpenMausBot");
+    setDesktopLanguage("en");
+    expect(buildApplicationMenu(input).find(item => item.label === "Server")).toBeDefined();
+  } finally {
+    setDesktopLanguage("en");
+    Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true });
+  }
 });

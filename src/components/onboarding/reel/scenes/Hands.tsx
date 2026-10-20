@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Check, ExternalLink, Hand, Loader2, MousePointer2, Settings2, X } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
@@ -70,7 +71,7 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
           <div className="flex items-center justify-between border-b border-hairline/40 px-3 py-2">
             <div className="flex items-center gap-2">
               <MausAvatar color="green" state={busy ? "working" : replied ? "proud" : "happy"} size={18} animated={!still} trackPointer={false} />
-              <span className="text-[12px] font-semibold text-ink">Maus</span>
+              <span className="text-[12px] font-semibold text-ink">{uiText("ui.Hands.51c62d69a6")}</span>
             </div>
             <span className={cn("flex size-6 items-center justify-center rounded-md transition-colors duration-300", panel ? "bg-raised text-accent" : "text-ink-secondary")}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
@@ -86,7 +87,7 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
                 <div className="min-w-0">
                   <div className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium transition-colors duration-300", done ? "bg-success/15 text-success" : "bg-raised text-ink-secondary")}>
                     {done ? <Check size={10} strokeWidth={3} /> : <Loader2 size={10} className="animate-spin" />}
-                    {done ? "clicked Book" : clicked ? "clicking Book…" : "using the computer"}
+                    {done ? uiText("ui.Hands.c3ae026fdf") : clicked ? uiText("ui.Hands.2e93163faa") : uiText("ui.Hands.a8ee59b8af")}
                   </div>
                   {replied && (
                     <div className="animate-spot-in mt-1.5 max-w-[210px] rounded-2xl rounded-tl-md border border-hairline/40 bg-card px-3 py-2 text-[11.5px] leading-relaxed text-ink shadow-[0_10px_30px_-12px_rgba(0,0,0,0.55)]">
@@ -96,7 +97,7 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
                 </div>
               </div>
             )}
-            <div className="mt-1 h-7 rounded-lg border border-hairline/40 bg-inset px-2.5 text-[10.5px] leading-7 text-ink-secondary">Message Maus</div>
+            <div className="mt-1 h-7 rounded-lg border border-hairline/40 bg-inset px-2.5 text-[10.5px] leading-7 text-ink-secondary">{uiText("ui.Hands.77cda72d37")}</div>
           </div>
         </div>
 
@@ -122,7 +123,7 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-[linear-gradient(135deg,#1f3a5f_0%,#2a5d8c_45%,#6b3fa0_100%)]" />
               <div className="absolute inset-x-0 top-0 flex h-3 items-center justify-between bg-black/30 px-1.5 text-[6px] text-white/80">
-                <span>Ubuntu</span>
+                <span>{uiText("ui.Hands.710eb4f4d7")}</span>
                 <span className="tabular-nums">14:58</span>
               </div>
               <div className="absolute left-[10%] right-[10%] top-[16%] bottom-[18%] overflow-hidden rounded-md bg-[#f4f5f7] shadow-[0_10px_30px_-8px_rgba(0,0,0,0.7)]">
@@ -130,10 +131,10 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
                   <span className="size-1.5 rounded-full bg-[#ff5f57]" />
                   <span className="size-1.5 rounded-full bg-[#febc2e]" />
                   <span className="size-1.5 rounded-full bg-[#28c840]" />
-                  <span className="ml-1 flex-1 rounded-sm bg-white px-1 text-[5.5px] leading-[9px] text-[#5f6368]">clinic.example/book</span>
+                  <span className="ml-1 flex-1 rounded-sm bg-white px-1 text-[5.5px] leading-[9px] text-[#5f6368]">{uiText("ui.Hands.468499d907")}</span>
                 </div>
                 <div className="p-2">
-                  <div className="text-[7px] font-semibold text-[#202124]">Book an appointment</div>
+                  <div className="text-[7px] font-semibold text-[#202124]">{uiText("ui.Hands.b7db7feb3c")}</div>
                   <div className="mt-1 grid grid-cols-3 gap-1">
                     {["2:30 pm", "3:00 pm", "3:30 pm"].map((slot, i) => (
                       <div key={slot} className={cn("rounded-sm border px-1 py-0.5 text-center text-[6px] tabular-nums", i === 1 ? "border-[#1a73e8] bg-[#e8f0fe] text-[#1a73e8]" : "border-[#dadce0] text-[#5f6368]")}>
@@ -148,7 +149,7 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
                       clicked && !done && "scale-95",
                     )}
                   >
-                    {done ? "Booked ✓" : "Book"}
+                    {done ? uiText("ui.Hands.85f21ed936") : uiText("ui.Hands.909cb81127")}
                   </div>
                 </div>
               </div>
@@ -171,16 +172,12 @@ export function Hands({ playing, onCue, onEnded, label }: SceneProps) {
 
           <div className="mx-2.5 mt-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-[9.5px] text-ink-secondary">
-              <span className="size-1.5 rounded-full bg-success" />
-              Cloud screen connected
-            </div>
+              <span className="size-1.5 rounded-full bg-success" />{uiText("ui.Hands.0d38a87af2")}</div>
             <div className="flex items-center gap-1">
               <span className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 text-[9px] text-ink">
-                <ExternalLink size={9} /> Open live desktop
-              </span>
+                <ExternalLink size={9} />{uiText("computer.openLiveDesktop")}</span>
               <span className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 text-[9px] text-ink">
-                <Hand size={9} /> Take control
-              </span>
+                <Hand size={9} />{uiText("browser.control.take")}</span>
             </div>
           </div>
         </aside>

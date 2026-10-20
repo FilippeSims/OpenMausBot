@@ -1,13 +1,14 @@
+import { t as uiText } from "@/lib/i18n";
 import type { InstanceInfo } from "@/state/store";
 import { canWorkOnCloud, type CloudEngine } from "../../shared/cloud-computer";
 import { isCloudComputerBusyMessage } from "../../shared/computer-contention";
 
 export function isRemoteScreenshotContention(error: { status: number; message: string }): boolean {
   return error.status === 409 && [
-    "this bot's cloud computer is being changed — wait for it to finish",
-    "the VPS is being prepared — try again shortly",
-    "VPS connection settings are being updated — wait for them to finish",
-    "Boat account settings are being updated — wait for them to finish",
+    uiText("ui.remote-desktop.9c797510f9"),
+    uiText("ui.remote-desktop.65f0d668ba"),
+    uiText("ui.remote-desktop.3134a1ca33"),
+    uiText("ui.remote-desktop.373dee1a4c"),
   ].includes(error.message);
 }
 

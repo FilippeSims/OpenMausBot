@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type DragEvent } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, FolderPlus, Plus } from "lucide-react";
@@ -126,7 +127,7 @@ export const PinnedBotCircle = memo(function PinnedBotCircle({
         draggable={Boolean(drag)}
         aria-current={selected ? "page" : undefined}
         aria-keyshortcuts={drag ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
-        aria-label={`${bot.name}${waiting ? ` · ${t("sidebar.preview.waiting")}` : working ? ` · ${t("chat.activity.working")}` : ""}${unread ? ` · ${t("task.unread")}` : ""}`}
+        aria-label={uiText("ui.PinnedCircleThreads.bae1f8e535", { value1: String(bot.name), value2: String(waiting ? ` · ${uiText("sidebar.preview.waiting")}` : working ? ` · ${uiText("chat.activity.working")}` : ""), value3: String(unread ? ` · ${uiText("task.unread")}` : "") })}
         title={bot.name}
         onClick={() => openBot(dispatch, bot, showThreads)}
         onDragStart={drag && ((event) => {

@@ -1,3 +1,5 @@
+import { tLiteral } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { DesktopWorkspaceSwitcher } from "../components/DesktopWorkspaceSwitcher";
 
@@ -115,28 +117,23 @@ export function PairPage({ initialCode, initialEmail = null, reason }: { initial
       <div className="absolute left-3 top-12 max-w-[280px]"><DesktopWorkspaceSwitcher /></div>
       <div className="w-full max-w-[420px]">
         {opening ? (
-          <p role="status" className="text-[20px] font-semibold">{cloudHome ? "Opening My Cloud…" : `Connecting to ${environment?.label ?? "this OpenMausBot"}…`}</p>
+          <p role="status" className="text-[20px] font-semibold">{cloudHome ? uiText("ui.PairPage.957e042f87") : uiText("ui.PairPage.e69b6c9c2d", { value1: String(environment?.label ?? "this OpenMausBot") })}</p>
         ) : <>
-        <h1 className="text-[20px] font-semibold">{cloudHome ? "My Cloud" : `${mode === "email" ? "Sign in to" : "Connect to"} ${environment?.label ?? "this OpenMausBot"}`}</h1>
+        <h1 className="text-[20px] font-semibold">{cloudHome ? uiText("cloudHome.title") : uiText("ui.PairPage.4040b7c06c", { value1: String(mode === "email" ? "Sign in to" : "Connect to"), value2: String(environment?.label ?? "this OpenMausBot") })}</h1>
         <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
-          {environment && !cloudHome ? `Version ${environment.version} on ${environment.platform}. ` : ""}
+          {environment && !cloudHome ? uiText("ui.PairPage.7e587c57ce", { value1: String(environment.version), value2: String(environment.platform) }) : ""}
           {pairIntro({ mode, sent, email, cloudHome })}
         </p>
-        {reasonWorthShowing(reason) && !connected ? <p className="mt-3 text-[13px] text-ink-secondary">{reasonWorthShowing(reason)}</p> : null}
-        {error && cloudHome && initialCode ? <p className="mt-3 text-[13px] text-ink-secondary">This link has expired or was already used. In the OpenMausBot app on your computer, open Settings → MausBot Cloud and choose Open My Cloud.</p> : null}
+        {reasonWorthShowing(reason) && !connected ? <p className="mt-3 text-[13px] text-ink-secondary">{tLiteral(reasonWorthShowing(reason) ?? "")}</p> : null}
+        {error && cloudHome && initialCode ? <p className="mt-3 text-[13px] text-ink-secondary">{uiText("ui.PairPage.6912682873")}</p> : null}
         </>}
         {opening ? null : connected ? (
-          <p className="mt-4 text-[13.5px]">
-            This browser is already connected.{" "}
-            <a href="/" className="text-accent underline">
-              Open the app
-            </a>
+          <p className="mt-4 text-[13.5px]"> {uiText("ui.PairPage.7536ba2c45")}{" "}
+            <a href="/" className="text-accent underline"> {uiText("ui.PairPage.688daef458")} </a>
           </p>
         ) : mode === "email" ? (
           <form onSubmit={submitEmail}>
-            <label className={fieldLabel} htmlFor="signin-email">
-              Email
-            </label>
+            <label className={fieldLabel} htmlFor="signin-email"> {uiText("cloudBuy.signIn.email")} </label>
             <input
               id="signin-email"
               type="email"
@@ -153,9 +150,7 @@ export function PairPage({ initialCode, initialEmail = null, reason }: { initial
             />
             {sent ? (
               <>
-                <label className={fieldLabel} htmlFor="signin-code">
-                  Code from the email
-                </label>
+                <label className={fieldLabel} htmlFor="signin-code"> {uiText("ui.PairPage.5cab1e5ceb")} </label>
                 <input
                   id="signin-code"
                   value={otp}
@@ -166,30 +161,22 @@ export function PairPage({ initialCode, initialEmail = null, reason }: { initial
                   spellCheck={false}
                   className={`${input} font-mono text-[15px] tracking-[0.12em]`}
                 />
-                <label className={fieldLabel} htmlFor="signin-label">
-                  This device
-                </label>
+                <label className={fieldLabel} htmlFor="signin-label"> {uiText("ui.PairPage.d052579c6a")} </label>
                 <input id="signin-label" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={80} className={input} />
               </>
             ) : null}
             {error ? <p className="mt-3 text-[13px] text-danger">{error}</p> : null}
             <button type="submit" disabled={busy || !email.includes("@") || (sent && otp.replace(/\D/g, "").length < 8)} className={button}>
-              {busy ? (sent ? "Signing in…" : "Sending…") : sent ? "Sign in" : "Send code"}
+              {busy ? (sent ? uiText("ui.PairPage.8b9d3de8ae") : uiText("engineSetup.sending")) : sent ? uiText("onboarding.org.signIn") : uiText("cloudBuy.signIn.send")}
             </button>
             {sent ? (
-              <button type="button" onClick={() => setSent(false)} className="mt-3 w-full text-[13px] text-ink-secondary underline">
-                Send a new code
-              </button>
+              <button type="button" onClick={() => setSent(false)} className="mt-3 w-full text-[13px] text-ink-secondary underline"> {uiText("cloudBuy.signIn.newCode")} </button>
             ) : null}
-            <button type="button" onClick={() => switchMode("code")} className="mt-3 w-full text-[13px] text-ink-secondary underline">
-              Have a pairing code instead?
-            </button>
+            <button type="button" onClick={() => switchMode("code")} className="mt-3 w-full text-[13px] text-ink-secondary underline"> {uiText("ui.PairPage.7f8238d893")} </button>
           </form>
         ) : (
           <form onSubmit={submitCode}>
-            <label className={fieldLabel} htmlFor="pair-code">
-              Pairing code
-            </label>
+            <label className={fieldLabel} htmlFor="pair-code"> {uiText("remote.client.pairingCode")} </label>
             <input
               id="pair-code"
               value={code}
@@ -197,24 +184,20 @@ export function PairPage({ initialCode, initialEmail = null, reason }: { initial
                 setCode(e.target.value);
                 setAttemptId(newAttemptId());
               }}
-              placeholder="XXXX-XXXX-XXXX"
+              placeholder={uiText("ui.PairPage.12cafdd536")}
               autoComplete="one-time-code"
               autoCapitalize="characters"
               spellCheck={false}
               className={`${input} font-mono text-[15px] tracking-[0.12em]`}
             />
-            <label className={fieldLabel} htmlFor="pair-label">
-              This device
-            </label>
+            <label className={fieldLabel} htmlFor="pair-label"> {uiText("ui.PairPage.d052579c6a")} </label>
             <input id="pair-label" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={80} className={input} />
             {error ? <p className="mt-3 text-[13px] text-danger">{error}</p> : null}
             <button type="submit" disabled={busy || code.replace(/[^a-z0-9]/gi, "").length < 12} className={button}>
-              {busy ? "Connecting…" : "Connect"}
+              {busy ? uiText("call.live.connecting") : uiText("cloudSetup.engine.action")}
             </button>
             {emailOffered ? (
-              <button type="button" onClick={() => switchMode("email")} className="mt-3 w-full text-[13px] text-ink-secondary underline">
-                Sign in with your email instead
-              </button>
+              <button type="button" onClick={() => switchMode("email")} className="mt-3 w-full text-[13px] text-ink-secondary underline"> {uiText("ui.PairPage.d627f65d3a")} </button>
             ) : null}
           </form>
         )}

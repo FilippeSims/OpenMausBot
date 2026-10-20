@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronRight, FileText, Image as ImageIcon, Slack, Smartphone, X } from "lucide-react";
 
@@ -296,7 +298,7 @@ export function SimpleBotPanel({
                   <button
                     type="button"
                     data-simple-edit="look"
-                    aria-label={`${t("botSettings.simple.edit")}: ${t("botSettings.simple.look")}`}
+                    aria-label={uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(uiText("botSettings.simple.edit")), value2: String(uiText("botSettings.simple.look")) })}
                     onClick={() => setEditing("look")}
                     className={rowActionCls}
                   >
@@ -341,12 +343,12 @@ export function SimpleBotPanel({
                 <Row
                   data-simple-row="identity"
                   title={t("botSettings.simple.nameAndJob")}
-                  hint={bot.title.trim() ? `${bot.name} · ${bot.title.trim()}` : bot.name}
+                  hint={bot.title.trim() ? uiText("ui.SimpleBotPanel.7c639bc99b", { value1: String(bot.name), value2: String(bot.title.trim()) }) : bot.name}
                 >
                   <button
                     type="button"
                     data-simple-edit="identity"
-                    aria-label={`${t("botSettings.simple.edit")}: ${t("botSettings.simple.nameAndJob")}`}
+                    aria-label={uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(uiText("botSettings.simple.edit")), value2: String(uiText("botSettings.simple.nameAndJob")) })}
                     onClick={() => setEditing("identity")}
                     className={rowActionCls}
                   >
@@ -383,7 +385,7 @@ export function SimpleBotPanel({
                   <button
                     type="button"
                     data-simple-edit="soul"
-                    aria-label={`${t("botSettings.simple.edit")}: ${t("botSettings.simple.instructions")}`}
+                    aria-label={uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(uiText("botSettings.simple.edit")), value2: String(uiText("botSettings.simple.instructions")) })}
                     onClick={() => setEditing("soul")}
                     className={rowActionCls}
                   >
@@ -466,7 +468,7 @@ export function SimpleBotPanel({
                 data-simple-row="computer"
                 title={t("computer.simple.whereWorks", { name: bot.name })}
                 hint={currentPlace === "auto" ? t("place.autoDetail")
-                  : placeListed ? worksOn.line : `${worksOnSimpleLabel(bot.computer, platform)}: ${worksOn.line}`}
+                  : placeListed ? worksOn.line : uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(worksOnSimpleLabel(bot.computer, platform)), value2: String(worksOn.line) })}
               >
                 <div role="group" aria-label={t("computer.simple.whereWorks", { name: bot.name })} className={segmentCls}>
                   {placeChoices.map((choice) => (
@@ -508,7 +510,7 @@ export function SimpleBotPanel({
                 <button
                   type="button"
                   data-simple-open-tab="vault"
-                  aria-label={`${t("botSettings.simple.open")}: ${t("botSettings.simple.vault")}`}
+                  aria-label={uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(uiText("botSettings.simple.open")), value2: String(uiText("botSettings.simple.vault")) })}
                   onClick={() => showTab("vault")}
                   className={rowActionCls}
                 >
@@ -527,7 +529,7 @@ export function SimpleBotPanel({
                 <button
                   type="button"
                   data-simple-open-tab="routines"
-                  aria-label={`${t("botSettings.simple.open")}: ${t("botSettings.simple.routines")}`}
+                  aria-label={uiText("ui.SimpleBotPanel.efae3eb968", { value1: String(uiText("botSettings.simple.open")), value2: String(uiText("botSettings.simple.routines")) })}
                   onClick={() => showTab("routines")}
                   className={linkCls}
                 >
@@ -584,7 +586,7 @@ export function SimpleBotPanel({
                     className="flex min-w-0 flex-col items-start gap-0.5 rounded-xl border border-hairline/40 bg-inset px-3 py-2.5 text-left hover:bg-raised"
                   >
                     <Slack size={16} className="mb-1 shrink-0 text-ink-secondary" aria-hidden="true" />
-                    <span className="max-w-full truncate text-[13px] font-medium text-ink">Slack</span>
+                    <span className="max-w-full truncate text-[13px] font-medium text-ink">{uiText("ui.SimpleBotPanel.b27fb38ba3")}</span>
                     <span className="max-w-full truncate text-[11.5px] text-ink-secondary">{t("botSettings.simple.slackHint")}</span>
                   </a>
                 )}
@@ -635,7 +637,7 @@ export function SimpleBotPanel({
                       <Icon size={16} className="shrink-0 text-ink-secondary" />
                       <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">{item.name}</span>
                       <span className="shrink-0 text-[12px] text-ink-tertiary">
-                        {new Date(item.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        {new Date(item.at).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" })}
                       </span>
                     </button>
                   );

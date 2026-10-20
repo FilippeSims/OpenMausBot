@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { api } from "@/state/store";
@@ -47,7 +48,7 @@ function formatResetDistance(resetsAt: string | null, now: number): string | nul
   const at = Date.parse(resetsAt);
   if (!Number.isFinite(at) || at <= now) return null;
   const minutes = Math.floor((at - now) / 60_000);
-  if (minutes < 1) return "less than a minute";
+  if (minutes < 1) return uiText("ui.PlanUsage.95d4cd2a77");
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const mins = minutes % 60;

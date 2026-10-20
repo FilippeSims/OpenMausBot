@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
@@ -585,7 +586,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
         <WhopIcon />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[14px] font-semibold leading-5 text-ink">Whop</span>
+            <span className="truncate text-[14px] font-semibold leading-5 text-ink">{uiText("ui.McpServersPanel.4eb4fb9788")}</span>
             {whopConnected && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-label={t("apps.connected")} />}
           </div>
           <p className="truncate text-[12.5px] leading-[18px] text-ink-secondary" title={t("whop.description")}>{t("whop.description")}</p>
@@ -681,7 +682,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
               onChange={(event) => setImportText(event.target.value)}
               spellCheck={false}
               rows={8}
-              placeholder={'{\n  "mcpServers": {\n    "notes": { "command": "npx", "args": ["-y", "@example/notes-mcp"], "env": { "NOTES_TOKEN": "…" } },\n    "docs": { "type": "http", "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer …" } }\n  }\n}'}
+              placeholder={uiText("ui.McpServersPanel.382756bfcb")}
               className="mt-3 w-full resize-y rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 font-mono text-[12px] leading-relaxed text-ink outline-none focus:border-accent"
             />
             <div className="mt-3 flex items-center justify-end gap-2">
@@ -749,7 +750,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                   value={draft.name}
                   maxLength={32}
                   onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value.toLowerCase() }))}
-                  placeholder="github"
+                  placeholder={uiText("ui.McpServersPanel.c0b0109d94")}
                   className="mt-1.5 w-full rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 text-[13px] text-ink outline-none focus:border-accent disabled:opacity-60"
                 />
               </label>
@@ -778,7 +779,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                     <textarea
                       value={draft.headers}
                       onChange={(event) => setDraft((current) => ({ ...current, headers: event.target.value }))}
-                      placeholder="Authorization: Bearer …"
+                      placeholder={uiText("ui.McpServersPanel.d28e460db7")}
                       rows={4}
                       className="mt-1.5 w-full resize-y rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 font-mono text-[12px] text-ink outline-none focus:border-accent"
                     />
@@ -823,7 +824,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                         <input
                           value={draft.oauthScopes}
                           onChange={(event) => setDraft((current) => ({ ...current, oauthScopes: event.target.value }))}
-                          placeholder="offline_access api://my-app/mcp.read"
+                          placeholder={uiText("ui.McpServersPanel.3da4fd49f5")}
                           spellCheck={false}
                           className="mt-1.5 w-full rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 font-mono text-[12px] text-ink outline-none focus:border-accent"
                         />
@@ -839,7 +840,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                   autoFocus={editing !== "new"}
                   value={draft.command}
                   onChange={(event) => setDraft((current) => ({ ...current, command: event.target.value }))}
-                  placeholder="npx"
+                  placeholder={uiText("ui.McpServersPanel.7c2a28952d")}
                   className="mt-1.5 w-full rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 text-[13px] text-ink outline-none focus:border-accent"
                 />
               </label>
@@ -848,7 +849,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                 <textarea
                   value={draft.args}
                   onChange={(event) => setDraft((current) => ({ ...current, args: event.target.value }))}
-                  placeholder={"-y\n@modelcontextprotocol/server-github"}
+                  placeholder={uiText("ui.McpServersPanel.c60de08087")}
                   rows={5}
                   className="mt-1.5 w-full resize-y rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 font-mono text-[12px] text-ink outline-none focus:border-accent"
                 />
@@ -858,7 +859,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                 <textarea
                   value={draft.env}
                   onChange={(event) => setDraft((current) => ({ ...current, env: event.target.value }))}
-                  placeholder="GITHUB_TOKEN=…"
+                  placeholder={uiText("ui.McpServersPanel.19f18c456d")}
                   rows={5}
                   className="mt-1.5 w-full resize-y rounded-lg border border-hairline/60 bg-raised px-3 py-2.5 font-mono text-[12px] text-ink outline-none focus:border-accent"
                 />
@@ -906,7 +907,7 @@ export function McpServersPanel({ embedded = false, whopCard = false, hideWhop =
                     </div>
                     <div className="min-w-0 flex-[1_1_220px]">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="min-w-0 truncate text-[14px] font-medium text-ink">{whop ? "Whop" : server.name}</span>
+                        <span className="min-w-0 truncate text-[14px] font-medium text-ink">{whop ? uiText("ui.McpServersPanel.4eb4fb9788") : server.name}</span>
                         <span className={cn("rounded-full px-2 py-0.5 text-[10.5px]", server.enabled ? "bg-success/10 text-success" : "bg-raised text-ink-secondary")}>{t(server.enabled ? "mcp.badge.on" : "mcp.badge.off")}</span>
                         {auth && <span className={cn("rounded-full px-2 py-0.5 text-[10.5px]", auth === "signed-in" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>{t(auth === "signed-in" ? "mcp.auth.signedIn" : "mcp.auth.needsSignIn")}</span>}
                         {server.managedBy && <span className="rounded-full bg-raised px-2 py-0.5 text-[10.5px] text-ink-secondary">{t("policy.managedBy", { organization: server.managedBy })}</span>}

@@ -1,4 +1,5 @@
 import { en, localeChoices, locales, type LocaleKey, type LocalePack } from "@/locales";
+import { setUiCopyResolver } from "../../shared/ui-copy";
 
 export function resolveLocale(tag: string | undefined, available: ReadonlySet<string>): string {
   if (!tag) return "en";
@@ -48,6 +49,19 @@ export function activeLocale(): string {
 let active = "en";
 let activePack: LocalePack = en;
 setLocale(globalThis.navigator?.language);
+
+const literalKeys = new Map(Object.entries(en).map(([key, value]) => [value, key as LocaleKey]));
+setUiCopyResolver((source, params) => {
+  const key = literalKeys.get(source);
+  return key ? t(key, params) : source.replace(/\{(\w+)\}/g, (match, name: string) =>
+    params && Object.hasOwn(params, name) ? String(params[name]) : match);
+});
+
+/** Localize known application copy at display time; unrecognized text is preserved. */
+export function tLiteral(source: string): string {
+  const key = literalKeys.get(source);
+  return key ? t(key) : source;
+}
 
 export function tFromServer(key: string | undefined, fallback: string | undefined): string | undefined {
   return key && Object.hasOwn(en, key) ? t(key as LocaleKey) : fallback;

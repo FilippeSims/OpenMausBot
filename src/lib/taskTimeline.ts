@@ -1,3 +1,4 @@
+import { uiCopy as uiText } from "../../shared/ui-copy.ts";
 import { failedTurnCause } from "../../shared/failed-turn.js";
 import { redactSecretsInText } from "../../shared/redact.js";
 
@@ -28,7 +29,7 @@ export function timelineEvents(messages: TimelineMessage[]): TimelineEvent[] {
       events.push({
         id: message.id,
         at: message.at,
-        label: sawUserInput ? "User input" : "Task started",
+        label: sawUserInput ? uiText("User input") : uiText("Task started"),
         state: "observed",
         kind: "task",
       });
@@ -45,9 +46,9 @@ export function timelineEvents(messages: TimelineMessage[]): TimelineEvent[] {
         kind: "tool",
       });
     } else if (message.kind === "screen") {
-      events.push({ id: message.id, at: message.at, label: "Screen observed", state: "observed", kind: "screen" });
+      events.push({ id: message.id, at: message.at, label: uiText("Screen observed"), state: "observed", kind: "screen" });
     } else if (message.kind === "text" && message.role === "bot" && message.text?.trim()) {
-      events.push({ id: message.id, at: message.at, label: "Response recorded", state: "complete", kind: "result" });
+      events.push({ id: message.id, at: message.at, label: uiText("Response recorded"), state: "complete", kind: "result" });
     }
   }
   return events;

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Mic, MicOff, PhoneOff, RotateCcw, Settings, X } from "lucide-react";
 
@@ -195,7 +196,7 @@ export function LiveCallBar({ bot }: { bot: Bot }) {
           aria-pressed={view.muted}
           aria-label={muteLabel}
           aria-keyshortcuts={muteChord.aria}
-          title={`${muteLabel} (${muteChord.text})`}
+          title={uiText("ui.LiveCallBar.48e56a2411", { value1: String(muteLabel), value2: String(muteChord.text) })}
           className={cn(button, view.muted ? "bg-raised text-ink" : "text-ink-secondary hover:text-ink")}
           onClick={() => setLiveMuted(!view.muted)}
         >
@@ -207,7 +208,7 @@ export function LiveCallBar({ bot }: { bot: Bot }) {
           disabled={view.ending}
           aria-label={t("call.live.hangUp")}
           aria-keyshortcuts={hangUpChord.aria}
-          title={`${t("call.live.hangUp")} (${hangUpChord.text})`}
+          title={uiText("ui.LiveCallBar.48e56a2411", { value1: String(uiText("call.live.hangUp")), value2: String(hangUpChord.text) })}
           className={cn(button, "bg-danger text-white hover:brightness-110 disabled:opacity-60")}
           onClick={() => void hangUpLiveCall()}
         >

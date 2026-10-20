@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { requestNotificationPermission } from "@/lib/notify";
 import type { Bot } from "@/state/store";
 import { Switch } from "../SettingsPrimitives";
@@ -21,14 +22,12 @@ export function VoiceSection({
 
       <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
         <div>
-          <div className="text-[15px] font-medium text-ink">Notifications</div>
-          <div className="mt-0.5 text-[13px] text-ink-secondary">
-            Get notified when this agent finishes or needs input
-          </div>
+          <div className="text-[15px] font-medium text-ink">{uiText("notifications.title")}</div>
+          <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.VoiceSection.5be559487e")}</div>
         </div>
         <Switch
           checked={bot.notifications}
-          aria-label="Agent notifications"
+          aria-label={uiText("ui.VoiceSection.50c151611c")}
           onClick={() => {
             const enabled = !bot.notifications;
             if (enabled && !draft) void requestNotificationPermission();

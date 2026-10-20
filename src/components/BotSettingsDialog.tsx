@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, Search, X } from "lucide-react";
 
@@ -182,7 +183,7 @@ export function BotSettingsDialog({ bot, overlay = false }: {
         body: JSON.stringify(target),
       });
     } catch (e: unknown) {
-        dispatch({ type: "error", message: e instanceof Error ? e.message : "Couldn't undo that change." });
+        dispatch({ type: "error", message: e instanceof Error ? e.message : uiText("ui.BotSettingsDialog.6c5176609e") });
     } finally {
       await loadHistory();
       setRollingBack(false);
@@ -223,7 +224,7 @@ export function BotSettingsDialog({ bot, overlay = false }: {
     switch (id) {
       case "overview":
         return overview === null && overviewError ? (
-          <div className="rounded-xl bg-card p-4 text-[13px] text-ink-secondary">Couldn’t load the overview.</div>
+          <div className="rounded-xl bg-card p-4 text-[13px] text-ink-secondary">{uiText("ui.BotSettingsDialog.7b5f2ca780")}</div>
         ) : (
           <OverviewSection
             overview={overview}
@@ -268,7 +269,7 @@ export function BotSettingsDialog({ bot, overlay = false }: {
         return <VisibilitySection bot={bot} />;
       case "history":
         return historyRows === null && historyError ? (
-          <div className="rounded-xl bg-card p-4 text-[13px] text-ink-secondary">Couldn’t load history.</div>
+          <div className="rounded-xl bg-card p-4 text-[13px] text-ink-secondary">{uiText("ui.BotSettingsDialog.3e8a2592bc")}</div>
         ) : (
           <HistorySection
             bot={bot}
@@ -333,7 +334,7 @@ export function BotSettingsDialog({ bot, overlay = false }: {
           <button
             type="button"
             onClick={() => dispatch({ type: "toggleSettings", open: false })}
-            aria-label="Close settings"
+            aria-label={uiText("settings.close")}
             className="rounded-md p-1 text-ink-secondary hover:bg-control hover:text-ink"
           >
             <X size={18} className="pointer-events-none" />
@@ -354,16 +355,15 @@ export function BotSettingsDialog({ bot, overlay = false }: {
               if (query) setQuery("");
               else dispatch({ type: "toggleSettings", open: false });
             }}
-            placeholder="Search"
-            aria-label="Search settings"
+            placeholder={uiText("settings.search")}
+            aria-label={uiText("settings.searchAria")}
             className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
           />
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {visibleSections.length === 0 && (
-            <div className="px-4 py-4 text-[12.5px] leading-relaxed text-ink-secondary">
-              Nothing matches “{query.trim()}”
+            <div className="px-4 py-4 text-[12.5px] leading-relaxed text-ink-secondary"> {uiText("ui.BotSettingsDialog.fd6075a120")}{query.trim()}”
             </div>
           )}
           {sections.map((entry) => {
@@ -420,9 +420,9 @@ export function BotSettingsDialog({ bot, overlay = false }: {
       </aside>
       <ConfirmDialog
         open={rollbackTarget !== null}
-        title="Restore previous instructions?"
-        body="Replaces current SOUL with the version before this change. Current version stays in History."
-        confirmLabel="Restore instructions"
+        title={uiText("ui.BotSettingsDialog.3ed16637f3")}
+        body={uiText("ui.BotSettingsDialog.d2ce06aebe")}
+        confirmLabel={uiText("ui.BotSettingsDialog.ca15287fdc")}
         tone="neutral"
         returnFocusRef={dialogRef}
         onCancel={() => setRollbackTarget(null)}

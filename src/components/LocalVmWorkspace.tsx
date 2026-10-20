@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import {
   AlertTriangle,
   Hand,
@@ -218,12 +219,12 @@ function useNativeViewObscured(explicit: boolean) {
 }
 
 function statusLabel(status: LocalVmWorkspaceStatus | null, nativeStatus: DesktopWorkspaceState["status"]) {
-  if (!status) return "Checking VM";
-  if (status.container === "missing") return "VM not created";
-  if (status.container === "stopped") return "VM stopped";
-  if (!status.ready) return "VM unavailable";
-  if (nativeStatus === "error") return "Viewer unavailable";
-  if (nativeStatus !== "ready") return "Connecting viewer";
+  if (!status) return uiText("ui.LocalVmWorkspace.943c15a74b");
+  if (status.container === "missing") return uiText("ui.LocalVmWorkspace.60f8d76126");
+  if (status.container === "stopped") return uiText("ui.LocalVmWorkspace.868f3204ff");
+  if (!status.ready) return uiText("ui.LocalVmWorkspace.055ef71765");
+  if (nativeStatus === "error") return uiText("ui.LocalVmWorkspace.4b9e9d74bd");
+  if (nativeStatus !== "ready") return uiText("ui.LocalVmWorkspace.4a7e31b7fd");
   return "Live · watch-only";
 }
 
@@ -258,7 +259,7 @@ function LocalVmPane({
 }: LocalVmPaneProps) {
   const contextId = SLOT_CONTEXTS[index];
   const botId = bot?.id ?? null;
-  const botName = bot?.name ?? "Local VM";
+  const botName = bot?.name ?? uiText("settings.section.computer");
   const viewportRef = useRef<HTMLDivElement>(null);
   const operationRef = useRef<Promise<void>>(Promise.resolve());
   const obscuredRef = useRef(obscured);
@@ -310,7 +311,7 @@ function LocalVmPane({
       if (bridge) await bridge.close(contextId).catch(() => {});
       if (!alive || !botId) return;
       if (!bridge) {
-        setError("The two-desktop view requires the OpenMausBot desktop app.");
+        setError(uiText("ui.LocalVmWorkspace.2ba652df31"));
         return;
       }
       try {
@@ -343,7 +344,7 @@ function LocalVmPane({
         const next = await bridge.open({
           contextId,
           url: viewerUrl,
-          title: `${botName}'s Local VM`,
+          title: uiText("ui.LocalVmWorkspace.93d8d30bdf", { value1: String(botName) }),
           bounds,
         });
         if (!alive) {
@@ -358,8 +359,8 @@ function LocalVmPane({
         if (!alive || controller.signal.aborted) return;
         setError(
           cause instanceof Error && cause.message === "layout-unavailable"
-            ? "The viewer area is not laid out yet. Retry after resizing the window."
-            : "OpenMausBot could not connect this Local VM viewer.",
+            ? uiText("ui.LocalVmWorkspace.14f6af07d5")
+            : uiText("ui.LocalVmWorkspace.64f6e378c8"),
         );
       }
     };
@@ -392,7 +393,7 @@ function LocalVmPane({
     if (!bridge || !bounds || !nativeState.open) return;
     void bridge
       .layout([{ contextId, bounds, visible: !obscured }])
-      .catch(() => setError("OpenMausBot could not position this Local VM viewer."));
+      .catch(() => setError(uiText("ui.LocalVmWorkspace.4a1203257d")));
   }, [contextId, nativeState.open, obscured]);
 
   useEffect(() => {
@@ -421,8 +422,7 @@ function LocalVmPane({
     >
       <div className="flex min-h-[68px] items-center gap-3 border-b border-hairline/40 px-3 py-2.5">
         <div className="min-w-0 flex-1">
-          <label className="sr-only" htmlFor={`local-vm-slot-${index}`}>
-            Local VM for pane {index + 1}
+          <label className="sr-only" htmlFor={`local-vm-slot-${index}`}> {uiText("ui.LocalVmWorkspace.8b3e7e9d9d")} {index + 1}
           </label>
           <Select size="sm" className="w-full"
             id={`local-vm-slot-${index}`}
@@ -430,7 +430,7 @@ function LocalVmPane({
             onChange={(event) => onSelect(event.target.value || null)}
             disabled={controlPending}
           >
-            <option value="">Choose a Local VM bot</option>
+            <option value="">{uiText("ui.LocalVmWorkspace.f649cc74b8")}</option>
             {bots.map((candidate) => (
               <option key={candidate.id} value={candidate.id} disabled={candidate.id === otherBotId}>
                 {candidate.name}
@@ -450,7 +450,7 @@ function LocalVmPane({
                       : "bg-ink-secondary/50",
               )}
             />
-            {active ? "You have control" : heldElsewhere ? "Control held elsewhere" : label}
+            {active ? uiText("ui.LocalVmWorkspace.c5d7d8b78b") : heldElsewhere ? uiText("ui.LocalVmWorkspace.f88ff1923e") : label}
           </div>
         </div>
         {bot && active ? (
@@ -460,19 +460,17 @@ function LocalVmPane({
             disabled={controlPending}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-2.5 py-2 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50"
           >
-            {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />}
-            Hand back
-          </button>
+            {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />} {uiText("browser.control.handBack")} </button>
         ) : bot ? (
           <button
             type="button"
             onClick={() => onTake(bot.id)}
             disabled={!canDrive || controlPending || heldElsewhere}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-raised px-2.5 py-2 text-[12px] text-ink hover:bg-raised-hover disabled:opacity-45"
-            title="Pause only this bot and enable keyboard and pointer input in this pane"
+            title={uiText("ui.LocalVmWorkspace.5ce7302ff4")}
           >
             {controlPending ? <Loader2 size={13} className="animate-spin" /> : <Hand size={13} />}
-            {heldElsewhere ? "Held elsewhere" : "Take control"}
+            {heldElsewhere ? uiText("ui.LocalVmWorkspace.34eabad2bf") : uiText("browser.control.take")}
           </button>
         ) : null}
       </div>
@@ -486,26 +484,24 @@ function LocalVmPane({
           {!bot ? (
             <div className="flex max-w-[260px] flex-col items-center gap-2 text-ink-secondary">
               <Monitor size={22} />
-              <span className="text-[12px]">Choose another bot configured for a Local VM.</span>
+              <span className="text-[12px]">{uiText("ui.LocalVmWorkspace.58dca820c4")}</span>
             </div>
           ) : !status && !error ? (
             <div className="flex items-center gap-2 text-[12px] text-ink-secondary">
-              <Loader2 size={15} className="animate-spin" /> Checking {bot.name}'s VM…
-            </div>
+              <Loader2 size={15} className="animate-spin" />{uiText("ui.LocalVmWorkspace.0dfe1d63c9")} {bot.name}{uiText("ui.LocalVmWorkspace.862a17ed95")}</div>
           ) : status?.ready && nativeState.status !== "error" && !error ? (
             <div className="flex items-center gap-2 text-[12px] text-ink-secondary">
-              <Loader2 size={15} className="animate-spin" /> Connecting live view…
-            </div>
+              <Loader2 size={15} className="animate-spin" />{uiText("ui.LocalVmWorkspace.596d4040b5")}</div>
           ) : (
             <div className="flex max-w-[300px] flex-col items-center gap-3 text-ink-secondary">
               <AlertTriangle size={21} className="text-warning" />
               <div className="text-[12px] leading-relaxed">
                 {error ??
                   (status?.container === "missing"
-                    ? `${bot.name}'s Local VM has not been created.`
+                    ? uiText("ui.LocalVmWorkspace.8fcc5be5ed", { value1: String(bot.name) })
                     : status?.container === "stopped"
-                      ? `${bot.name}'s Local VM is stopped.`
-                      : `${bot.name}'s Local VM is not ready for a live view.`)}
+                      ? uiText("ui.LocalVmWorkspace.2b0564b8c5", { value1: String(bot.name) })
+                      : uiText("ui.LocalVmWorkspace.2d5536f0a9", { value1: String(bot.name) }))}
               </div>
               <div className="flex gap-2">
                 <button
@@ -513,15 +509,12 @@ function LocalVmPane({
                   onClick={() => setRetry((value) => value + 1)}
                   className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-2 text-[12px] text-ink hover:bg-raised-hover"
                 >
-                  <RefreshCw size={13} /> Retry status
-                </button>
+                  <RefreshCw size={13} />{uiText("ui.LocalVmWorkspace.bd13bebaa8")}</button>
                 <button
                   type="button"
                   onClick={() => onOpenComputer(bot.id)}
                   className="rounded-lg bg-raised px-3 py-2 text-[12px] text-ink hover:bg-raised-hover"
-                >
-                  Open Computer
-                </button>
+                >{uiText("ui.LocalVmWorkspace.a2b6428e3c")}</button>
               </div>
             </div>
           )}
@@ -590,7 +583,7 @@ export function LocalVmWorkspace({
       },
       async setInteractive(contextId) {
         const bridge = window.ogb?.desktopWorkspace;
-        if (!bridge) throw new Error("The two-desktop view bridge is unavailable");
+        if (!bridge) throw new Error(uiText("ui.LocalVmWorkspace.effdfa7e30"));
         return bridge.setInteractive(contextId);
       },
     }),
@@ -632,7 +625,7 @@ export function LocalVmWorkspace({
         setControlledBotId(null);
       })
       .catch(() => {
-        setControlError("The removed pane could not hand control back safely.");
+        setControlError(uiText("ui.LocalVmWorkspace.aba48dfe94"));
       });
   }, [controlPort, slots]);
 
@@ -677,7 +670,7 @@ export function LocalVmWorkspace({
       setControlledBotId(null);
       return true;
     } catch {
-      setControlError("OpenMausBot could not hand control back. The view stayed open.");
+      setControlError(uiText("ui.LocalVmWorkspace.4f3637dfc2"));
       return false;
     } finally {
       controlBusyRef.current = false;
@@ -699,7 +692,7 @@ export function LocalVmWorkspace({
           ...controlPort,
           async setInteractive(nextContextId) {
             if (nextContextId && contextForBot(botId) !== nextContextId) {
-              throw new Error("The Local VM pane changed during control acquisition");
+              throw new Error(uiText("ui.LocalVmWorkspace.0e894102c6"));
             }
             return controlPort.setInteractive(nextContextId);
           },
@@ -712,7 +705,7 @@ export function LocalVmWorkspace({
         );
         setControlledBotId(null);
         if (result.status === "held-elsewhere") {
-          setControlError("This VM is already controlled in another viewer. Hand it back there first.");
+          setControlError(uiText("ui.LocalVmWorkspace.464dcf0296"));
           return;
         }
         if (!mountedRef.current) {
@@ -722,7 +715,7 @@ export function LocalVmWorkspace({
         setControlledBotId(botId);
       } catch {
         setControlledBotId(controlledBotIdRef.current);
-        setControlError("Control could not switch safely. Any remaining hold stayed paused.");
+        setControlError(uiText("ui.LocalVmWorkspace.1ce85cc5d9"));
       } finally {
         controlBusyRef.current = false;
         setControlPending(false);
@@ -765,17 +758,15 @@ export function LocalVmWorkspace({
           <Monitor size={18} />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[14px] font-semibold text-ink">Local VM view</h1>
-          <p className="truncate text-[11.5px] text-ink-secondary">
-            Two live desktops · one active controller · watch-only by default
-          </p>
+          <h1 className="truncate text-[14px] font-semibold text-ink">{uiText("ui.LocalVmWorkspace.938153ddd0")}</h1>
+          <p className="truncate text-[11.5px] text-ink-secondary">{uiText("ui.LocalVmWorkspace.f519bbc57b")}</p>
         </div>
         <button
           type="button"
           onClick={() => void closeWorkspace()}
           disabled={controlPending}
           className="rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink disabled:opacity-50"
-          aria-label="Close Local VM view"
+          aria-label={uiText("ui.LocalVmWorkspace.d74415d4e8")}
         >
           <X size={18} />
         </button>

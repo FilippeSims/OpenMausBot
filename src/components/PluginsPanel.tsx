@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Loader2, RefreshCw, Search, Server, TriangleAlert, X } from "lucide-react";
 import { api, useStore, type Bot, type InstanceInfo } from "@/state/store";
@@ -983,7 +984,7 @@ export function PluginsPanel() {
                 return (
                   <div key={account.id} className="flex min-w-0 items-center gap-2 text-[12px] leading-5">
                     {active ? <Check size={12} className="shrink-0 text-success" /> : <span className="size-3 shrink-0" />}
-                    <span className="min-w-0 truncate text-ink" title={`${account.alias ? `${account.id} · ` : ""}${account.status.toLowerCase()}`}>
+                    <span className="min-w-0 truncate text-ink" title={uiText("ui.PluginsPanel.9989fa2d2c", { value1: String(account.alias ? `${account.id} · ` : ""), value2: String(account.status.toLowerCase()) })}>
                       {account.alias || account.id}
                       <span className="text-ink-secondary"> · {account.status.toLowerCase()}</span>
                     </span>

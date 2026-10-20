@@ -1,3 +1,4 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Loader2, LogIn, X } from "lucide-react";
 import { api, ApiError, useStore } from "@/state/store";
@@ -114,7 +115,7 @@ export function DeviceSignInProgress({ auth, browserPkce = false, provider = "co
         <Loader2 size={12} className="animate-spin" /> {t("engineSetup.device.waiting")}
       </p>
       {auth.expiresAt && Number.isFinite(Date.parse(auth.expiresAt)) && (
-        <p className="text-[11px] text-ink-secondary">{t(browserPkce ? "engineSetup.chatgpt.expires" : "engineSetup.device.expires", { time: new Date(auth.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })}</p>
+        <p className="text-[11px] text-ink-secondary">{t(browserPkce ? "engineSetup.chatgpt.expires" : "engineSetup.device.expires", { time: new Date(auth.expiresAt).toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit" }) })}</p>
       )}
       <p className="text-[11px] leading-relaxed text-ink-secondary">{t(browserPkce ? "engineSetup.chatgpt.security" : copy.security)}</p>
     </div>

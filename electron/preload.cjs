@@ -39,7 +39,7 @@ ipcRenderer.on("app:open-settings", (_event, section) => {
 const localOrigin = process.argv.find((arg) => arg.startsWith("--omb-local-origin="))?.slice("--omb-local-origin=".length) ?? null;
 const isLocalPage = !localOrigin || location.origin === localOrigin;
 const savedServer = id => isLocalPage && typeof id === "string" && /^[\w-]{1,64}$/.test(id) ? [id] : [];
-const REMOTE_SAFE = new Set(["platform", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "workspaces", "cloudMove", "cloudLending", "cloudPlan", "desktopNotices", "desktopAnalytics"]);
+const REMOTE_SAFE = new Set(["platform", "getCapabilities", "onCapabilitiesChanged", "applySkin", "applyLanguage", "setUnreadCount", "permStatus", "workspaces", "cloudMove", "cloudLending", "cloudPlan", "desktopNotices", "desktopAnalytics"]);
 function updaterOffered() {
   try { return ipcRenderer.sendSync("update:offered") === true; } catch { return false; }
 }
@@ -182,6 +182,7 @@ const bridge = {
   /** Unlike window.open, this still works after an asynchronous API request. */
   openExternal: (url) => ipcRenderer.invoke("desktop:open-external", url),
   applySkin: (skin) => ipcRenderer.invoke("desktop:skin", skin),
+  applyLanguage: (language) => ipcRenderer.invoke("desktop:language", language),
   windowControls: {
     minimize: () => ipcRenderer.invoke("window:minimize"),
     toggleMaximize: () => ipcRenderer.invoke("window:toggle-maximize"),

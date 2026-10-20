@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, PlugZap, RefreshCw, X } from "lucide-react";
 
@@ -151,7 +152,7 @@ export function ConnectorCard({ botId, threadId, message }: { botId: string; thr
         <span className="text-ink-secondary" title={connector.resumed ? t("connectors.card.resumed") : t("connectors.card.paused")}>
           {connector.label}
         </span>
-        <span> · {t("connectors.card.connected")}{connector.resumed ? ` · ${t("connectors.card.continuing")}` : stopped ? ` · ${t("chat.turnStopped")}` : ""}</span>
+        <span> · {t("connectors.card.connected")}{connector.resumed ? uiText("ui.ConnectorCard.f6b53f9c8a", { value1: String(uiText("connectors.card.continuing")) }) : stopped ? uiText("ui.ConnectorCard.f6b53f9c8a", { value1: String(uiText("chat.turnStopped")) }) : ""}</span>
       </AskSettledLine>
     );
   }

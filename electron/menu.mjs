@@ -1,5 +1,6 @@
 // Electron has no role for the macOS Preferences… item, so it is built explicitly.
 import { Menu, app } from "electron";
+import { desktopLanguage, desktopText } from "./desktop-i18n.mjs";
 
 /**
  * @param {object} input
@@ -31,7 +32,7 @@ export function buildApplicationMenu({ environments, activeId, onSwitch, onAddFr
       { label: "Connect to a server…", click: onConnect },
       { label: "Add Server from Copied Pairing Link…", click: () => onAddFromClipboard() },
       {
-        label: active ? `Forget “${active.name}”` : "Forget Server",
+        label: active ? desktopText("Forget “{name}”", { name: active.name }) : "Forget Server",
         enabled: Boolean(active),
         click: () => active && onForget(active.id),
       },
@@ -45,5 +46,27 @@ export function buildApplicationMenu({ environments, activeId, onSwitch, onAddFr
     { role: "viewMenu" },
     { role: "windowMenu" },
   ];
+  if (desktopLanguage() === "pt-BR") {
+    const roles = {
+      about: "About OpenMausBot", hide: "Hide OpenMausBot", hideOthers: "Hide Others", unhide: "Show All", quit: "Quit OpenMausBot",
+      fileMenu: "File", editMenu: "Edit", viewMenu: "View", windowMenu: "Window", close: "Close", undo: "Undo", redo: "Redo",
+      cut: "Cut", copy: "Copy", paste: "Paste", pasteAndMatchStyle: "Paste and Match Style", delete: "Delete", selectAll: "Select All",
+      reload: "Reload", forceReload: "Force Reload", toggleDevTools: "Developer Tools", resetZoom: "Actual Size", zoomIn: "Zoom In",
+      zoomOut: "Zoom Out", togglefullscreen: "Toggle Full Screen", minimize: "Minimize", zoom: "Zoom", front: "Bring All to Front",
+    };
+    const menus = {
+      fileMenu: ["close", ...(!isMac ? ["quit"] : [])],
+      editMenu: ["undo", "redo", null, "cut", "copy", "paste", "pasteAndMatchStyle", "delete", "selectAll"],
+      viewMenu: ["reload", "forceReload", "toggleDevTools", null, "resetZoom", "zoomIn", "zoomOut", null, "togglefullscreen"],
+      windowMenu: ["minimize", "zoom", ...(isMac ? [null, "front"] : ["close"])],
+    };
+    const translate = (items) => items.forEach(item => {
+      if (item.role && roles[item.role]) item.label = desktopText(roles[item.role]);
+      else if (item.label) item.label = desktopText(item.label);
+      if (menus[item.role]) item.submenu = menus[item.role].map(role => role ? { role } : { type: "separator" });
+      if (Array.isArray(item.submenu)) translate(item.submenu);
+    });
+    translate(template);
+  }
   return Menu.buildFromTemplate(template);
 }

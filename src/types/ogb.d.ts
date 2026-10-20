@@ -271,6 +271,8 @@ const __APP_VERSION__: string;
       openExternal?(url: string): Promise<boolean>;
       /** Recolor the native window chrome for a skin; absent on older builds. */
       applySkin?(skin: string): Promise<boolean>;
+      /** Update native menus to follow the renderer's selected language. */
+      applyLanguage?(language: string): Promise<boolean>;
       /** The renderer-drawn Windows caption buttons; absent outside the
        * frameless Windows shell (macOS/Linux/browser keep native chrome). */
       windowControls?: {

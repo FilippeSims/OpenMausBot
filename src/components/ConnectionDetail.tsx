@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState } from "react";
 import { Check, Copy, X } from "lucide-react";
 import { useCopyFeedback } from "@/lib/copy-text";
@@ -26,11 +27,11 @@ export function ConnectionDetail({ label, value }: { label: string; value: strin
         onClick={() => setRevealed((current) => !current)}
         className="shrink-0 rounded px-2 py-1 text-[11px] text-ink-secondary hover:bg-control hover:text-ink"
       >
-        {revealed ? "Hide" : "Reveal"}
+        {revealed ? uiText("ui.ConnectionDetail.ac20a57bfd") : uiText("ui.ConnectionDetail.36b830bdb4")}
       </button>
       <button
         onClick={copy}
-        aria-label={copyState === "failed" ? t("common.copyFailed") : `Copy ${label}`}
+        aria-label={copyState === "failed" ? t("common.copyFailed") : uiText("ui.ConnectionDetail.6dd8303613", { value1: String(label) })}
         className="shrink-0 rounded p-1.5 text-ink-secondary hover:bg-control hover:text-ink"
       >
         {copyState === "copied" ? <Check size={13} className="text-success" /> : copyState === "failed" ? <X size={13} className="text-danger" /> : <Copy size={13} />}

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // LocalComputerAutoWarning remembers its bot, so a bot switch while it is up never applies the choice to the new bot.
 import { useEffect, useState } from "react";
 import { Crown } from "lucide-react";
@@ -78,28 +79,28 @@ export function PermissionsSection({
             <Crown size={17} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-medium text-ink">Chief of Staff</div>
-            <div className="text-[11.5px] text-ink-secondary">One for {sectionName}</div>
+            <div className="text-[15px] font-medium text-ink">{uiText("teamShare.part.leader")}</div>
+            <div className="text-[11.5px] text-ink-secondary">{uiText("ui.PermissionsSection.19facd6350")} {sectionName}</div>
           </div>
           <Switch
             checked={Boolean(bot.chiefOfStaff)}
-            aria-label="Chief of Staff"
+            aria-label={uiText("teamShare.part.leader")}
             disabled={!bot.chiefOfStaff && !canCoordinate}
             onClick={() => patch({ chiefOfStaff: !bot.chiefOfStaff })}
-            title={!bot.chiefOfStaff && !canCoordinate ? "This model cannot contact other bots" : undefined}
+            title={!bot.chiefOfStaff && !canCoordinate ? uiText("ui.PermissionsSection.2a02ec6dd5") : undefined}
             className="disabled:cursor-not-allowed"
           />
         </div>
         <div className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
           {bot.chiefOfStaff && !canCoordinate
-            ? "This bot still holds the role, but its current provider cannot contact teammates. Choose a provider that supports bot coordination."
+            ? uiText("ui.PermissionsSection.cdb55f1b7c")
             : bot.chiefOfStaff
-              ? `This is the primary contact for ${sectionName}. It can create and coordinate specialists in this team, then combine their work into one answer.`
+              ? uiText("ui.PermissionsSection.c82f803642", { value1: String(sectionName) })
               : !canCoordinate
-                ? "Choose a provider that supports bot coordination."
+                ? uiText("ui.PermissionsSection.e6fd08fc36")
                 : currentChief
-                  ? `Make this bot the ${sectionName} Chief and hand the role over from ${currentChief.name}.`
-                  : `Make this bot the primary contact for the ${sectionName} team.`}
+                  ? uiText("ui.PermissionsSection.4b7ed11594", { value1: String(sectionName), value2: String(currentChief.name) })
+                  : uiText("ui.PermissionsSection.cfda74d20d", { value1: String(sectionName) })}
         </div>
         <ProposalStatus bot={bot} kind="chief" />
         {bot.chiefOfStaff && <ManagedTeamsSettings
@@ -114,28 +115,28 @@ export function PermissionsSection({
 
       <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
         <div>
-          <div className="text-[15px] font-medium text-ink">Ask me before contacting other bots</div>
+          <div className="text-[15px] font-medium text-ink">{uiText("ui.PermissionsSection.9450910319")}</div>
           <div className="mt-0.5 text-[13px] text-ink-secondary">
             {bot.approvePeerComms
-              ? "This bot will stop and ask before it reaches out to another bot."
-              : "Let this bot talk to teammates on its own, without a confirmation step."}
+              ? uiText("ui.PermissionsSection.61164d47cf")
+              : uiText("ui.PermissionsSection.8c759157e0")}
           </div>
           <ProposalStatus bot={bot} kind="owner" />
         </div>
         <Switch
           checked={Boolean(bot.approvePeerComms)}
-          aria-label="Ask me before contacting other bots"
+          aria-label={uiText("ui.PermissionsSection.9450910319")}
           disabled={!bot.approvePeerComms && !canCoordinate}
           onClick={() => patch({ approvePeerComms: !bot.approvePeerComms })}
-          title={!bot.approvePeerComms && !canCoordinate ? "This model cannot contact other bots" : undefined}
+          title={!bot.approvePeerComms && !canCoordinate ? uiText("ui.PermissionsSection.2a02ec6dd5") : undefined}
           className="disabled:cursor-not-allowed"
         />
       </div>
 
       <div className="rounded-xl bg-card p-4">
-        <div className="text-[15px] font-medium text-ink">Approval level</div>
+        <div className="text-[15px] font-medium text-ink">{uiText("teamSettings.tab.approval")}</div>
         <div className="mt-0.5 text-[13px] text-ink-secondary">
-          {draft ? "Default for the new bot's threads, routines and delegated work." : "Default for new threads, routines and delegated work. Full access also applies at once to every existing thread. Use Refresh permissions on a thread to apply the current level to that conversation."}
+          {draft ? uiText("ui.PermissionsSection.2011b58393") : uiText("ui.PermissionsSection.2399bf45b1")}
         </div>
         <ProposalStatus bot={bot} kind="owner" />
         <div className="mt-3">
@@ -156,7 +157,7 @@ export function PermissionsSection({
           type="button" disabled={Boolean(bot.busy)}
           className="mt-3 text-[13px] text-accent hover:underline disabled:opacity-40"
           onClick={applyFullEverywhere}
-        >Apply Full access to all threads</button>}
+        >{uiText("ui.PermissionsSection.b2db906c8a")}</button>}
         {!draft && ownerOrAdmin === true && <button
           type="button"
           className="mt-3 block text-[13px] text-accent hover:underline"
@@ -217,16 +218,13 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
 
   return (
     <div className="rounded-xl bg-card p-4">
-      <div className="text-[15px] font-medium text-ink">Sending on your behalf</div>
-      <div className="mt-0.5 text-[13px] text-ink-secondary">
-        Emails, messages, posts, invites, and payments through connected apps. Reading and drafting never count.
-        Full access sends without asking.
-      </div>
+      <div className="text-[15px] font-medium text-ink">{uiText("ui.PermissionsSection.38c45167f7")}</div>
+      <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.PermissionsSection.2967fc7efe")}</div>
       <div className="mt-3 flex gap-1 rounded-lg bg-inset p-0.5">
         {(
           [
-            ["ask", "Ask every time", "Every send waits for your tap."],
-            ["allow", "Allow a daily amount", "Sends go out on their own, up to the cap below."],
+            ["ask", uiText("ui.PermissionsSection.91da6bc629"), uiText("ui.PermissionsSection.3d5ff01e52")],
+            ["allow", uiText("ui.PermissionsSection.ab8b05e8b6"), uiText("ui.PermissionsSection.2ae5244868")],
           ] as const
         ).map(([value, label, hint]) => (
           <button
@@ -248,9 +246,7 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
       </div>
       {policy.policy === "allow" && (
         <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-ink-secondary">
-          <label className="flex items-center gap-2">
-            Up to
-            <input
+          <label className="flex items-center gap-2"> {uiText("ui.PermissionsSection.3e2884632c")} <input
               type="number"
               min={1}
               max={1000}
@@ -260,13 +256,11 @@ function OutboundControl({ bot, onChange }: { bot: Bot; onChange: (policy: Outbo
               onKeyDown={(event) => {
                 if (event.key === "Enter") (event.target as HTMLInputElement).blur();
               }}
-              aria-label="Daily outbound limit"
+              aria-label={uiText("ui.PermissionsSection.9408c89b8d")}
               className="w-20 rounded-md bg-inset px-2 py-1 text-[13px] text-ink tabular-nums outline-none focus:ring-1 focus:ring-accent"
-            />
-            a day
-          </label>
+            />{uiText("ui.PermissionsSection.4ed042e01c")}</label>
           <span className="tabular-nums">
-            {today === null ? "" : `${today} of ${policy.dailyCap} used today`}
+            {today === null ? "" : uiText("ui.PermissionsSection.e364d13fc3", { value1: String(today), value2: String(policy.dailyCap) })}
           </span>
         </div>
       )}

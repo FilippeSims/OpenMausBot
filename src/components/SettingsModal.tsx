@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Archive, CircleUser, Coins, FlaskConical, KeyRound, LockKeyhole, Monitor, Palette, ScrollText, Search, Sparkles, TabletSmartphone, Terminal, User, Users, X, Building2, Zap, BookOpen } from "lucide-react";
 import { api, useStore, type AppSettingsSection, type ConfigStatus } from "@/state/store";
@@ -172,7 +173,7 @@ function ProfileFields() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ profile: { name: name.trim(), email: email.trim().toLowerCase() } }),
     })
-      .then((r) => { if (!r.ok) throw new Error("Profile save failed"); return r.json(); })
+      .then((r) => { if (!r.ok) throw new Error(uiText("ui.SettingsModal.75eb4fadd0")); return r.json(); })
       .then((config: ConfigStatus) => {
         if (config.profile) dispatch({ type: "profileSaved", profile: { name: config.profile.name, email: config.profile.email } });
       })
@@ -874,7 +875,7 @@ export function SettingsModal() {
               {state.config?.cloudHome !== true && (
                 <p className="-mt-2 text-[11.5px] leading-relaxed text-ink-secondary">
                   {t("keys.opencode.providersHint").split("{command}").flatMap((part, index) =>
-                    index === 0 ? [part] : [<code key={index} className="font-mono">opencode auth login</code>, part])}
+                    index === 0 ? [part] : [<code key={index} className="font-mono">{uiText("ui.SettingsModal.d6e307d11e")}</code>, part])}
                 </p>
               )}
               <OpenCodeProviderKeys />
@@ -1067,7 +1068,7 @@ export function SettingsModal() {
             <button
               onClick={() => dispatch({ type: "toggleAppSettings", open: false })}
               aria-label={t("settings.close")}
-              title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
+              title={uiText("ui.SettingsModal.48e56a2411", { value1: String(uiText("settings.close")), value2: String(shortcutLabel("close-panel")) })}
               className="ui-icon-button cursor-pointer shrink-0"
             >
               <X size={18} />

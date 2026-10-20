@@ -1,3 +1,4 @@
+import { uiCopy as uiText } from "../../shared/ui-copy.ts";
 import { isCitationAttachment, serializeCitation, type CitationAttachment } from "./citations.ts";
 export { dataContextFor, type DataContext, type DataViewContext } from "../../shared/data-context.ts";
 
@@ -234,17 +235,17 @@ async function uploadWithRetry<T>(url: string, init: RequestInit): Promise<T> {
         continue;
       }
       const detail = (await response.json().catch(() => ({ error: response.statusText }))) as { error?: string };
-      throw Object.assign(new Error(detail.error ?? "upload failed"), { status: response.status });
+      throw Object.assign(new Error(detail.error ?? uiText("upload failed")), { status: response.status });
     }
     try {
       return await response.json() as T;
     } catch (error) {
       if (attempt === UPLOAD_ATTEMPTS - 1) {
-        throw new Error("upload returned an invalid response", { cause: error });
+        throw new Error(uiText("upload returned an invalid response"), { cause: error });
       }
     }
   }
-  throw new Error("upload failed");
+  throw new Error(uiText("upload failed"));
 }
 
 function canonicalImageName(originalName: string, path: string, mime: string): string {
@@ -252,11 +253,11 @@ function canonicalImageName(originalName: string, path: string, mime: string): s
   const extension = IMAGE_EXTENSION_BY_MIME[normalizedMime];
   const pathName = attachmentBasename(path);
   if (!extension || !pathName.toLowerCase().endsWith(extension)) {
-    throw new Error("upload returned invalid image metadata");
+    throw new Error(uiText("upload returned invalid image metadata"));
   }
   const original = attachmentBasename(originalName.trim());
   const dot = original.lastIndexOf(".");
-  const stem = (dot > 0 ? original.slice(0, dot) : original).trim() || "pasted image";
+  const stem = (dot > 0 ? original.slice(0, dot) : original).trim() || uiText("pasted image");
   return `${stem}${extension}`;
 }
 
@@ -462,7 +463,7 @@ function transcriptFileName(path: string, suppliedName?: string): string {
   }).join("").replace(/\s+/g, " ").trim();
   const safe = clean(attachmentBasename(decoded));
   const fallback = clean(attachmentBasename(path));
-  return Array.from(safe || fallback || "Attached file").slice(0, 180).join("");
+  return Array.from(safe || fallback || uiText("Attached file")).slice(0, 180).join("");
 }
 
 export function isPrivateAttachmentPath(path: string): boolean {
@@ -728,7 +729,7 @@ export async function intakeFiles<T extends DroppedFile & { type: string }>(
         return {
           attachments: [],
           rejectedNames: [],
-          uploadError: `${file.name}: ${err instanceof Error ? err.message : "upload failed"}`,
+          uploadError: `${file.name}: ${err instanceof Error ? err.message : uiText("upload failed")}`,
         };
       }
     }
@@ -741,7 +742,7 @@ export async function intakeFiles<T extends DroppedFile & { type: string }>(
       return {
         attachments: [],
         rejectedNames: [],
-        uploadError: `${file.name}: ${err instanceof Error ? err.message : "upload failed"}`,
+        uploadError: `${file.name}: ${err instanceof Error ? err.message : uiText("upload failed")}`,
       };
     }
     const result = await attachmentsFromDroppedFiles([file], getPath);
@@ -751,7 +752,7 @@ export async function intakeFiles<T extends DroppedFile & { type: string }>(
   const rejectedNames = results.flatMap((result) => result.rejectedNames);
   const uploadErrors = results.flatMap((result) => result.uploadError ? [result.uploadError] : []);
   const pathless = rejectedNames.length
-    ? `Unable to attach ${rejectedNames.join(", ")}. Choose a supported image, document, or audio file.`
+    ? uiText("Unable to attach {value1}. Choose a supported image, document, or audio file.", { value1: String(rejectedNames.join(", ")) })
     : null;
   const failed = uploadErrors.length ? uploadErrors.join("; ") : null;
   return {

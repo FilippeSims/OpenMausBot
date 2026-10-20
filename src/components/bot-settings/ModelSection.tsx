@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { EffortRow, ModelPicker } from "../ModelPicker";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -20,9 +21,9 @@ export function ModelSection({ bot }: { bot: Bot }) {
           contained
           label={
             <div>
-              <div className="text-[15px] font-medium text-ink">Default model</div>
+              <div className="text-[15px] font-medium text-ink">{uiText("botSettings.simple.defaultModel")}</div>
               <div className="mt-0.5 text-[13px] text-ink-secondary">
-                {draft ? "Starting model for the new bot and its threads." : "For groups and every thread that uses the bot's model. A thread keeps its own model only when you pick one in it."}
+                {draft ? uiText("ui.ModelSection.8c7fb036f3") : uiText("ui.ModelSection.8af55d33cc")}
               </div>
               <ProposalStatus bot={bot} kind="chief" />
             </div>
@@ -36,10 +37,10 @@ export function ModelSection({ bot }: { bot: Bot }) {
         className="rounded-xl bg-card p-4"
         label={
           <div>
-            <div className="text-[15px] font-medium text-ink">{modelVariants ? "Reasoning" : "Effort"}</div>
+            <div className="text-[15px] font-medium text-ink">{modelVariants ? uiText("model.simple.reasoning") : uiText("teamSettings.effort")}</div>
             {/* Codex applies a level to the whole thread and cannot take one back, so this says what the app sends, not where the engine ends up. */}
             <div className="mt-0.5 text-[13px] text-ink-secondary">
-              {modelVariants ? (draft ? "Starting reasoning variant for the new bot." : "For groups and every thread that uses the bot's model.") : `How hard this bot thinks in groups and every thread that uses its model${bot.modelSelection.effort ? "" : " (Default: no level is sent)"}`}
+              {modelVariants ? (draft ? uiText("ui.ModelSection.21463e32fd") : uiText("ui.ModelSection.c1469fc983")) : uiText("ui.ModelSection.f71faae6bb", { value1: String(bot.modelSelection.effort ? "" : uiText("ui.ModelSection.92f0434121")) })}
             </div>
             <ProposalStatus bot={bot} kind="chief" />
           </div>
@@ -90,13 +91,9 @@ function FallbackChain({ bot, onChange }: { bot: Bot; onChange: (fallback: Bot["
 
   return (
     <div className="rounded-xl bg-card p-4">
-      <div className="text-[15px] font-medium text-ink">Backup models for this bot</div>
-      <div className="mt-0.5 text-[13px] text-ink-secondary">
-        When Automatic recovery is enabled in App Settings, try these models in order only if the provider
-        proves the request never started. Work that may have run is not replayed. Only that thread switches;
-        bot defaults and other threads stay unchanged. Backup provider charges may apply.
-      </div>
-      {!state.config?.automaticRecovery?.enabled && <p className="mt-2 text-[12px] text-ink-secondary">Automatic recovery is off. This list stays inactive until you enable it in App Settings.</p>}
+      <div className="text-[15px] font-medium text-ink">{uiText("ui.ModelSection.8430cb1d23")}</div>
+      <div className="mt-0.5 text-[13px] text-ink-secondary">{uiText("ui.ModelSection.6acd5044ee")}</div>
+      {!state.config?.automaticRecovery?.enabled && <p className="mt-2 text-[12px] text-ink-secondary">{uiText("ui.ModelSection.951b238462")}</p>}
       {chain.length > 0 && (
         <ol className="mt-3 flex flex-col gap-1">
           {chain.map((entry, index) => (
@@ -107,7 +104,7 @@ function FallbackChain({ bot, onChange }: { bot: Bot; onChange: (fallback: Bot["
               <button
                 type="button"
                 onClick={() => onChange(chain.filter((candidate) => candidate.instanceId !== entry.instanceId))}
-                aria-label={`Remove ${nameOf(entry.instanceId)} from the fallback list`}
+                aria-label={uiText("ui.ModelSection.0c60129cbf", { value1: String(nameOf(entry.instanceId)) })}
                 className="shrink-0 rounded p-0.5 text-ink-secondary hover:text-ink"
               >
                 <X size={13} />
@@ -121,10 +118,10 @@ function FallbackChain({ bot, onChange }: { bot: Bot; onChange: (fallback: Bot["
           <Select size="sm"
             value=""
             onChange={(event) => add(event.target.value)}
-            aria-label="Add a fallback engine"
+            aria-label={uiText("ui.ModelSection.215aebb7b7")}
             disabled={available.length === 0}
           >
-            <option value="">{available.length === 0 ? "No other engine is available" : "Add an engine…"}</option>
+            <option value="">{available.length === 0 ? uiText("ui.ModelSection.2e8f179eea") : uiText("ui.ModelSection.1997ae9a75")}</option>
             {available.map((instance) => (
               <option key={instance.instanceId} value={instance.instanceId}>
                 {instance.displayName}

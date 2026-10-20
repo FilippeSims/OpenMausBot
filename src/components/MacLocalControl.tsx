@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2, Shield } from "lucide-react";
 import { useDesktopCapabilities } from "./DesktopCapabilities";
@@ -63,7 +64,7 @@ export function MacLocalControl() {
       <div className="flex items-start gap-3">
         <Shield size={16} className="mt-0.5 shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-medium text-ink">Allow control of this computer</div>
+          <div className="text-[14px] font-medium text-ink">{uiText("ui.MacLocalControl.81f53f6380")}</div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">
             {permissionMessage ?? t("computer.mac.permission.generic")}
           </p>
@@ -82,9 +83,7 @@ export function MacLocalControl() {
                 onClick={() => void openSettings()}
                 disabled={pending}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white hover:brightness-110 disabled:opacity-50"
-              >
-                Open System Settings
-              </button>
+              >{uiText("ui.MacLocalControl.18196b39b4")}</button>
             )}
             <button
               type="button"
@@ -92,9 +91,7 @@ export function MacLocalControl() {
               disabled={pending}
               className="inline-flex items-center gap-1.5 rounded-lg border border-hairline/50 px-3 py-1.5 text-[12.5px] font-medium text-ink hover:bg-raised disabled:opacity-50"
             >
-              {pending && <Loader2 size={13} className="animate-spin" />}
-              Retry
-            </button>
+              {pending && <Loader2 size={13} className="animate-spin" />} {uiText("commandAllowlist.retry")} </button>
           </div>
         </div>
       </div>

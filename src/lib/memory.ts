@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { ApiError, api } from "@/state/store";
 
 export const MEMORY_INDEX = "MEMORY.md";
@@ -146,11 +148,11 @@ export function tidyMemoryNow(botId: string): Promise<{ report: TidyReport; over
 
 export function tidySummary(report: TidyReport): string {
   const parts: string[] = [];
-  if (report.expired) parts.push(`archived ${report.expired} expired note${report.expired === 1 ? "" : "s"}`);
+  if (report.expired) parts.push(uiText("ui.memory.aabd3895da", { value1: String(report.expired), value2: String(report.expired === 1 ? "" : "s") }));
   if (report.duplicates) parts.push(`merged ${report.duplicates} duplicate${report.duplicates === 1 ? "" : "s"}`);
-  if (report.superseded) parts.push(`crossed out ${report.superseded} contradicted note${report.superseded === 1 ? "" : "s"}`);
-  if (report.organized) parts.push(`filed ${report.organized} note${report.organized === 1 ? "" : "s"} into topics`);
-  const head = parts.length ? parts.join(", ") : "nothing to tidy";
+  if (report.superseded) parts.push(uiText("ui.memory.b0e0bcf088", { value1: String(report.superseded), value2: String(report.superseded === 1 ? "" : "s") }));
+  if (report.organized) parts.push(uiText("ui.memory.92598f401a", { value1: String(report.organized), value2: String(report.organized === 1 ? "" : "s") }));
+  const head = parts.length ? parts.join(", ") : uiText("ui.memory.6d372215c2");
   return head.charAt(0).toUpperCase() + head.slice(1);
 }
 
@@ -167,15 +169,15 @@ export function formatBytes(bytes: number): string {
 
 export function relativeTime(at: number, now = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - at) / 1000));
-  if (seconds < 45) return "just now";
+  if (seconds < 45) return uiText("task.updated.justNow");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60) return uiText("ui.memory.1de67215cf", { value1: String(minutes) });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return uiText("ui.memory.c4f5845fa5", { value1: String(hours) });
   const days = Math.round(hours / 24);
   if (days === 1) return "yesterday";
-  if (days < 7) return `${days} days ago`;
-  return new Date(at).toLocaleDateString([], { month: "short", day: "numeric" });
+  if (days < 7) return uiText("ui.memory.e348af77c7", { value1: String(days) });
+  return new Date(at).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" });
 }
 
 export type CapacityLevel = "ok" | "near" | "over";
@@ -192,13 +194,13 @@ export function capacityStatus(index: MemoryCapacity): CapacityStatus {
   const lineShare = index.maxLines ? index.lines / index.maxLines : 0;
   const byteShare = index.maxBytes ? index.bytes / index.maxBytes : 0;
   const level: CapacityLevel = index.truncated ? "over" : Math.max(lineShare, byteShare) >= 0.8 ? "near" : "ok";
-  const sentence = `${index.lines} of ${index.maxLines} lines · ${formatBytes(index.bytes)} of ${formatBytes(index.maxBytes)} — only the first ${index.maxLines} lines load each turn.`;
+  const sentence = uiText("ui.memory.61d46b6100", { value1: String(index.lines), value2: String(index.maxLines), value3: String(formatBytes(index.bytes)), value4: String(formatBytes(index.maxBytes)), value5: String(index.maxLines) });
   let warning: string | null = null;
   if (index.truncated) {
     const missingLines = index.lines - index.loadedLines;
     warning = missingLines > 0
-      ? `${index.lines} lines saved, ${index.loadedLines} load into every conversation — ${missingLines} ${missingLines === 1 ? "line is" : "lines are"} not being loaded. Trim this file or move notes into a topic file.`
-      : `${formatBytes(index.bytes)} saved, ${formatBytes(index.loadedBytes)} load into every conversation — the rest is not being loaded. Trim this file or move notes into a topic file.`;
+      ? uiText("ui.memory.4bd75998d0", { value1: String(index.lines), value2: String(index.loadedLines), value3: String(missingLines), value4: String(missingLines === 1 ? "line is" : "lines are") })
+      : uiText("ui.memory.2faccfb1b3", { value1: String(formatBytes(index.bytes)), value2: String(formatBytes(index.loadedBytes)) });
   }
   return { level, lineShare, byteShare, sentence, warning };
 }
@@ -210,7 +212,7 @@ function fileLabel(path: string): string {
 }
 
 export function journalSummary(row: MemoryJournalRow, botName: string): string {
-  const who = row.actor === "bot" ? botName : row.actor === "import" ? "An import" : row.actor === "upkeep" ? "Memory upkeep" : "You";
+  const who = row.actor === "bot" ? botName : row.actor === "import" ? uiText("ui.memory.3f442efbe8") : row.actor === "upkeep" ? uiText("ui.MemorySection.96b7c58507") : "You";
   const file = fileLabel(row.path);
   const isIndex = row.path === MEMORY_INDEX;
   const topic = isIndex ? file : row.path.startsWith("memory/log/") ? file : `the ${file} topic`;
@@ -227,21 +229,21 @@ function plural(count: number, noun: string): string {
 
 export function journalSource(row: MemoryJournalRow): string | null {
   if (row.via === "revert") return "undo";
-  if (row.via === "disk") return "changed outside the app";
+  if (row.via === "disk") return uiText("ui.memory.4d4d5d9df5");
   if (row.via === "tidy") return "tidy-up";
-  if (row.via === "organize") return "filed into topics";
-  if (row.via === "capture") return row.threadTitle ? `noticed in chat “${row.threadTitle}”` : "noticed in a chat";
-  if (row.threadTitle) return `from chat “${row.threadTitle}”`;
+  if (row.via === "organize") return uiText("ui.memory.a67f76b193");
+  if (row.via === "capture") return row.threadTitle ? uiText("ui.memory.a98966974f", { value1: String(row.threadTitle) }) : uiText("ui.memory.a0843fadfc");
+  if (row.threadTitle) return uiText("ui.memory.554e581de9", { value1: String(row.threadTitle) });
   if (row.actor === "bot") return "during a task";
-  if (row.via === "ui") return "in Settings";
-  if (row.via === "api") return "through the API";
+  if (row.via === "ui") return uiText("ui.memory.a61a4cd7ef");
+  if (row.via === "api") return uiText("ui.memory.33913a3c98");
   return null;
 }
 
 export function fileManagerLabel(platform: string | undefined): string {
-  if (platform === "darwin") return "Show in Finder";
-  if (platform === "win32") return "Show in Explorer";
-  return "Show in file manager";
+  if (platform === "darwin") return uiText("ui.memory.c2a9c77acf");
+  if (platform === "win32") return uiText("ui.memory.44b3e74a5a");
+  return uiText("ui.memory.3ca4dad5cc");
 }
 
 export function topicFileName(input: string): string | null {

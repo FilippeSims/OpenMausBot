@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import {
   forwardRef,
   memo,
@@ -250,7 +251,7 @@ export function BotAvatar({ bot, size = 44, label, readable = false, ...mascotPr
     >
       <img
         src={profile.avatarUrl}
-        alt={label ?? (bot.name ? `${bot.name} avatar` : "Bot avatar")}
+        alt={label ?? (bot.name ? uiText("ui.Avatar.5c08ab381a", { value1: String(bot.name) }) : uiText("ui.Avatar.d768bc547c"))}
         width={size}
         height={size}
         draggable={false}

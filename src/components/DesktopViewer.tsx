@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight, Clipboard, Keyboard, Maximize, Minimize, Monitor, RefreshCw, Send, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -57,7 +58,7 @@ export function DesktopViewer() {
           const joined = await fetch(`/api/bots/${target.slice(4)}/computer/join${query}`, {
             method: "POST", headers: { "content-type": "application/json" }, body: "{}", signal,
           });
-          if (!joined.ok) throw new Error("join failed");
+          if (!joined.ok) throw new Error(uiText("ui.DesktopViewer.64630fa955"));
           if (controller.signal.aborted) return;
         }
         const path = `/api/desktop-viewer/${target}`;
@@ -65,7 +66,7 @@ export function DesktopViewer() {
           signal,
           credentials: "same-origin", cache: "no-store",
         });
-        if (!response.ok) throw new Error("viewer unavailable");
+        if (!response.ok) throw new Error(uiText("ui.DesktopViewer.d55111bde5"));
         const config = await response.json();
         if (controller.signal.aborted) return;
         const websocket = new URL(`${path}/websockify`, location.href);
@@ -174,7 +175,7 @@ export function DesktopViewer() {
         {controlError && <p role="alert" className="absolute inset-x-3 bottom-3 rounded-xl border border-hairline bg-panel p-3 text-ink">{controlError}</p>}
       </main>
 
-      <a id="viewer-notice" href="/novnc-NOTICE.txt" target="_blank" rel="license noopener noreferrer" title={t("desktopViewer.notice")} aria-label={t("desktopViewer.notice")} className="absolute bottom-2 right-2 z-10 flex min-h-6 w-11 items-center justify-center rounded-lg bg-app/80 text-[10px] text-ink-secondary hover:text-ink hover:underline" style={{ marginRight: "env(safe-area-inset-right)", marginBottom: "env(safe-area-inset-bottom)" }}>noVNC</a>
+      <a id="viewer-notice" href="/novnc-NOTICE.txt" target="_blank" rel="license noopener noreferrer" title={t("desktopViewer.notice")} aria-label={t("desktopViewer.notice")} className="absolute bottom-2 right-2 z-10 flex min-h-6 w-11 items-center justify-center rounded-lg bg-app/80 text-[10px] text-ink-secondary hover:text-ink hover:underline" style={{ marginRight: "env(safe-area-inset-right)", marginBottom: "env(safe-area-inset-bottom)" }}>{uiText("ui.DesktopViewer.3b498e821b")}</a>
 
       {panelMotion.shown && <section {...panelMotion.exitProps} aria-label={t(keyboardPanel ? "desktopViewer.keyboard" : "desktopViewer.clipboard")} onKeyDown={event => {
         if (event.key === "Escape") { event.stopPropagation(); closePanel(); }

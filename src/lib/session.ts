@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 export interface EnvironmentDescriptor {
   environmentId: string;
   label: string;
@@ -104,7 +105,7 @@ export async function pairWithCode(
       body: JSON.stringify({ code: input.code, label: input.label, cookie: true, attemptId: input.attemptId ?? newAttemptId(), ...(input.browser ? { browser: true } : {}) }),
     });
   } catch (error) {
-    return { ok: false, error: `could not reach the server (${error instanceof Error ? error.message : String(error)})` };
+    return { ok: false, error: uiText("ui.session.1abb1439a7", { value1: String(error instanceof Error ? error.message : String(error)) }) };
   }
   const body: unknown = await res.json().catch(() => ({}));
   if (res.ok) return { ok: true };
@@ -141,7 +142,7 @@ async function postAuth(path: string, body: Record<string, unknown>, fetchImpl: 
   try {
     res = await fetchImpl(path, { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   } catch (error) {
-    return { ok: false, error: `could not reach the server (${error instanceof Error ? error.message : String(error)})` };
+    return { ok: false, error: uiText("ui.session.1abb1439a7", { value1: String(error instanceof Error ? error.message : String(error)) }) };
   }
   const parsed: unknown = await res.json().catch(() => ({}));
   if (res.ok) return { ok: true };

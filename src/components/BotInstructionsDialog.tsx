@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { BookOpen, X } from "lucide-react";
@@ -76,7 +77,7 @@ export function BotInstructionsDialog({ bot, onClose, inline = false }: { bot: B
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-accent-text">
                 <BookOpen size={15} />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">Bot instructions</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">{uiText("ui.BotInstructionsDialog.f8553a3d61")}</span>
               </div>
               <h2 id="bot-instructions-title" className="mt-0.5 truncate text-[20px] font-semibold tracking-[-0.01em] text-ink">
                 {bot.name}
@@ -87,7 +88,7 @@ export function BotInstructionsDialog({ bot, onClose, inline = false }: { bot: B
           <button
             type="button"
             onClick={close}
-            aria-label="Close bot instructions"
+            aria-label={uiText("ui.BotInstructionsDialog.e869efe847")}
             className="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-secondary hover:bg-raised hover:text-ink"
           >
             <X size={19} />
@@ -102,17 +103,15 @@ export function BotInstructionsDialog({ bot, onClose, inline = false }: { bot: B
           ) : (
             <div className="rounded-xl border border-dashed border-hairline bg-inset px-5 py-12 text-center">
               <BookOpen size={22} className="mx-auto text-ink-tertiary" />
-              <p className="mt-3 text-[13px] font-medium text-ink">No instructions yet</p>
-              <p className="mt-1 text-[12px] text-ink-secondary">Add them from this bot’s profile.</p>
+              <p className="mt-3 text-[13px] font-medium text-ink">{uiText("ui.BotInstructionsDialog.3a6170c548")}</p>
+              <p className="mt-1 text-[12px] text-ink-secondary">{uiText("ui.BotInstructionsDialog.0fddf01336")}</p>
             </div>
           )}
         </div>
 
         <footer className="flex items-center justify-between gap-4 border-t border-hairline/40 px-6 py-4 text-[11.5px] text-ink-secondary sm:px-8">
-          <span>Included in this bot’s context on every turn.</span>
-          <button type="button" onClick={close} className="rounded-lg bg-control px-3.5 py-2 text-[13px] font-medium text-ink hover:bg-raised-hover">
-            Done
-          </button>
+          <span>{uiText("ui.BotInstructionsDialog.d5827ab648")}</span>
+          <button type="button" onClick={close} className="rounded-lg bg-control px-3.5 py-2 text-[13px] font-medium text-ink hover:bg-raised-hover">{uiText("cloudMove.ok")}</button>
         </footer>
       </div>
     </div>

@@ -1,7 +1,8 @@
+import { t as uiText } from "@/lib/i18n";
 const browserCapabilities: DesktopCapabilities = {
   host: {
     platform: "other",
-    label: "Browser",
+    get label() { return uiText("settings.profiles.browserLabel"); },
     session: "unknown",
     packaged: false,
   },

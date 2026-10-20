@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { MausAvatar } from "@/components/Avatar";
 import { cn } from "@/lib/cn";
@@ -14,12 +15,12 @@ type Line =
 
 const SCRIPT: Array<{ at: number; line: Line }> = [
   { at: 300, line: { kind: "cmd", text: "npx openmausbot" } },
-  { at: 1150, line: { kind: "out", text: "Welcome to OpenMausBot", tone: "ink" } },
-  { at: 1350, line: { kind: "out", text: "Let's connect your AI. Choose a provider, then a model.", tone: "dim" } },
-  { at: 1800, line: { kind: "pick", label: "Choose your AI connection", options: ["Claude Code", "ChatGPT / Codex", "API key"], chosen: 0 } },
-  { at: 2900, line: { kind: "done", label: "Choose your AI connection", value: "Claude Code" } },
-  { at: 3150, line: { kind: "done", label: "Choose your model", value: "claude-sonnet" } },
-  { at: 3700, line: { kind: "out", text: "OpenMausBot ready → http://127.0.0.1:8799", tone: "success" } },
+  { at: 1150, line: { kind: "out", get text() { return uiText("ui.Terminal.924183a2bc"); }, tone: "ink" } },
+  { at: 1350, line: { kind: "out", get text() { return uiText("ui.Terminal.3bdfdb3995"); }, tone: "dim" } },
+  { at: 1800, line: { kind: "pick", get label() { return uiText("ui.Terminal.e0ea69ff6f"); }, options: ["Claude Code", "ChatGPT / Codex", uiText("model.simple.apiKey")], chosen: 0 } },
+  { at: 2900, line: { kind: "done", get label() { return uiText("ui.Terminal.e0ea69ff6f"); }, value: "Claude Code" } },
+  { at: 3150, line: { kind: "done", get label() { return uiText("ui.Terminal.14f24b36d5"); }, value: "claude-sonnet" } },
+  { at: 3700, line: { kind: "out", get text() { return uiText("ui.Terminal.920a5d1b87"); }, tone: "success" } },
 ];
 
 const RISE_AT = 4200;
@@ -72,7 +73,7 @@ export function Terminal({ playing, onCue, onEnded, label }: SceneProps) {
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />
           <span className="size-2.5 rounded-full bg-[#febc2e]" />
           <span className="size-2.5 rounded-full bg-[#28c840]" />
-          <span className="ml-2 text-[10px] text-white/40">zsh</span>
+          <span className="ml-2 text-[10px] text-white/40">{uiText("ui.Terminal.a26e376542")}</span>
         </div>
         <div className="px-3.5 py-2.5">
           {lines.map(({ at, line }, i) => {
@@ -134,7 +135,7 @@ export function Terminal({ playing, onCue, onEnded, label }: SceneProps) {
             </div>
             <div className="ml-2 flex h-6 max-w-[150px] items-center gap-1.5 rounded-t-lg bg-[#35363a] px-2.5 text-[9.5px] text-[#e8eaed]">
               <MausAvatar color="green" state="idle" size={10} animated={false} trackPointer={false} />
-              <span className="truncate">OpenMausBot</span>
+              <span className="truncate">{uiText("ui.Terminal.71a8a8166c")}</span>
               <span className="ml-1 text-[#9aa0a6]">×</span>
             </div>
             <span className="mb-1 text-[12px] leading-none text-[#9aa0a6]">+</span>
@@ -156,7 +157,7 @@ export function Terminal({ playing, onCue, onEnded, label }: SceneProps) {
         <div className="relative flex min-h-0 flex-1 bg-app">
           <div className="flex w-[104px] shrink-0 flex-col border-r border-hairline/40 bg-panel/70 p-2">
             <div className="h-5 rounded-md bg-inset" />
-            <div className="mt-2 text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-tertiary">Bots</div>
+            <div className="mt-2 text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-tertiary">{uiText("teamShare.part.bots")}</div>
             <div className="mt-1 flex items-center gap-1.5 rounded-md bg-raised/70 px-1.5 py-1">
               <MausAvatar color="green" state="happy" size={14} animated={false} trackPointer={false} />
               <div className="min-w-0">
@@ -178,11 +179,11 @@ export function Terminal({ playing, onCue, onEnded, label }: SceneProps) {
             <div className="absolute left-1/2 top-[6px] w-[196px] -translate-x-1/2 rounded-xl border border-hairline/50 bg-panel px-4 py-2.5 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.7)]">
               <div className="flex flex-col items-center">
                 <MausAvatar color="green" state="happy" size={24} animated={!still} trackPointer={false} />
-                <div className="mt-1 text-[10px] font-semibold text-ink">Welcome to OpenMausBot</div>
+                <div className="mt-1 text-[10px] font-semibold text-ink">{uiText("ui.Terminal.924183a2bc")}</div>
                 <div className="mt-0.5 h-1 w-24 rounded bg-ink-secondary/40" />
-                <div className="mt-2 flex h-[18px] w-full items-center rounded-md border border-hairline/40 bg-inset px-2 text-[8px] text-ink-secondary">Your name</div>
+                <div className="mt-2 flex h-[18px] w-full items-center rounded-md border border-hairline/40 bg-inset px-2 text-[8px] text-ink-secondary">{uiText("settings.profile.name")}</div>
                 <div className="mt-1 flex h-[18px] w-full items-center rounded-md border border-hairline/40 bg-inset px-2 text-[8px] text-ink-secondary">you@example.com</div>
-                <div className="mt-1 flex h-[18px] w-full items-center justify-center rounded-md bg-accent text-[8.5px] font-medium text-white">Continue</div>
+                <div className="mt-1 flex h-[18px] w-full items-center justify-center rounded-md bg-accent text-[8.5px] font-medium text-white">{uiText("onboarding.continue")}</div>
               </div>
             </div>
           </div>

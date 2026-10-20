@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // Half-duplex: the dictation helper is Apple's SFSpeechRecognizer on raw AVAudioEngine input with no echo cancellation,
 // so a mic open during playback transcribes the bot's own voice back. The buffer-backed recognizer does not finalize on
 // silence; the helper ends the stream.
@@ -130,25 +131,25 @@ export function CallTargetButton({
       : liveMode
       ? t("call.live.callWith", { name: targetName })
       : !capabilitiesReady
-      ? "Checking call availability"
+      ? uiText("ui.CallView.76e149d437")
       : !supported
-        ? capabilityHelp?.label ?? "Call unavailable"
+        ? capabilityHelp?.label ?? uiText("ui.CallView.777bbda350")
         : !configured
-          ? "Set up a voice in an agent profile to make calls"
+          ? uiText("ui.CallView.46ec6388ad")
           : !voiceReady
-            ? "Pick a voice in an agent profile to make calls"
+            ? uiText("ui.CallView.3f6d7ffff6")
             : `Call ${targetName}`;
 
   const reason = !capabilitiesReady
-    ? "Checking whether this device can make calls."
+    ? uiText("ui.CallView.0eefb3d2ce")
     : capabilityHelp
       ? capabilityHelp.reason
         : !configured
-          ? "Set up ElevenLabs, Fish Audio, Chatterbox, or a built-in Mac voice so the bot can speak during calls."
+          ? uiText("ui.CallView.63e2446b61")
           : !voiceReady
             ? voices.length > 1
-              ? "Give every group member a voice before starting a group call."
-              : "Choose a voice before starting a call."
+              ? uiText("ui.CallView.fb7abdef37")
+              : uiText("ui.CallView.f797fb7140")
             : "";
 
   const closePopovers = useCallback(() => {
@@ -327,10 +328,10 @@ export function CallTargetButton({
         <div
           id={helpId}
           role="group"
-          aria-label="Call unavailable"
+          aria-label={uiText("ui.CallView.777bbda350")}
           className={cn("absolute right-0 z-30 w-[280px]", composer ? "bottom-full mb-1.5" : "mt-1.5", "rounded-xl border border-hairline bg-panel p-3 text-left shadow-2xl", helpMotion.className)} {...helpMotion.exitProps}
         >
-          <div className="text-[13px] font-medium text-ink">Call unavailable</div>
+          <div className="text-[13px] font-medium text-ink">{uiText("ui.CallView.777bbda350")}</div>
           <div className="mt-1 text-[12px] leading-[1.45] text-ink-secondary">{reason}</div>
           {canLive && (
             <button
@@ -430,7 +431,7 @@ export function CallModeMenu({ id, mode, onChoose, onClose, placement = "header"
             <span className="min-w-0 flex-1">
               <span className={cn("block text-[13px] font-medium", unavailable ? "text-ink-tertiary" : "text-ink")}>{t(entry.label)}</span>
               <span className="mt-0.5 block text-[11.5px] leading-[1.4] text-ink-secondary">
-                {unavailable ? `${unavailable.label}. ${unavailable.reason}` : callModeHint(entry.id, { cloudHome })}
+                {unavailable ? uiText("ui.CallView.a02b6faec3", { value1: String(unavailable.label), value2: String(unavailable.reason) }) : callModeHint(entry.id, { cloudHome })}
               </span>
             </span>
             {mode === entry.id && <Check size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />}
@@ -461,7 +462,7 @@ function Call({ bot }: { bot: Bot }) {
   const [heard, setHeard] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const pushToTalk = usePushToTalk(bot.id, phase === "listening", () => {
-    setNote("Push to talk couldn't start. Check Microphone and Speech Recognition access.");
+    setNote(uiText("ui.CallView.8ea517c547"));
   });
 
   const messages = visibleMessages(bot);
@@ -510,7 +511,7 @@ function Call({ bot }: { bot: Bot }) {
     setNote(null);
     void window.ogb?.speechStart({ endpointMs: CALL_ENDPOINT_MS }).catch(() => {
       if (alive.current && currentCall() === bot.id) {
-        setNote("The microphone couldn't start. Check Microphone and Speech Recognition access.");
+        setNote(uiText("ui.CallView.6b32255e43"));
       }
     });
   }, [bot.id, move]);
@@ -553,7 +554,7 @@ function Call({ bot }: { bot: Bot }) {
     const offTranscript = bridge.onSpeechTranscript((line) => {
       if (!alive.current || currentCall() !== bot.id || phaseRef.current !== "listening") return;
       if (line.error) {
-        setNote("Dictation stopped unexpectedly. Check Microphone and Speech Recognition access.");
+        setNote(uiText("ui.CallView.0bfd8ec92e"));
         return;
       }
       if (typeof line.text !== "string") return;
@@ -573,7 +574,7 @@ function Call({ bot }: { bot: Bot }) {
           const allow = YES.test(said);
           if (allow && open.skill) {
             setHeard("");
-            void sayThenListen("Open this chat to review the complete skill before enabling it. You can say no now to deny it.");
+            void sayThenListen(uiText("ui.CallView.bd855239c8"));
             return;
           }
           // Stay claimed until the server's card patch arrives, or a render in that gap submits the same approval
@@ -587,7 +588,7 @@ function Call({ bot }: { bot: Bot }) {
             threadId: bot.threadId,
             requestId: open.requestId,
             behavior: allow ? "allow" : "deny",
-            message: allow ? undefined : "Denied by the user, on a call.",
+            message: allow ? undefined : uiText("ui.CallView.aa94691490"),
             onError: (error: string) => {
               const pending = askedApproval.current;
               if (
@@ -598,15 +599,15 @@ function Call({ bot }: { bot: Bot }) {
               ) return;
               pending.submitted = false;
               const detail = error.trim().slice(0, 240);
-              const decision = open.routine ? "routine decision" : "approval";
+              const decision = open.routine ? uiText("ui.CallView.2badb2ef6b") : "approval";
               void sayThenListen(
-                `I couldn't save that ${decision}${detail ? `: ${detail}` : "."} Please try again.`,
+                uiText("ui.CallView.b66d9fdfb2", { value1: String(decision), value2: String(detail ? `: ${detail}` : ".") }),
               );
             },
           });
           return;
         }
-        void sayThenListen("Sorry — is that a yes or a no?");
+        void sayThenListen(uiText("ui.CallView.b160752c65"));
         return;
       }
 
@@ -624,18 +625,18 @@ function Call({ bot }: { bot: Bot }) {
     const offEnd = bridge.onSpeechEnd(({ code, reason }) => {
       if (!alive.current || currentCall() !== bot.id) return;
       if (code === 2) {
-        setNote("Calls need macOS dictation, which isn't available here yet.");
+        setNote(uiText("ui.CallView.e756a43054"));
         return;
       }
       if (code === 1) {
         setNote(
           reason === "helper-build-failed"
-            ? "The dictation helper couldn't be built. Install Apple's Command Line Tools and try again."
+            ? uiText("ui.CallView.1a14049ce8")
             : reason === "dictation-disabled"
-              ? "Turn on Dictation in System Settings → Keyboard, then try again."
+              ? uiText("composer.dictation.disabled")
               : reason === "speech-not-authorized"
-                ? "Allow Speech Recognition in System Settings → Privacy & Security, then try again."
-                : "Dictation couldn't start. Try again.",
+                ? uiText("ui.CallView.895ef9d2b2")
+                : uiText("composer.dictation.failed"),
         );
         return;
       }
@@ -681,8 +682,8 @@ function Call({ bot }: { bot: Bot }) {
       };
       spokenIds.current.add(approval.message.id);
       const skillPrompt = approval.message.card?.skillRequest?.action === "update"
-        ? `${bot.name} wants to update a learned skill. Open this chat to review the complete skill before replacing the current version. You can say no to deny it.`
-        : `${bot.name} wants to enable a new learned skill. Open this chat to review the complete skill before enabling it. You can say no to deny it.`;
+        ? uiText("ui.CallView.54f5bf2b1f", { value1: String(bot.name) })
+        : uiText("ui.CallView.83378a167b", { value1: String(bot.name) });
       void sayThenListen(isSkillApproval(approval) ? skillPrompt : spokenApprovalPrompt(approval, bot.name));
       return;
     }
@@ -695,7 +696,7 @@ function Call({ bot }: { bot: Bot }) {
       spokenIds.current.add(question.id);
       const detail = question.card.subtitle.trim();
       const choices = question.card.options.length
-        ? ` The options are ${question.card.options.join(", ")}.`
+        ? uiText("ui.CallView.bd51091845", { value1: String(question.card.options.join(", ")) })
         : "";
       void sayThenListen(`${bot.name} asks: ${detail}${/[.!?]$/.test(detail) ? "" : "."}${choices}`);
       return;
@@ -753,10 +754,10 @@ function Call({ bot }: { bot: Bot }) {
   const status =
     phase === "listening"
       ? pushToTalk
-        ? "Push to talk"
+        ? uiText("ui.CallView.03fc694c61")
         : "Listening"
       : phase === "sending"
-        ? "One moment"
+        ? uiText("ui.CallView.16d511b34b")
         : phase === "speaking"
           ? bot.name
           : "Working";
@@ -765,7 +766,7 @@ function Call({ bot }: { bot: Bot }) {
     <>
       <button
         onClick={() => endCall(bot.id)}
-        aria-label="Hang up"
+        aria-label={uiText("call.live.hangUp")}
         className="absolute right-5 top-5 rounded-md p-2 text-ink-secondary hover:bg-raised hover:text-ink"
       >
         <X size={18} />
@@ -785,7 +786,7 @@ function Call({ bot }: { bot: Bot }) {
         {phase === "listening" ? (
           heard || (
             <span className="text-ink-secondary">
-              {pushToTalk ? "Release Control + Option to send…" : "Say something…"}
+              {pushToTalk ? uiText("ui.CallView.6cfbbd2b0c") : uiText("ui.CallView.fd8c1cd4ac")}
             </span>
           )
         ) : (
@@ -799,9 +800,7 @@ function Call({ bot }: { bot: Bot }) {
           <button
             onClick={listen}
             className="rounded-full border border-warning/40 px-3 py-1.5 text-[12px] hover:bg-warning/10"
-          >
-            Try microphone again
-          </button>
+          >{uiText("ui.CallView.ab8814a58c")}</button>
         </div>
       )}
       {speech.error && <div className="max-w-[420px] text-center text-[12.5px] text-danger">{speech.error}</div>}
@@ -815,21 +814,16 @@ function Call({ bot }: { bot: Bot }) {
               listen();
             }}
             className="rounded-full border border-hairline/50 px-4 py-2 text-[13.5px] text-ink hover:bg-raised"
-          >
-            Interrupt
-          </button>
+          >{uiText("ui.CallView.b625231412")}</button>
         )}
         <button
           onClick={() => endCall(bot.id)}
           className="flex items-center gap-2 rounded-full bg-danger px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110"
         >
-          <PhoneOff size={16} /> Hang up
-        </button>
+          <PhoneOff size={16} />{uiText("call.live.hangUp")}</button>
       </div>
 
-      <div className="text-[11.5px] text-ink-tertiary">
-        Hold Control + Option to talk · Space interrupts · Esc hangs up
-      </div>
+      <div className="text-[11.5px] text-ink-tertiary">{uiText("ui.CallView.85a873aabb")}</div>
     </>
   );
 }

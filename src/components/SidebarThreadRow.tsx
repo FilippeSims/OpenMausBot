@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Archive, ArchiveRestore, BellOff, Check, ChevronRight, Clock, Clock3, FolderInput, Link2, Link2Off, Loader2, MoreHorizontal, Pencil, Pin, PinOff, RefreshCw, Trash2 } from "lucide-react";
@@ -23,7 +25,7 @@ type ThreadRowTask = Pick<Task, "threadId" | "title" | "projectId" | "busy" | "a
 
 export function formatUpdatedAt(at: number): string {
   if (!Number.isFinite(at) || at <= 0) return "";
-  return new Date(at).toLocaleString([], { dateStyle: "short", timeStyle: "short" });
+  return new Date(at).toLocaleString(uiLocale(), { dateStyle: "short", timeStyle: "short" });
 }
 
 export function threadUpdatedLabel(at: number, now: number): string {
@@ -345,7 +347,7 @@ export const SidebarThreadRow = memo(function SidebarThreadRow({ task, ownerId, 
       {onMove && Boolean(folders?.length) && <label className="block rounded px-2.5 py-2 text-[12px] text-ink"><span className="mb-1 flex items-center gap-2 text-ink-secondary"><FolderInput size={12} />{t("folder.move")}</span>
         <Select size="sm" className="w-full" aria-label={t("folder.moveNamed", { title: task.title })} value={folders?.some((folder) => folder.id === task.projectId) ? task.projectId : ""}
           onChange={(event) => { onMove(task, event.target.value || null); setMenu(null); }}>
-          <option value="">{t("folder.none")}</option>{folders?.map((folder) => <option key={folder.id} value={folder.id}>{folder.emoji ? `${folder.emoji} ` : ""}{folder.name}</option>)}
+          <option value="">{t("folder.none")}</option>{folders?.map((folder) => <option key={folder.id} value={folder.id}>{folder.emoji ? uiText("ui.SidebarThreadRow.05549c141d", { value1: String(folder.emoji) }) : ""}{folder.name}</option>)}
         </Select>
       </label>}
       {onPin && <button type="button" onClick={() => { setMenu(null); onPin(task, task.pinned !== true); }} className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[12px] text-ink hover:bg-raised">{task.pinned === true ? <PinOff size={12} /> : <Pin size={12} />}{task.pinned === true ? t("sidebar.bot.unpin") : t("sidebar.bot.pin")}</button>}

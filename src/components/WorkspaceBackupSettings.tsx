@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Download, Loader2, Upload } from "lucide-react";
 import type { WorkspaceBackupSummary } from "../../shared/workspace-backup";
@@ -22,7 +23,7 @@ export function WorkspaceBackupRestartNotice({ onRetry }: { onRetry?: () => void
     if (!relaunch || lock.current || restarting) return;
     lock.current = true; setRestarting(true); setError(false);
     try {
-      if (!await relaunch()) throw new Error("Restart unavailable");
+      if (!await relaunch()) throw new Error(uiText("ui.WorkspaceBackupSettings.9a8720aa55"));
     } catch {
       lock.current = false; setRestarting(false); setError(true);
     }
@@ -131,7 +132,7 @@ export function WorkspaceBackupSettings() {
   });
 
   const restoreBackup = () => perform("restore", async () => {
-    if (!preview || confirmation !== "REPLACE") return;
+    if (!preview || confirmation !== t("backup.replaceToken")) return;
     // The stage ID is the restore ID: persist it before the request so a lost response still lets this browser recover
     // its drafts at boot.
     localStorage.setItem(WORKSPACE_RESTORE_MARKER, preview.id);
@@ -177,8 +178,8 @@ export function WorkspaceBackupSettings() {
                 <WorkspaceBackupSummaryView summary={preview.summary} />
                 <p className="text-[13px] leading-relaxed text-danger">{t("backup.replaceWarning")}</p>
                 <p className="text-[13px] leading-relaxed text-danger">{t("backup.trustWarning")}</p>
-                <label className="text-[13px] text-ink">{t("backup.confirmReplace")}<input value={confirmation} autoComplete="off" spellCheck={false} disabled={disabled} onChange={(event) => setConfirmation(event.target.value)} className={`${inputClass} mt-1`} /></label>
-                <button type="button" disabled={disabled || confirmation !== "REPLACE"} onClick={() => void restoreBackup()} className="cursor-pointer rounded-lg bg-danger px-3 py-2 text-[13px] font-medium text-danger-ink disabled:opacity-40">{busy === "restore" ? t("backup.restoring") : t("backup.replace")}</button>
+                <label className="text-[13px] text-ink">{t("backup.typeToConfirm", { word: t("backup.replaceToken") })}<input value={confirmation} autoComplete="off" spellCheck={false} disabled={disabled} onChange={(event) => setConfirmation(event.target.value)} className={`${inputClass} mt-1`} /></label>
+                <button type="button" disabled={disabled || confirmation !== t("backup.replaceToken")} onClick={() => void restoreBackup()} className="cursor-pointer rounded-lg bg-danger px-3 py-2 text-[13px] font-medium text-danger-ink disabled:opacity-40">{busy === "restore" ? t("backup.restoring") : t("backup.replace")}</button>
                 </div>}
             </Card>
             </>

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Copy, ExternalLink, Laptop, Cloud, Link2, Loader2, Pencil, RotateCw, Trash2, Webhook, X, Zap } from "lucide-react";
 
@@ -26,10 +27,10 @@ import { Select } from "./Select";
 
 export const TRIGGER_SOURCES: Array<{ id: string; labelKey?: LocaleKey; label?: string }> = [
   { id: "link", labelKey: "triggers.source.linkRequest" },
-  { id: "typeform", label: "Typeform" },
-  { id: "zapier", label: "Zapier" },
-  { id: "github", label: "GitHub" },
-  { id: "stripe", label: "Stripe" },
+  { id: "typeform", get label() { return uiText("ui.TriggersPanel.2bcaf210c1"); } },
+  { id: "zapier", get label() { return uiText("ui.TriggersPanel.e39202c322"); } },
+  { id: "github", get label() { return uiText("ui.TriggersPanel.f911e414cf"); } },
+  { id: "stripe", get label() { return uiText("ui.TriggersPanel.961a6062ba"); } },
   { id: "custom", labelKey: "triggers.source.custom" },
 ];
 
@@ -218,7 +219,7 @@ export function TriggersPanel() {
           {error && <div role="alert" className="mt-3 rounded-xl border border-danger/30 bg-danger/10 px-3.5 py-3 text-[12px] text-danger">{error}</div>}
           {ingress && !ingress.available && (
             <div role="status" className="mt-3 flex items-center gap-2 rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-3 text-[12px] text-danger">
-              <span className="size-1.5 shrink-0 rounded-full bg-danger" />{t("triggers.receiverUnavailable")}{ingress.error ? ` ${ingress.error}` : ""}
+              <span className="size-1.5 shrink-0 rounded-full bg-danger" />{t("triggers.receiverUnavailable")}{ingress.error ? uiText("ui.TriggersPanel.50843318c9", { value1: String(ingress.error) }) : ""}
             </div>
           )}
 

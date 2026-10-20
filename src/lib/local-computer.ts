@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { Bot, InstanceInfo } from "@/state/store";
 
 export function instanceSupportsLocalComputer(
@@ -30,28 +31,28 @@ export function localComputerDisabledReason({
   providerSupportsLocal: boolean;
 }): string | null {
   if (!providerSupportsLocal) {
-    return "The selected provider cannot request approvals for local computer actions.";
+    return uiText("ui.local-computer.4fb8617970");
   }
   if (capabilities.localComputer.available) return null;
   if (capabilities.host.platform === "linux") {
     if (capabilities.localComputer.reasonCode === "linux-wayland-seat-safety-blocked") {
-      return "Local computer control is not available on Wayland yet. Sign out and choose Ubuntu on Xorg to use This computer.";
+      return uiText("ui.local-computer.0568cc9656");
     }
     if (capabilities.localComputer.reasonCode === "wayland-compositor-unsupported") {
-      return "Wayland local control is currently limited to GNOME. Xorg remains available on supported desktops.";
+      return uiText("ui.local-computer.1583aeae42");
     }
     if (!capabilities.localComputer.enabled) {
-      return "Enable the local control beta and complete the Cua Driver checks first.";
+      return uiText("ui.local-computer.c08d53f381");
     }
-    return capabilities.localComputer.message ?? "Cua Driver is not ready for local control.";
+    return capabilities.localComputer.message ?? uiText("ui.local-computer.06614ae7a0");
   }
   if (capabilities.host.label === "Browser") {
-    return "Local computer control requires the desktop app.";
+    return uiText("ui.local-computer.6ca1bf250c");
   }
   if (capabilities.host.platform === "win32") {
-    return "The bundled Cua Driver could not start. Restart OpenMausBot and check Diagnostics if it still fails.";
+    return uiText("ui.local-computer.dd981101da");
   }
-  return "CUA Driver is not ready for local computer control.";
+  return uiText("ui.local-computer.611d867a87");
 }
 
 export type BoatPanelAction =

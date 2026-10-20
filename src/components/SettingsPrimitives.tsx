@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useId, type ComponentProps } from "react";
 import { Check, Copy, X } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -77,7 +78,7 @@ export function SettingRow({
   );
 }
 
-export function CommandLine({ command, copyLabel = "Copy command" }: { command: string; copyLabel?: string }) {
+export function CommandLine({ command, copyLabel = uiText("chat.claudeUpdate.copy") }: { command: string; copyLabel?: string }) {
   const { state, copy } = useCopyFeedback(command);
 
   return (

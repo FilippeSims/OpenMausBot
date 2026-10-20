@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { ReactNode } from "react";
 import { Check, ChevronDown, ChevronRight, KeyRound, Loader2 } from "lucide-react";
 import type { InstanceInfo } from "@/state/store";
@@ -163,7 +164,7 @@ export function SimpleModelPane({
                         key={option.id}
                         type="button"
                         aria-pressed={current}
-                        aria-label={option.provider ? `${option.label} · ${option.provider}` : undefined}
+                        aria-label={option.provider ? uiText("ui.SimpleModelPane.7c639bc99b", { value1: String(option.label), value2: String(option.provider) }) : undefined}
                         title={[option.label, option.provider, blurb].filter(Boolean).join(" · ")}
                         onClick={() => onPick(option.id)}
                         className={cn(row, "font-medium text-ink", current ? "bg-raised-hover" : "hover:bg-control/60")}

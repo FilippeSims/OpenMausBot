@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { t, tFromServer } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import type { PackageDocument, PackageSummary } from "../../shared/package-format";
@@ -142,7 +143,7 @@ export async function preparePictures(
 const browserPictureTools: PictureTools = {
   async fetchBlob(url) {
     const response = await fetch(url);
-    if (!response.ok) throw new Error("picture unavailable");
+    if (!response.ok) throw new Error(uiText("ui.team-share.1e765cbcb0"));
     return response.blob();
   },
   async shrink(blob) {
@@ -164,7 +165,7 @@ const browserPictureTools: PictureTools = {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error ?? new Error("picture unreadable"));
+      reader.onerror = () => reject(reader.error ?? new Error(uiText("ui.team-share.4fb6ed3895")));
       reader.readAsDataURL(blob);
     });
   },

@@ -33,12 +33,22 @@ if (!process.versions.electron) {
   const { app, BrowserWindow, Menu, Tray, nativeImage, session } = await import("electron");
   const { createStartupScreen } = await import("../electron/startup-screen.mjs");
   const { createSystemTray } = await import("../electron/system-tray.mjs");
+  const { setDesktopLanguage } = await import("../electron/desktop-i18n.mjs");
+  const { buildApplicationMenu } = await import("../electron/menu.mjs");
+  const portuguese = process.env.OMB_VERIFY_LOCALE === "pt-br";
+  setDesktopLanguage(portuguese ? "pt-br" : "en");
   app.setPath("userData", join(output, "profile"));
   app.setPath("sessionData", join(output, "profile"));
   app.commandLine.appendSwitch("disable-background-networking");
   app.on("window-all-closed", () => {});
   void app.whenReady().then(async () => {
   record("ready");
+  if (portuguese) {
+    const menu = buildApplicationMenu({ environments: [], activeId: "local", onSwitch: () => {}, onOpenSettings: () => {} });
+    assert.ok(menu.items.some(item => item.label === "Servidor"));
+    assert.ok(menu.items.some(item => item.label === "Editar"));
+  }
+
   session.defaultSession.webRequest.onBeforeRequest((request, callback) => {
     callback({ cancel: !request.url.startsWith("data:") });
   });
@@ -63,6 +73,11 @@ if (!process.versions.electron) {
     writeFileSync(join(output, "startup-screen.png"), (await active.webContents.capturePage()).toPNG());
     assert.equal(await active.webContents.executeJavaScript("document.querySelector('h1').textContent"), "OpenMaus Bot");
     assert.equal(await active.webContents.executeJavaScript("typeof process"), "undefined");
+    if (portuguese) {
+      assert.equal(await active.webContents.executeJavaScript("document.documentElement.lang"), "pt-BR");
+      assert.match(await active.webContents.executeJavaScript("document.querySelector('[role=status]').textContent"), /Abrindo sua instalação/);
+    }
+
     // Exercise the actual renderer close button.
     await active.webContents.executeJavaScript("document.querySelector('button').click()");
     record("clicked close");

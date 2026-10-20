@@ -1,16 +1,19 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
 import { useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { WIDGET_WEEKDAYS, type WidgetNode } from "../../../shared/widget";
 import { useWidgetField } from "./WidgetControls";
 
+let namesLocale = "";
 let names: { narrow: string[]; short: string[]; long: string[] } | undefined;
 
 /** 1 January 2024 was a Monday. */
 export function widgetDayNames(): { narrow: string[]; short: string[]; long: string[] } {
-  if (names) return names;
+  if (names && namesLocale === uiLocale()) return names;
+  namesLocale = uiLocale();
   const days = WIDGET_WEEKDAYS.map((_, index) => new Date(2024, 0, 1 + index));
-  const name = (weekday: "narrow" | "short" | "long") => days.map((day) => new Intl.DateTimeFormat(undefined, { weekday }).format(day));
+  const name = (weekday: "narrow" | "short" | "long") => days.map((day) => new Intl.DateTimeFormat(uiLocale(), { weekday }).format(day));
   names = { narrow: name("narrow"), short: name("short"), long: name("long") };
   return names;
 }

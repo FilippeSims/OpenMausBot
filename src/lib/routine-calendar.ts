@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import type { Routine, RoutineRun, RoutineSchedule } from "./routines";
 import { nextCronRuns } from "../../shared/routine-schedule";
 
@@ -154,7 +156,7 @@ export function slotAt(day: number, clientY: number, top: number, hourHeight: nu
 export function scheduleAt(schedule: Exclude<RoutineSchedule, { type: "interval" | "cron" }>, occurrenceAt: number, nextAt: number): Exclude<RoutineSchedule, { type: "interval" | "cron" }>;
 export function scheduleAt(schedule: RoutineSchedule, occurrenceAt: number, nextAt: number): RoutineSchedule;
 export function scheduleAt(schedule: RoutineSchedule, occurrenceAt: number, nextAt: number): RoutineSchedule {
-  if (schedule.type === "cron") throw new Error("Edit this routine's schedule to change its cron timing.");
+  if (schedule.type === "cron") throw new Error(uiText("ui.routine-calendar.bec624062c"));
   if (schedule.type === "once") return { type: "once", at: nextAt };
   if (schedule.type === "interval") {
     return {
@@ -271,10 +273,10 @@ export function calendarRangeLabel(from: number, days: number): string {
   const start = new Date(from);
   const end = new Date(to);
   if (days === 1) {
-    return start.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+    return start.toLocaleDateString(uiLocale(), { month: "long", day: "numeric", year: "numeric" });
   }
   if (start.getMonth() === end.getMonth()) {
-    return `${start.toLocaleDateString([], { month: "long" })} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
+    return `${start.toLocaleDateString(uiLocale(), { month: "long" })} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
   }
-  return `${start.toLocaleDateString([], { month: "short", day: "numeric" })} – ${end.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+  return `${start.toLocaleDateString(uiLocale(), { month: "short", day: "numeric" })} – ${end.toLocaleDateString(uiLocale(), { month: "short", day: "numeric", year: "numeric" })}`;
 }

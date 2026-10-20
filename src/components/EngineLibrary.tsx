@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState, type ReactNode } from "react";
 import { ArrowUpRight, Check, ChevronDown, RefreshCw } from "lucide-react";
 import { useStore, type InstanceInfo } from "@/state/store";
@@ -59,7 +60,7 @@ export function EngineCard({ instance, children, summary }: { instance: Instance
           {summary ? (
             <span className={cn("text-[11px] font-medium", ready ? "text-ink-secondary" : "text-accent-text")}>{summary.action}</span>
           ) : ready ? (
-            <span className="text-[11px] tabular-nums text-ink-secondary">{version ? `v${version}` : t("engines.library.manage")}</span>
+            <span className="text-[11px] tabular-nums text-ink-secondary">{version ? uiText("ui.EngineLibrary.93619055f8", { value1: String(version) }) : t("engines.library.manage")}</span>
           ) : (
             <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent-text">
               {t("engines.library.setup")}<ArrowUpRight size={13} aria-hidden="true" />

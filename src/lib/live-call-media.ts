@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // Its data channel may only send session.close; everything else about the call runs on the harness.
 import { useSyncExternalStore } from "react";
 import type { LiveCallState, LiveEndReason } from "../../shared/wire";
@@ -292,7 +293,7 @@ export function liveCallShortcut(event: ChordEvent, isMac: boolean): LiveCallSho
 
 export function liveCallChord(action: LiveCallShortcut, isMac: boolean): { text: string; aria: string } {
   const letter = action === "mute" ? "M" : "H";
-  return isMac ? { text: `⌘⇧${letter}`, aria: `Meta+Shift+${letter}` } : { text: `Ctrl+Shift+${letter}`, aria: `Control+Shift+${letter}` };
+  return isMac ? { text: uiText("ui.live-call-media.41cde9475f", { value1: String(letter) }), aria: `Meta+Shift+${letter}` } : { text: uiText("ui.live-call-media.678e9faf99", { value1: String(letter) }), aria: `Control+Shift+${letter}` };
 }
 
 export function handleLiveCallKey(event: ChordEvent, isMac: boolean): boolean {

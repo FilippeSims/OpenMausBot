@@ -1,3 +1,4 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Check, ChevronDown, Cloud, Minus } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
@@ -42,10 +43,10 @@ function nextRunLabel(at: number | null, now = Date.now()): string | null {
   if (!at) return null;
   const when = new Date(at), today = new Date(now);
   const days = Math.round((new Date(when).setHours(0, 0, 0, 0) - new Date(today).setHours(0, 0, 0, 0)) / 86_400_000);
-  const time = when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const time = when.toLocaleTimeString(uiLocale(), { hour: "numeric", minute: "2-digit" });
   if (days === 0) return t("cloudSetup.ready.today", { time });
   if (days === 1) return t("cloudSetup.ready.tomorrow", { time });
-  return t("cloudSetup.ready.on", { day: when.toLocaleDateString([], { weekday: "long" }), time });
+  return t("cloudSetup.ready.on", { day: when.toLocaleDateString(uiLocale(), { weekday: "long" }), time });
 }
 
 function CloudReady({ routine, onDone }: { routine?: Routine; onDone: () => void }) {

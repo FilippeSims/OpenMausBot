@@ -1,4 +1,5 @@
-import { t } from "./i18n";
+import { t as uiText } from "@/lib/i18n";
+import { activeLocale, t } from "./i18n";
 import { en, type LocaleKey } from "@/locales";
 
 export const ACTIVITY_WHATS = ["all", "approvals", "decisions", "config", "people", "session", "webhook", "mcp", "engine", "bot", "budget", "visibility"] as const;
@@ -95,10 +96,11 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 
 function dayLabel(date: Date, now: Date): string {
   const key = localDayKey(date);
-  if (key === localDayKey(now)) return "Today";
+  if (key === localDayKey(now)) return t("activity.today");
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (key === localDayKey(yesterday)) return "Yesterday";
+  if (key === localDayKey(yesterday)) return t("activity.yesterday");
+  if (activeLocale() !== "en") return new Intl.DateTimeFormat(activeLocale(), { weekday: "short", day: "numeric", month: "short", ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) }).format(date);
   const base = `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
   return date.getFullYear() === now.getFullYear() ? base : `${base} ${date.getFullYear()}`;
 }
@@ -120,17 +122,17 @@ export type ChipTone = "ok" | "danger" | "accent" | "warn";
 export function outcomeChip(outcome: ActivityOutcome): { text: string; tone: ChipTone } {
   switch (outcome) {
     case "ran":
-      return { text: "Ran", tone: "ok" };
+      return { text: uiText("ui.activity.b6a7c95e78"), tone: "ok" };
     case "failed":
-      return { text: "Failed", tone: "danger" };
+      return { text: uiText("toolDetail.failed"), tone: "danger" };
     case "running":
-      return { text: "Running", tone: "accent" };
+      return { text: uiText("toolDetail.running"), tone: "accent" };
     case "allowed":
-      return { text: "Allowed", tone: "ok" };
+      return { text: uiText("approval.status.allowed"), tone: "ok" };
     case "denied":
-      return { text: "Denied", tone: "danger" };
+      return { text: uiText("approval.status.denied"), tone: "danger" };
     case "waiting":
-      return { text: "Needs you", tone: "warn" };
+      return { text: uiText("ui.activity.74b6abdf59"), tone: "warn" };
   }
 }
 

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { t } from "./i18n";
 
 export type MacCuaPermission = "screen" | "accessibility";
@@ -16,6 +17,6 @@ export function macCuaPermissionMessage(permissions: MacCuaPermission[]): string
   if (!permissions.length) return null;
   if (permissions.length > 1) return t("computer.mac.permission.requiredBoth");
   return t("computer.mac.permission.requiredOne", {
-    permission: permissions[0] === "screen" ? "Screen Recording" : "Accessibility",
+    permission: permissions[0] === "screen" ? uiText("ui.mac-cua-permissions.bc3c742893") : "Accessibility",
   });
 }

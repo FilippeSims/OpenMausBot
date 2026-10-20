@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, KeyRound, Loader2, Plus, RefreshCw, Search, X } from "lucide-react";
 import { useStore, currentTaskBot, type Bot, type InstanceInfo, type ModelSelection } from "@/state/store";
@@ -98,10 +99,10 @@ export function EffortRow({
   if (compact) return (
     <label className={cn("flex items-center justify-between gap-3", className)}>
       {label}
-      <Select size="sm" className="max-w-[65%]" aria-label="Reasoning effort" value={selection.effort ?? ""}
+      <Select size="sm" className="max-w-[65%]" aria-label={uiText("model.simple.effort")} value={selection.effort ?? ""}
         onChange={(event) => dispatch({ type: "setModel", botId: bot.id, threadId, ...(updateBotDefault ? { updateBotDefault: true } : {}),
           selection: { ...selection, effort: levels.find((level) => level === event.target.value) } })}>
-        <option value="">Default</option>
+        <option value="">{uiText("botSettings.replyStyle.default")}</option>
         {levels.map((level) => <option key={level} value={level}>{effortLabel(level)}</option>)}
       </Select>
     </label>
@@ -110,7 +111,7 @@ export function EffortRow({
   return (
     <div className={className}>
       {label}
-      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Reasoning effort">
+      <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={uiText("model.simple.effort")}>
         {[undefined, ...levels].map((level) => (
           <button
             key={level ?? "default"}
@@ -118,8 +119,8 @@ export function EffortRow({
             aria-pressed={selection.effort === level}
             title={
               level === undefined
-                ? "Send no effort level and let the provider decide"
-                : `Ask for ${effortLabel(level)} reasoning effort`
+                ? uiText("ui.ModelPicker.8619e981c1")
+                : uiText("ui.ModelPicker.414eaeb99c", { value1: String(effortLabel(level)) })
             }
             onClick={() => dispatch({ type: "setModel", botId: bot.id, threadId, ...(updateBotDefault ? { updateBotDefault: true } : {}), selection: { ...selection, effort: level } })}
             className={cn(
@@ -129,7 +130,7 @@ export function EffortRow({
                 : "border-hairline/40 text-ink-secondary hover:bg-control/60 hover:text-ink",
             )}
           >
-            {level === undefined ? "Default" : effortLabel(level)}
+            {level === undefined ? uiText("botSettings.replyStyle.default") : effortLabel(level)}
           </button>
         ))}
       </div>
@@ -138,7 +139,7 @@ export function EffortRow({
 }
 
 function variantLabel(option: ModelVariantOption): string {
-  return option.id === "default" ? "OpenCode default" : option.label;
+  return option.id === "default" ? uiText("ui.ModelPicker.394bb010a6") : option.label;
 }
 
 /** ACP variant ids are opaque; their model/session declares the available choices. */
@@ -171,15 +172,15 @@ export function ModelVariantRow({ bot, threadId, updateBotDefault, className, la
     <div className={className}>
       <label className="flex items-center justify-between gap-3">
         {label}
-        <Select size="sm" aria-label="Reasoning variant" disabled={bot.busy} className={wide ? "flex-1" : "max-w-[65%]"}
+        <Select size="sm" aria-label={uiText("ui.ModelPicker.a9945f16f4")} disabled={bot.busy} className={wide ? "flex-1" : "max-w-[65%]"}
           value={selection.variant === undefined ? "unset" : missing ? "missing" : String(options.findIndex((option) => option.id === selection.variant))}
           onChange={(event) => choose(options[Number(event.target.value)]?.id)}>
-          <option value="unset">Use session setting</option>
-          {missing && <option value="missing" disabled>{selection.variant} ({unavailable ? "unavailable" : "unverified"})</option>}
+          <option value="unset">{uiText("ui.ModelPicker.30241b4860")}</option>
+          {missing && <option value="missing" disabled>{selection.variant} ({unavailable ? uiText("ui.ModelPicker.ba691ba042") : uiText("ui.ModelPicker.97b7e2db79")})</option>}
           {options.map((option, index) => <option key={option.id} value={String(index)}>{variantLabel(option)}</option>)}
         </Select>
       </label>
-      {missing && <p className="mt-1 text-[11px] text-ink-secondary">{unavailable ? "Saved variant is unavailable. Choose another or use the session setting." : "Saved variant has not been checked in this session."}</p>}
+      {missing && <p className="mt-1 text-[11px] text-ink-secondary">{unavailable ? uiText("ui.ModelPicker.d89f8ddb5c") : uiText("ui.ModelPicker.cc222cf0c0")}</p>}
     </div>
   );
   return (
@@ -187,27 +188,25 @@ export function ModelVariantRow({ bot, threadId, updateBotDefault, className, la
       {label}
       {(selection.variant === undefined || missing) && (
         <p className="mt-2 text-[12px] text-ink-secondary">
-          {unavailable ? `Saved variant “${selection.variant}” is unavailable. Choose an available variant.`
-            : missing ? `Saved variant “${selection.variant}” has not been checked in this session.` : "No variant selected."}
-          {current !== undefined && ` Session: ${variantLabel(options.find((option) => option.id === current) ?? { id: current, label: current })}.`}
+          {unavailable ? uiText("ui.ModelPicker.64cd46f7d4", { value1: String(selection.variant) })
+            : missing ? uiText("ui.ModelPicker.67bdf0600f", { value1: String(selection.variant) }) : uiText("ui.ModelPicker.933a8045dd")}
+          {current !== undefined && uiText("ui.ModelPicker.3cbef69de0", { value1: String(variantLabel(options.find((option) => option.id === current) ?? { id: current, label: current })) })}
         </p>
       )}
       {selection.variant !== undefined && (
         <button type="button" disabled={bot.busy} onClick={() => choose()}
-          title="Send no variant selection; OpenCode keeps its session or configured setting"
-          className="mt-2 block text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink disabled:opacity-50">
-          Clear variant selection
-        </button>
+          title={uiText("ui.ModelPicker.1267e3ec8d")}
+          className="mt-2 block text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink disabled:opacity-50">{uiText("ui.ModelPicker.0c17f853e9")}</button>
       )}
       {options.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Reasoning variant">
+        <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={uiText("ui.ModelPicker.a9945f16f4")}>
           {options.map((option) => (
             <button
               key={option.id}
               type="button"
               disabled={bot.busy}
               aria-pressed={selection.variant === option.id}
-              title={`Use ${variantLabel(option)} for this model`}
+              title={uiText("ui.ModelPicker.9152d811e3", { value1: String(variantLabel(option)) })}
               onClick={() => choose(option.id)}
               className={cn(
                 "rounded-full border px-2.5 py-1 text-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:opacity-50",
@@ -266,10 +265,10 @@ function ModelRow({
           </span>
         )}
         {option.id === defaultId && (
-          <span className="shrink-0 rounded bg-inset px-1.5 py-px text-[10px] text-ink-secondary">Default</span>
+          <span className="shrink-0 rounded bg-inset px-1.5 py-px text-[10px] text-ink-secondary">{uiText("botSettings.replyStyle.default")}</span>
         )}
         {option.loaded && (
-          <span className="shrink-0 rounded bg-accent/10 px-1.5 py-px text-[10px] text-accent">Loaded</span>
+          <span className="shrink-0 rounded bg-accent/10 px-1.5 py-px text-[10px] text-accent">{uiText("teamMemory.loaded")}</span>
         )}
         {botModel && <span data-bot-model className="shrink-0 text-[11px] text-ink-secondary">{t("model.botModelTag")}</span>}
       </span>
@@ -384,9 +383,9 @@ export function ModelEngineRail({ instances, selectedInstance, claudeInstance, o
         type="button"
         key={instance.instanceId}
         onClick={() => onSelect(target)}
-        aria-label={managedBy ? `${label} · ${managedBy}` : label}
+        aria-label={managedBy ? uiText("ui.ModelPicker.7c639bc99b", { value1: String(label), value2: String(managedBy) }) : label}
         aria-pressed={selected}
-        title={`${label} · ${managedBy ?? engineStatus(target)}`}
+        title={uiText("ui.ModelPicker.7c639bc99b", { value1: String(label), value2: String(managedBy ?? engineStatus(target)) })}
         className={cn("relative flex size-9 items-center justify-center rounded-lg", selected ? "bg-control ring-1 ring-hairline/50" : "hover:bg-control/60", managedBy && "opacity-40")}
       >
         <InstanceProviderMark instance={target} size={18} />
@@ -789,7 +788,7 @@ export function ModelPicker({
         "flex items-center gap-1.5 rounded-full border border-hairline/40 bg-control/60 py-1 pl-2 pr-2.5 text-[13px] text-ink hover:bg-raised-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-control/60",
         !contained && active && !showActiveAccount && COMPACT_SQUARE,
       )}
-      title={bot.busy ? `${summary}${followLine}\n${t(threadId ? "model.threadBusy" : "model.busy")}` : `${summary}${followLine}`}
+      title={bot.busy ? uiText("ui.ModelPicker.4eeee48000", { value1: String(summary), value2: String(followLine), value3: String(uiText(threadId ? "model.threadBusy" : "model.busy")) }) : uiText("ui.ModelPicker.9989fa2d2c", { value1: String(summary), value2: String(followLine) })}
     >
       {active && <InstanceProviderMark instance={active} size={14} />}
       {!contained && active && showActiveAccount && (
@@ -914,16 +913,16 @@ export function ModelPicker({
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
             {threadId && (
               <div className="shrink-0 border-b border-hairline/40 px-3 py-2">
-                <div role="group" aria-label="Apply model changes to" className="flex gap-1">
+                <div role="group" aria-label={uiText("ui.ModelPicker.a32914db34")} className="flex gap-1">
                   {(["thread", "bot"] as const).map((value) => (
                     <button key={value} type="button" aria-pressed={scope === value} onClick={() => setScope(value)}
                       className={cn("rounded-lg px-2 py-1 text-[12px]", scope === value ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/60")}>
-                      {value === "bot" ? "Thread + bot default" : "Only this thread"}
+                      {value === "bot" ? uiText("ui.ModelPicker.d8dbd94252") : uiText("ui.ModelPicker.5090b79730")}
                     </button>
                   ))}
                 </div>
                 <p className="mt-1 text-[11px] text-ink-secondary">
-                  {scope === "bot" ? "The bot's model: this thread, groups, and every thread that uses the bot's model." : "This thread only. It keeps this model when the bot's model changes."}
+                  {scope === "bot" ? uiText("ui.ModelPicker.68fe68862f") : uiText("ui.ModelPicker.6003effce7")}
                 </p>
               </div>
             )}
@@ -1004,7 +1003,7 @@ export function ModelPicker({
                     <EngineSetup instance={railInstance} intent={pane === "custom" ? "inject" : "cloud"} />
                     {railInstance.claudeAccount && needsSignIn(railInstance) && pane !== "custom" && (
                       <p className="mt-2 text-[11.5px] leading-relaxed text-ink-secondary">
-                        {railInstance.claudeAccount.signInShell === "powershell" && `${t("engines.account.powershell")} `}
+                        {railInstance.claudeAccount.signInShell === "powershell" && uiText("ui.ModelPicker.05549c141d", { value1: String(uiText("engines.account.powershell")) })}
                         {t("engines.account.signInHint")}
                       </p>
                     )}
@@ -1117,7 +1116,7 @@ export function ModelPicker({
                     threadId={threadId}
                     updateBotDefault={Boolean(threadId && scope === "bot")}
                     className="shrink-0 border-t border-hairline/40 px-4 py-2"
-                    label={<span className="text-[12.5px] font-medium text-ink">{active?.capabilities?.modelVariants ? "Reasoning" : "Effort"}</span>}
+                    label={<span className="text-[12.5px] font-medium text-ink">{active?.capabilities?.modelVariants ? uiText("model.simple.reasoning") : uiText("teamSettings.effort")}</span>}
                   />
                 )}
 

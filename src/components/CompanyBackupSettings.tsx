@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import type { ManagedDesktopState } from "../../electron/managed-desktop.mjs";
 import type { WorkspaceBackupSummary } from "../../shared/workspace-backup";
@@ -173,7 +174,7 @@ export function ConnectedCompanyBackupSettings({ connection, bridge }: { connect
   };
   const configureSchedule = async (enabled: boolean) => {
     if (!bridge.configureSchedule || lock.current || !state ||
-        (enabled && (disabled || dialog?.kind !== "schedule" || confirmation !== "BACK UP THIS WORKSPACE DAILY"))) return;
+        (enabled && (disabled || dialog?.kind !== "schedule" || confirmation !== uiText("ui.CompanyBackupSettings.2b97804379")))) return;
     // Turning off must stay possible while the native scheduler uploads; main cancels only that scheduled operation.
     lock.current = true; setAction("schedule"); setError("");
     const current = generation.current, initialRevision = revision.current;
@@ -203,19 +204,19 @@ export function ConnectedCompanyBackupSettings({ connection, bridge }: { connect
     });
   };
   const restore = () => {
-    if (dialog?.kind !== "restore" || !preview || confirmation !== "REPLACE") return;
+    if (dialog?.kind !== "restore" || !preview || confirmation !== t("backup.replaceToken")) return;
     void perform("restore", async (isCurrent) => {
       // Boot recovery reads this stage ID even if the response is lost; without storage, never start a replacement we
       // cannot recover.
       const existingRestore = localStorage.getItem(WORKSPACE_RESTORE_MARKER);
-      if (existingRestore && existingRestore !== preview.id) throw new Error("An earlier restore needs recovery first.");
+      if (existingRestore && existingRestore !== preview.id) throw new Error(uiText("ui.CompanyBackupSettings.5c7217c3b2"));
       localStorage.setItem(WORKSPACE_RESTORE_MARKER, preview.id);
       await bridge.restore({ id: preview.id, confirmation: "REPLACE" });
       if (isCurrent()) { setRestartRequired(true); closeDialog(); }
     });
   };
   const deleteBackup = () => {
-    if (dialog?.kind !== "delete" || confirmation !== "DELETE") return;
+    if (dialog?.kind !== "delete" || confirmation !== t("backup.deleteToken")) return;
     void perform("delete", async (isCurrent) => {
       await bridge.delete({ id: dialog.entry.id, confirmation: "DELETE" });
       if (isCurrent()) { closeDialog(); await refresh(); }
@@ -263,7 +264,7 @@ export function ConnectedCompanyBackupSettings({ connection, bridge }: { connect
         {pending > 0 && <p role="status" className="text-[12px] text-ink-secondary">{t("companyBackup.pending", { count: pending })}</p>}
         {listing && ready.length === 0 && <p className="text-[13px] text-ink-secondary">{t("companyBackup.empty")}</p>}
         <ul className="divide-y divide-hairline/40">{ready.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-          <div className="min-w-0 text-[13px]"><div className="text-ink">{dateLabel(entry)}</div><div className="text-[12px] text-ink-secondary">{bytes(entry.sizeBytes)}{entry.appVersion ? ` · ${entry.appVersion}` : ""}</div><code className="break-all text-[11px] text-ink-secondary">{entry.id}</code></div>
+          <div className="min-w-0 text-[13px]"><div className="text-ink">{dateLabel(entry)}</div><div className="text-[12px] text-ink-secondary">{bytes(entry.sizeBytes)}{entry.appVersion ? uiText("ui.CompanyBackupSettings.f6b53f9c8a", { value1: String(entry.appVersion) }) : ""}</div><code className="break-all text-[11px] text-ink-secondary">{entry.id}</code></div>
           <div className="flex flex-wrap gap-2"><button type="button" className="ui-button" disabled={disabled} onClick={() => openDialog({ kind: "restore", entry })}>{t("companyBackup.restore")}</button><button type="button" className="ui-button text-danger" disabled={disabled} onClick={() => openDialog({ kind: "delete", entry })}>{t("companyBackup.delete")}</button></div>
         </li>)}</ul>
       </>}
@@ -282,8 +283,8 @@ export function ConnectedCompanyBackupSettings({ connection, bridge }: { connect
           <p className="text-[13px] text-ink">{t(dialog.kind === "schedule" ? "companyBackup.scheduleWarning" : "companyBackup.managedUploadWarning", { organization: connection.organization?.name ?? "", email: connection.email ?? "" })}</p>
           {dialog.kind === "schedule" ? <details className="text-[13px] text-ink-secondary"><summary className="cursor-pointer text-ink">{t("companyBackup.included")}</summary><p className="mt-2">{t("backup.excluded")}</p><p className="mt-2">{t("companyBackup.managedPrivacy")}</p></details> : <><p className="text-[13px] text-ink-secondary">{t("backup.excluded")}</p><p className="text-[13px] text-ink-secondary">{t("companyBackup.managedPrivacy")}</p></>}
           <p className="text-[13px] text-ink-secondary">{t("companyBackup.managedEncryption")}</p>
-          {dialog.kind === "schedule" && <label className="flex items-start gap-2 text-[13px]"><input className="mt-1 accent-accent" type="checkbox" required disabled={disabled} checked={confirmation === "BACK UP THIS WORKSPACE DAILY"} onChange={event => setConfirmation(event.target.checked ? "BACK UP THIS WORKSPACE DAILY" : "")} /><span>{t("companyBackup.scheduleConsent")}</span></label>}
-          <button type="submit" className="ui-button" disabled={disabled || (dialog.kind === "schedule" && confirmation !== "BACK UP THIS WORKSPACE DAILY")}>{t(dialog.kind === "schedule" ? "companyBackup.enableSchedule" : "companyBackup.create")}</button>
+          {dialog.kind === "schedule" && <label className="flex items-start gap-2 text-[13px]"><input className="mt-1 accent-accent" type="checkbox" required disabled={disabled} checked={confirmation === uiText("ui.CompanyBackupSettings.2b97804379")} onChange={event => setConfirmation(event.target.checked ? uiText("ui.CompanyBackupSettings.2b97804379") : "")} /><span>{t("companyBackup.scheduleConsent")}</span></label>}
+          <button type="submit" className="ui-button" disabled={disabled || (dialog.kind === "schedule" && confirmation !== uiText("ui.CompanyBackupSettings.2b97804379"))}>{t(dialog.kind === "schedule" ? "companyBackup.enableSchedule" : "companyBackup.create")}</button>
         </form>}
         {dialog.kind === "restore" && (!preview ? <form className="flex flex-col gap-3" onSubmit={(event) => { event.preventDefault(); prepare(); }}>
           <p className="text-[13px] text-ink-secondary">{t("companyBackup.previewHelp")}</p>
@@ -292,13 +293,13 @@ export function ConnectedCompanyBackupSettings({ connection, bridge }: { connect
         </form> : <>
           <WorkspaceBackupSummaryView summary={preview.summary} />
           <p className="text-[13px] text-danger">{t("backup.replaceWarning")}</p><p className="text-[13px] text-danger">{t("backup.trustWarning")}</p>
-          <label className="text-[13px]">{t("backup.confirmReplace")}<input autoComplete="off" spellCheck={false} maxLength={7} disabled={disabled} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className={inputClass} /></label>
-          <button type="button" className="ui-button text-danger" disabled={disabled || confirmation !== "REPLACE"} onClick={restore}>{t("backup.replace")}</button>
+          <label className="text-[13px]">{t("backup.typeToConfirm", { word: t("backup.replaceToken") })}<input autoComplete="off" spellCheck={false} maxLength={t("backup.replaceToken").length} disabled={disabled} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className={inputClass} /></label>
+          <button type="button" className="ui-button text-danger" disabled={disabled || confirmation !== t("backup.replaceToken")} onClick={restore}>{t("backup.replace")}</button>
         </>)}
         {dialog.kind === "delete" && <>
           <p className="text-[13px] text-danger">{t("companyBackup.deleteWarning")}</p>
-          <label className="text-[13px]">{t("companyBackup.confirmDelete")}<input autoComplete="off" spellCheck={false} maxLength={6} disabled={disabled} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className={inputClass} /></label>
-          <button type="button" className="ui-button text-danger" disabled={disabled || confirmation !== "DELETE"} onClick={deleteBackup}>{t("companyBackup.delete")}</button>
+          <label className="text-[13px]">{t("backup.typeToConfirm", { word: t("backup.deleteToken") })}<input autoComplete="off" spellCheck={false} maxLength={t("backup.deleteToken").length} disabled={disabled} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className={inputClass} /></label>
+          <button type="button" className="ui-button text-danger" disabled={disabled || confirmation !== t("backup.deleteToken")} onClick={deleteBackup}>{t("companyBackup.delete")}</button>
         </>}
         {busyView}
         {statusMessage && <p role="alert" className="break-words text-[13px] text-danger">{statusMessage}</p>}

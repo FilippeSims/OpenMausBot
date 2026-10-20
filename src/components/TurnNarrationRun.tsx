@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // Providers such as Grok narrate before tools.
 import { useEffect, useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
@@ -23,7 +24,7 @@ export function TurnNarrationRun({
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          title={open ? "Hide progress messages" : "Show progress messages"}
+          title={open ? uiText("ui.TurnNarrationRun.71042af46a") : uiText("ui.TurnNarrationRun.b7e07eef87")}
           className="ui-pill"
         >
           <Check size={13} className="text-success" />

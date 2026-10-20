@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { ChevronDown, Cloud, Laptop } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -32,12 +33,12 @@ export function DesktopWorkspaceSwitcher({ compact = false, inline = false, clou
   if (!bridge) {
     if (!cloudHome) return null;
     const whose = owner ? t("sidebar.cloudOwner", { email: owner }) : "";
-    const label = `${t("cloudSetup.myCloud")} · ${t("cloudSetup.alwaysOn")}${whose ? ` · ${whose}` : ""}`;
+    const label = uiText("ui.DesktopWorkspaceSwitcher.1d7b3db750", { value1: String(uiText("cloudSetup.myCloud")), value2: String(uiText("cloudSetup.alwaysOn")), value3: String(whose ? ` · ${whose}` : "") });
     if (inline) return <div data-cloud-home-indicator data-workspace-switcher="inline" title={label}
       className="flex min-w-0 items-center gap-1.5 px-1.5 text-[12.5px] font-medium text-ink">
       <Cloud size={14} aria-hidden="true" className="shrink-0 text-ink-secondary" />
       <span className="min-w-0 truncate">{t("cloudSetup.myCloud")}</span>
-      <span className="sr-only"> · {t("cloudSetup.alwaysOn")}{whose ? ` · ${whose}` : ""}</span>
+      <span className="sr-only"> · {t("cloudSetup.alwaysOn")}{whose ? uiText("ui.DesktopWorkspaceSwitcher.f6b53f9c8a", { value1: String(whose) }) : ""}</span>
     </div>;
     return <div data-cloud-home-indicator className={cn("py-1.5", compact ? "px-2" : "px-3")}>
       <div title={label} className={cn("flex items-center gap-2 py-2 text-[13px] font-medium text-ink", compact ? "justify-center px-1" : "px-2")}>

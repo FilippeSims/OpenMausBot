@@ -37,7 +37,11 @@ function retiredIn(text: string, boat: RegExp = BOAT): string[] {
 }
 
 const PENDING_KEY_PREFIXES: string[] = [];
-const EN_ALLOWED: Record<string, string> = {};
+const EN_ALLOWED: Record<string, string> = {
+  "ui.CloudBackendPicker.d714c47261": "the own-key computer provider is named Boat",
+  "ui.CloudBackendPicker.7bea157de6": "the own-key picker distinguishes Boat from a VPS",
+  "ui.CloudBackendPicker.90406b7d67": "the own-key provider name is Boat",
+};
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const SCANNED = ["src", "server", "electron", "shared"];
@@ -47,7 +51,6 @@ const isSource = (name: string) => /\.(?:ts|tsx|mjs|cjs|js)$/.test(name) && !/\.
 
 /** No snippet keeps the word file-wide; otherwise only literals containing the snippet. */
 const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = [
-  { file: "src/components/CloudBackendPicker.tsx", why: "the own-key provider picker names its two providers, Boat and a VPS" },
   { file: "shared/credential-request.ts", snippet: "when Boat is selected", why: "the card that asks for a person's own Boat key" },
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
   { file: "server/request-auth.ts", snippet: "OMB Cloud home", why: "a request-trust reason and log warning, never shown in the app" },

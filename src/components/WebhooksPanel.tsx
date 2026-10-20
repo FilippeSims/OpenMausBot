@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { boatCapableEngine } from "@/lib/remote-desktop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -37,14 +39,14 @@ import { t } from "@/lib/i18n";
 export function relativeTime(at?: number) {
   if (!at) return "Never";
   const elapsed = Math.max(0, Date.now() - at);
-  if (elapsed < 60_000) return "Just now";
+  if (elapsed < 60_000) return uiText("ui.WebhooksPanel.66f53417d3");
   if (elapsed < 60 * 60_000) return `${Math.floor(elapsed / 60_000)}m ago`;
   if (elapsed < 24 * 60 * 60_000) return `${Math.floor(elapsed / 3_600_000)}h ago`;
-  return new Date(at).toLocaleDateString([], { month: "short", day: "numeric" });
+  return new Date(at).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" });
 }
 
 function deliverySummary(run: RoutineRun) {
-  const eventName = run.prompt?.match(/^Event: (.+)$/m)?.[1]?.trim() || "Webhook event";
+  const eventName = run.prompt?.match(/^Event: (.+)$/m)?.[1]?.trim() || uiText("ui.WebhooksPanel.ebde639db5");
   const eventData = run.prompt?.match(/\[UNTRUSTED WEBHOOK EVENT DATA\]\n([\s\S]*?)\n\[\/UNTRUSTED WEBHOOK EVENT DATA\]/)?.[1] ?? "";
   const payloadStart = eventData.indexOf("\n\n");
   const payload = (payloadStart >= 0 ? eventData.slice(payloadStart + 2) : eventData).replace(/\s+/g, " ").trim();
@@ -57,10 +59,10 @@ export function suggestedName(prompt: string, bot?: Bot) {
 }
 
 export function statusFor(webhook: WebhookTrigger) {
-  if (webhook.verificationPending) return { label: "Waiting for test", tone: "text-accent", dot: "bg-accent animate-pulse" };
-  if (webhook.verifiedAt && !webhook.enabled) return { label: "Ready to enable", tone: "text-warning", dot: "bg-warning" };
-  if (webhook.enabled) return { label: "Active", tone: "text-success", dot: "bg-success" };
-  return { label: "Paused", tone: "text-ink-secondary", dot: "bg-ink-secondary/50" };
+  if (webhook.verificationPending) return { label: uiText("ui.WebhooksPanel.540795994c"), tone: "text-accent", dot: "bg-accent animate-pulse" };
+  if (webhook.verifiedAt && !webhook.enabled) return { label: uiText("ui.WebhooksPanel.0ac215b0f0"), tone: "text-warning", dot: "bg-warning" };
+  if (webhook.enabled) return { label: uiText("routines.activeSchedule"), tone: "text-success", dot: "bg-success" };
+  return { label: uiText("vm.state.paused"), tone: "text-ink-secondary", dot: "bg-ink-secondary/50" };
 }
 
 export function outcomeTone(outcome: WebhookAttempt["outcome"], run?: RoutineRun) {
@@ -71,8 +73,8 @@ export function outcomeTone(outcome: WebhookAttempt["outcome"], run?: RoutineRun
 }
 
 export function outcomeLabel(outcome: WebhookAttempt["outcome"], run?: RoutineRun) {
-  if (run) return run.status === "waiting" ? "Needs you" : run.status[0]!.toUpperCase() + run.status.slice(1);
-  if (outcome === "captured") return "Test received";
+  if (run) return run.status === "waiting" ? uiText("ui.activity.74b6abdf59") : run.status[0]!.toUpperCase() + run.status.slice(1);
+  if (outcome === "captured") return uiText("ui.WebhooksPanel.4be6be57c4");
   if (outcome === "duplicate") return "Duplicate";
   if (outcome === "ignored") return "Ignored";
   if (outcome === "rejected") return "Rejected";
@@ -138,7 +140,7 @@ export function WebhookEditor({ webhook, bots, onClose, onCredential }: { webhoo
     const bot = bots.find((candidate) => candidate.id === botId);
     const pendingLimit = webhookMaxPendingRunsInput(maxPendingRuns);
     if (pendingLimit === undefined) {
-      setError(`Unfinished tasks at once must be a whole number from 1 to ${WEBHOOK_MAX_PENDING_RUNS_LIMIT}.`);
+      setError(uiText("ui.WebhooksPanel.b3be0fbf02", { value1: String(WEBHOOK_MAX_PENDING_RUNS_LIMIT) }));
       return;
     }
     const input: WebhookTriggerInput = { name: name.trim() || suggestedName(prompt, bot), prompt: prompt.trim(), botId, runOn, ...webhookActivationDefaults(webhook), eventTypes: eventTypes.split(",").map((value) => value.trim()).filter(Boolean), maxPendingRuns: pendingLimit };
@@ -158,24 +160,24 @@ export function WebhookEditor({ webhook, bots, onClose, onCredential }: { webhoo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={webhook ? "Edit webhook" : "New webhook"} tabIndex={-1} className="flex max-h-[90vh] w-full max-w-[590px] flex-col overflow-hidden rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
-        <div className="flex items-start justify-between border-b border-hairline/40 px-5 py-4"><div><div className="text-[17px] font-semibold text-ink">{webhook ? "Edit webhook" : "New webhook"}</div><div className="mt-1 text-[12px] text-ink-secondary">Each request starts a new task in the MAUS chat.</div></div><button onClick={onClose} aria-label="Close webhook editor" className="rounded-lg p-2 text-ink-secondary hover:bg-raised hover:text-ink"><X size={18} /></button></div>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={webhook ? uiText("ui.WebhooksPanel.269887c15b") : uiText("routines.newWebhook")} tabIndex={-1} className="flex max-h-[90vh] w-full max-w-[590px] flex-col overflow-hidden rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
+        <div className="flex items-start justify-between border-b border-hairline/40 px-5 py-4"><div><div className="text-[17px] font-semibold text-ink">{webhook ? uiText("ui.WebhooksPanel.269887c15b") : uiText("routines.newWebhook")}</div><div className="mt-1 text-[12px] text-ink-secondary">{uiText("ui.WebhooksPanel.6ac155c803")}</div></div><button onClick={onClose} aria-label={uiText("ui.WebhooksPanel.f3c48d32e7")} className="rounded-lg p-2 text-ink-secondary hover:bg-raised hover:text-ink"><X size={18} /></button></div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-          <div><div className="mb-2 text-[12px] font-medium text-ink-secondary">Who receives the tasks?</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{bots.map((bot) => <button key={bot.id} type="button" data-initial-focus={botId === bot.id ? "" : undefined} onClick={() => setBotId(bot.id)} className={cn("flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left", botId === bot.id ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised/60")}><BotAvatar bot={bot} state={botId === bot.id ? "happy" : "idle"} size={38} animated={false} /><span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{bot.name}</span></button>)}</div></div>
-          <div className="rounded-xl border border-accent/20 bg-accent/5 px-3.5 py-3 text-[11.5px] leading-relaxed text-ink-secondary">Send the task in the request: <code className="text-ink">{`{"task":"Check the failed build"}`}</code>. The MAUS keeps its model, tools, permissions, and computer setup.</div>
+          <div><div className="mb-2 text-[12px] font-medium text-ink-secondary">{uiText("ui.WebhooksPanel.9b74244f6e")}</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{bots.map((bot) => <button key={bot.id} type="button" data-initial-focus={botId === bot.id ? "" : undefined} onClick={() => setBotId(bot.id)} className={cn("flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left", botId === bot.id ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised/60")}><BotAvatar bot={bot} state={botId === bot.id ? "happy" : "idle"} size={38} animated={false} /><span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{bot.name}</span></button>)}</div></div>
+          <div className="rounded-xl border border-accent/20 bg-accent/5 px-3.5 py-3 text-[11.5px] leading-relaxed text-ink-secondary">{uiText("triggers.requestTask")} <code className="text-ink">{uiText("ui.WebhooksPanel.e51aee3b2f")}</code>{uiText("ui.WebhooksPanel.1b4d1b0158")}</div>
           <details className="group rounded-xl border border-hairline/45 bg-inset/45 px-4 py-3" open={Boolean(webhook)}>
-            <summary className="cursor-pointer text-[12.5px] font-medium text-ink">Advanced options</summary>
+            <summary className="cursor-pointer text-[12.5px] font-medium text-ink">{uiText("triggers.advanced")}</summary>
             <div className="mt-4 space-y-4">
-              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">Name <span className="font-normal">· optional</span></span><input value={name} onChange={(event) => setName(event.target.value)} placeholder={suggestedName(prompt, bots.find((bot) => bot.id === botId))} className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /></label>
-              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">Default instructions <span className="font-normal">· optional</span></span><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} placeholder="For every event, summarize what happened and suggest the next step…" className="w-full resize-y rounded-xl border border-hairline/60 bg-panel px-3.5 py-3 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] leading-relaxed text-ink-secondary">Use this only when every event needs the same handling rule. Otherwise the request’s task is used.</span></label>
-              <div><div className="mb-2 text-[11.5px] font-medium text-ink-secondary">Run on</div><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRunOn("maus")} className={cn("rounded-xl border p-3 text-left", runOn === "maus" ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-panel hover:bg-raised/60")}><div className="flex items-center gap-2 text-[12.5px] font-medium text-ink"><Laptop size={14} />This computer</div></button><button type="button" disabled={!cloudReady && runOn !== "cloud"} onClick={() => setRunOn("cloud")} className={cn("rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-45", runOn === "cloud" ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-panel hover:bg-raised/60")}><div className="flex items-center gap-2 text-[12.5px] font-medium text-ink"><Cloud size={14} />Cloud computer</div></button></div></div>
-              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">Only accept event types <span className="font-normal">· optional</span></span><input value={eventTypes} onChange={(event) => setEventTypes(event.target.value)} placeholder="push, workflow_run" className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] text-ink-secondary">Comma-separated values from the sender’s event-type header.</span></label>
-              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">Unfinished tasks at once <span className="font-normal">· optional</span></span><input type="number" inputMode="numeric" min={1} max={WEBHOOK_MAX_PENDING_RUNS_LIMIT} step={1} value={maxPendingRuns} onChange={(event) => setMaxPendingRuns(event.target.value)} placeholder={String(WEBHOOK_DEFAULT_MAX_PENDING_RUNS)} className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] text-ink-secondary">How many of this webhook’s tasks can be queued or running together. More requests get HTTP 429 until one finishes. Leave blank for {WEBHOOK_DEFAULT_MAX_PENDING_RUNS}.</span></label>
+              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">{uiText("teamShare.name")} <span className="font-normal">{uiText("ui.WebhooksPanel.304d987734")}</span></span><input value={name} onChange={(event) => setName(event.target.value)} placeholder={suggestedName(prompt, bots.find((bot) => bot.id === botId))} className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /></label>
+              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">{uiText("ui.WebhooksPanel.1284c91295")} <span className="font-normal">{uiText("ui.WebhooksPanel.304d987734")}</span></span><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} placeholder={uiText("ui.WebhooksPanel.cb234da18b")} className="w-full resize-y rounded-xl border border-hairline/60 bg-panel px-3.5 py-3 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] leading-relaxed text-ink-secondary">{uiText("ui.WebhooksPanel.882b091bec")}</span></label>
+              <div><div className="mb-2 text-[11.5px] font-medium text-ink-secondary">{uiText("ui.WebhooksPanel.f4b4b028ec")}</div><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRunOn("maus")} className={cn("rounded-xl border p-3 text-left", runOn === "maus" ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-panel hover:bg-raised/60")}><div className="flex items-center gap-2 text-[12.5px] font-medium text-ink"><Laptop size={14} />{uiText("usage.history.owner")}</div></button><button type="button" disabled={!cloudReady && runOn !== "cloud"} onClick={() => setRunOn("cloud")} className={cn("rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-45", runOn === "cloud" ? "border-accent/70 bg-accent/10" : "border-hairline/50 bg-panel hover:bg-raised/60")}><div className="flex items-center gap-2 text-[12.5px] font-medium text-ink"><Cloud size={14} />{uiText("routines.runsOn.boat")}</div></button></div></div>
+              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">{uiText("ui.WebhooksPanel.946e5c0e69")} <span className="font-normal">{uiText("ui.WebhooksPanel.304d987734")}</span></span><input value={eventTypes} onChange={(event) => setEventTypes(event.target.value)} placeholder={uiText("ui.WebhooksPanel.fe3d1a5f94")} className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] text-ink-secondary">{uiText("ui.WebhooksPanel.598213a3e8")}</span></label>
+              <label className="block"><span className="mb-1.5 block text-[11.5px] font-medium text-ink-secondary">{uiText("ui.WebhooksPanel.7e97ca2aee")} <span className="font-normal">{uiText("ui.WebhooksPanel.304d987734")}</span></span><input type="number" inputMode="numeric" min={1} max={WEBHOOK_MAX_PENDING_RUNS_LIMIT} step={1} value={maxPendingRuns} onChange={(event) => setMaxPendingRuns(event.target.value)} placeholder={String(WEBHOOK_DEFAULT_MAX_PENDING_RUNS)} className="w-full rounded-xl border border-hairline/60 bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/70" /><span className="mt-1.5 block text-[10.5px] text-ink-secondary">{uiText("ui.WebhooksPanel.b0c56ec3db")} {WEBHOOK_DEFAULT_MAX_PENDING_RUNS}.</span></label>
             </div>
           </details>
           {error && <div className="rounded-xl border border-danger/30 bg-danger/10 px-3.5 py-3 text-[12px] text-danger">{error}</div>}
         </div>
-        <div className="flex justify-end gap-2 border-t border-hairline/40 px-5 py-4"><button onClick={onClose} className="rounded-xl px-4 py-2 text-[13px] text-ink-secondary hover:bg-raised hover:text-ink">Cancel</button><button disabled={saving || !botId} onClick={() => void save()} className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40">{saving && <Loader2 size={14} className="animate-spin" />}{webhook ? "Save changes" : "Create webhook"}</button></div>
+        <div className="flex justify-end gap-2 border-t border-hairline/40 px-5 py-4"><button onClick={onClose} className="rounded-xl px-4 py-2 text-[13px] text-ink-secondary hover:bg-raised hover:text-ink">{uiText("cloudAdd.cancel")}</button><button disabled={saving || !botId} onClick={() => void save()} className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40">{saving && <Loader2 size={14} className="animate-spin" />}{webhook ? uiText("settings.logins.saveChange") : uiText("ui.WebhooksPanel.4a2b33ad2c")}</button></div>
       </div>
     </div>
   );
@@ -192,7 +194,7 @@ export function webhookActivity(webhook: WebhookTrigger, webhookAttempts: Webhoo
       id: attempt.id,
       at: attempt.receivedAt,
       outcome: attempt.outcome,
-      eventName: attempt.eventName || (attempt.outcome === "rejected" ? "Rejected request" : "Webhook event"),
+      eventName: attempt.eventName || (attempt.outcome === "rejected" ? uiText("ui.WebhooksPanel.ec71af335b") : uiText("ui.WebhooksPanel.ebde639db5")),
       preview: attempt.preview || "",
       reason: attempt.reason,
       run: attempt.runId ? runById.get(attempt.runId) : undefined,
@@ -226,7 +228,7 @@ export function useWebhookActions() {
     setError("");
     try {
       if (action === "delete") {
-        if (!window.confirm(`Delete “${webhook.name}”? Existing thread history will stay available.`)) return;
+        if (!window.confirm(uiText("ui.WebhooksPanel.c453e12415", { value1: String(webhook.name) }))) return;
         await api(`/api/webhooks/${webhook.id}`, { method: "DELETE" });
         dispatch({ type: "webhookDeleted", webhookId: webhook.id });
         removeWebhookCredential(webhookCredentialStore(), webhook.id);
@@ -237,7 +239,7 @@ export function useWebhookActions() {
         });
       } else {
         const enabling = !webhook.enabled;
-        if (enabling && webhook.verificationPending) throw new Error("Send a request before turning this webhook on");
+        if (enabling && webhook.verificationPending) throw new Error(uiText("ui.WebhooksPanel.0f6764a55d"));
         const response = await api(`/api/webhooks/${webhook.id}`, { method: "PATCH", body: JSON.stringify({ enabled: enabling, verificationPending: false }) });
         dispatch({ type: "webhookPatched", webhook: response.webhook });
       }
@@ -255,7 +257,7 @@ export function useWebhookActions() {
     setWorking(`${webhook.id}:command`);
     setError("");
     try {
-      if (replace && !window.confirm("Replace this private URL? Every previously copied command will stop working.")) return;
+      if (replace && !window.confirm(uiText("ui.WebhooksPanel.1b4bc55f70"))) return;
       let credential = replace ? undefined : credentials[webhook.id];
       if (!credential) {
         const response = await api(`/api/webhooks/${webhook.id}/rotate`, { method: "POST" });
@@ -264,7 +266,7 @@ export function useWebhookActions() {
         setCredentials((current) => ({ ...current, [webhook.id]: credential! }));
         saveWebhookCredential(webhookCredentialStore(), webhook.id, credential!);
       }
-      if (!credential) throw new Error("Could not create a terminal command");
+      if (!credential) throw new Error(uiText("ui.WebhooksPanel.3d7bade0e4"));
       if (await copyText(copy === "link" ? credential.url : terminalCommand(credential)) !== "copied") throw new Error(t("common.copyFailed"));
       setCopiedId(webhook.id);
       setCopiedKind(copy);
@@ -328,21 +330,21 @@ export function WebhooksPanel({
     <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mx-auto max-w-[1120px] space-y-4">
         {error && <div className="rounded-xl border border-danger/30 bg-danger/10 px-3.5 py-3 text-[12px] text-danger">{error}</div>}
-        {ingress && !ingress.available && <div className="flex items-center gap-2 rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-3 text-[12px] text-danger"><span className="size-1.5 shrink-0 rounded-full bg-danger" />Webhook receiver unavailable{ingress.error ? `: ${ingress.error}` : "."}</div>}
+        {ingress && !ingress.available && <div className="flex items-center gap-2 rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-3 text-[12px] text-danger"><span className="size-1.5 shrink-0 rounded-full bg-danger" />{uiText("ui.WebhooksPanel.dc92467460")}{ingress.error ? uiText("ui.WebhooksPanel.92dd63d2f3", { value1: String(ingress.error) }) : "."}</div>}
 
         {state.webhooks.length === 0 ? (
           <div className="border-t border-hairline/40 px-6 py-16 text-center">
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-accent/10 text-accent"><Send size={23} /></div>
-            <h3 className="text-[16px] font-semibold text-ink">Create your first webhook</h3>
-            <p className="mx-auto mt-2 max-w-[420px] text-[12.5px] leading-relaxed text-ink-secondary">Choose a MAUS, copy one command, and every request becomes a new task in its chat.</p>
-            <button onClick={() => setEditor("new")} disabled={bots.length === 0} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40"><Plus size={15} />Create webhook</button>
-            {bots.length === 0 && <p className="mt-3 text-[12px] text-warning">Create a MAUS first, then come back here.</p>}
+            <h3 className="text-[16px] font-semibold text-ink">{uiText("ui.WebhooksPanel.ba1269b367")}</h3>
+            <p className="mx-auto mt-2 max-w-[420px] text-[12.5px] leading-relaxed text-ink-secondary">{uiText("ui.WebhooksPanel.333159da76")}</p>
+            <button onClick={() => setEditor("new")} disabled={bots.length === 0} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40"><Plus size={15} />{uiText("ui.WebhooksPanel.4a2b33ad2c")}</button>
+            {bots.length === 0 && <p className="mt-3 text-[12px] text-warning">{uiText("ui.WebhooksPanel.6144ca3787")}</p>}
           </div>
         ) : selected && (
           <div className="min-h-[580px] overflow-hidden rounded-2xl border border-hairline/45 bg-panel/25 md:grid md:grid-cols-[250px_minmax(0,1fr)]">
             <aside className="border-b border-hairline/40 bg-inset/35 p-2.5 md:border-r md:border-b-0">
               <div className="flex items-center justify-between px-2 py-2">
-                <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-ink-secondary">Your webhooks</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-ink-secondary">{uiText("ui.WebhooksPanel.80c6b050ad")}</span>
                 <span className="text-[10px] tabular-nums text-ink-secondary">{state.webhooks.length}</span>
               </div>
               <nav className="flex gap-1 overflow-x-auto md:block md:space-y-1 md:overflow-visible">
@@ -368,57 +370,57 @@ export function WebhooksPanel({
                   {selectedBot ? <BotAvatar bot={selectedBot} state={selected.enabled ? "idle" : "sleeping"} size={44} animated={false} label={selectedBot.name} /> : <div className="flex size-11 items-center justify-center rounded-xl bg-raised text-ink-secondary"><Webhook size={18} /></div>}
                   <div className="min-w-0">
                     <h3 className="truncate text-[17px] font-semibold text-ink">{selected.name}</h3>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] text-ink-secondary"><span>{selectedBot?.name ?? "Deleted MAUS"}</span><span>·</span><span>{selected.runOn === "cloud" ? "Cloud computer" : "This computer"}</span></div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10.5px] text-ink-secondary"><span>{selectedBot?.name ?? uiText("ui.WebhooksPanel.d6208da0ff")}</span><span>·</span><span>{selected.runOn === "cloud" ? uiText("routines.runsOn.boat") : uiText("usage.history.owner")}</span></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!selected.verificationPending && <button disabled={Boolean(working)} onClick={() => void invoke(selected, "toggle")} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11.5px] font-medium", selected.enabled ? "bg-raised text-ink-secondary hover:text-ink" : "bg-accent text-white hover:brightness-110")}>{selected.enabled ? <Pause size={13} /> : <Play size={13} />}{selected.enabled ? "Pause" : "Enable"}</button>}
-                  <details className="relative"><summary className="list-none rounded-lg p-2 text-ink-secondary hover:bg-raised hover:text-ink"><MoreHorizontal size={17} /></summary><div className="absolute right-0 top-full z-20 mt-1 w-[180px] rounded-xl border border-hairline/50 bg-card p-1.5 shadow-2xl"><button onClick={() => setEditor(selected)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-raised">Edit settings</button><button onClick={() => void invoke(selected, "delete")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-danger hover:bg-danger/10"><Trash2 size={13} />Delete</button></div></details>
+                  {!selected.verificationPending && <button disabled={Boolean(working)} onClick={() => void invoke(selected, "toggle")} className={cn("flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11.5px] font-medium", selected.enabled ? "bg-raised text-ink-secondary hover:text-ink" : "bg-accent text-white hover:brightness-110")}>{selected.enabled ? <Pause size={13} /> : <Play size={13} />}{selected.enabled ? uiText("routines.pause") : uiText("approval.action.enable")}</button>}
+                  <details className="relative"><summary className="list-none rounded-lg p-2 text-ink-secondary hover:bg-raised hover:text-ink"><MoreHorizontal size={17} /></summary><div className="absolute right-0 top-full z-20 mt-1 w-[180px] rounded-xl border border-hairline/50 bg-card p-1.5 shadow-2xl"><button onClick={() => setEditor(selected)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-raised">{uiText("triggers.editSettings")}</button><button onClick={() => void invoke(selected, "delete")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] text-danger hover:bg-danger/10"><Trash2 size={13} />{uiText("common.delete")}</button></div></details>
                 </div>
               </div>
 
               <div className="mt-5 flex gap-5 border-b border-hairline/35 px-5 md:px-7">
-                <button onClick={() => setTab("setup")} className={cn("border-b-2 px-0.5 pb-3 text-[12px] font-medium", tab === "setup" ? "border-accent text-ink" : "border-transparent text-ink-secondary hover:text-ink")}>Setup</button>
-                <button onClick={() => setTab("activity")} className={cn("flex items-center gap-1.5 border-b-2 px-0.5 pb-3 text-[12px] font-medium", tab === "activity" ? "border-accent text-ink" : "border-transparent text-ink-secondary hover:text-ink")}>Activity{activity.length > 0 && <span className="rounded-full bg-raised px-1.5 py-0.5 text-[9px] tabular-nums text-ink-secondary">{activity.length}</span>}</button>
+                <button onClick={() => setTab("setup")} className={cn("border-b-2 px-0.5 pb-3 text-[12px] font-medium", tab === "setup" ? "border-accent text-ink" : "border-transparent text-ink-secondary hover:text-ink")}>{uiText("vm.setup.title")}</button>
+                <button onClick={() => setTab("activity")} className={cn("flex items-center gap-1.5 border-b-2 px-0.5 pb-3 text-[12px] font-medium", tab === "activity" ? "border-accent text-ink" : "border-transparent text-ink-secondary hover:text-ink")}>{uiText("settings.section.activity")}{activity.length > 0 && <span className="rounded-full bg-raised px-1.5 py-0.5 text-[9px] tabular-nums text-ink-secondary">{activity.length}</span>}</button>
               </div>
 
               {tab === "setup" ? (
                 <div className="px-5 py-6 md:px-7">
                   <div className="max-w-[720px]">
-                    <h4 className="text-[14px] font-semibold text-ink">Send a task</h4>
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-ink-secondary">Copy this command into Terminal and press Return. It starts a real task in {selectedBot?.name ?? "this MAUS"}&apos;s chat; edit the task text for whatever you want done.</p>
+                    <h4 className="text-[14px] font-semibold text-ink">{uiText("ui.WebhooksPanel.afdea53d5c")}</h4>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-ink-secondary">{uiText("ui.WebhooksPanel.e4240d6d87")} {selectedBot?.name ?? uiText("ui.WebhooksPanel.842fc128e5")}{uiText("ui.WebhooksPanel.dbb297660b")}</p>
                     {credential ? (
                       <div className="mt-4 overflow-hidden rounded-xl border border-hairline/45 bg-inset">
-                        <div className="flex items-center justify-between border-b border-hairline/45 px-3.5 py-2"><span className="text-[9.5px] font-medium uppercase tracking-wider text-ink-secondary">Terminal</span><div className="flex items-center gap-1"><button onClick={() => void createAndCopyCommand(selected)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10.5px] font-medium text-ink-secondary hover:bg-raised hover:text-ink">{copiedId === selected.id ? <Check size={12} className="text-success" /> : <Copy size={12} />}{copiedId === selected.id ? "Copied" : "Copy command"}</button><button onClick={() => void createAndCopyCommand(selected, true)} className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised hover:text-ink" title="Rotate private URL"><RotateCw size={12} /></button></div></div>
+                        <div className="flex items-center justify-between border-b border-hairline/45 px-3.5 py-2"><span className="text-[9.5px] font-medium uppercase tracking-wider text-ink-secondary">{uiText("engineSetup.terminal")}</span><div className="flex items-center gap-1"><button onClick={() => void createAndCopyCommand(selected)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10.5px] font-medium text-ink-secondary hover:bg-raised hover:text-ink">{copiedId === selected.id ? <Check size={12} className="text-success" /> : <Copy size={12} />}{copiedId === selected.id ? uiText("table.copied") : uiText("chat.claudeUpdate.copy")}</button><button onClick={() => void createAndCopyCommand(selected, true)} className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised hover:text-ink" title={uiText("triggers.rotateUrl")}><RotateCw size={12} /></button></div></div>
                         <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all text-ink-secondary">{command}</pre>
                       </div>
                     ) : (
                       <div className="mt-4">
-                        <p className="max-w-[560px] text-[10.5px] leading-relaxed text-ink-secondary">The private URL is shown once. Generate a replacement to copy your webhook command; any older command for this webhook will stop working.</p>
-                        <button disabled={Boolean(working) || !ingress?.available} onClick={() => void createAndCopyCommand(selected)} className="mt-3 flex items-center gap-2 rounded-xl bg-accent px-3.5 py-2.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-40">{working === `${selected.id}:command` ? <Loader2 size={14} className="animate-spin" /> : <RotateCw size={14} />}Generate new private URL</button>
+                        <p className="max-w-[560px] text-[10.5px] leading-relaxed text-ink-secondary">{uiText("ui.WebhooksPanel.e1afd0a894")}</p>
+                        <button disabled={Boolean(working) || !ingress?.available} onClick={() => void createAndCopyCommand(selected)} className="mt-3 flex items-center gap-2 rounded-xl bg-accent px-3.5 py-2.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-40">{working === `${selected.id}:command` ? <Loader2 size={14} className="animate-spin" /> : <RotateCw size={14} />}{uiText("ui.WebhooksPanel.a6c7986bc2")}</button>
                       </div>
                     )}
-                    <div className="mt-3 flex items-start gap-2 text-[10.5px] leading-relaxed text-ink-secondary"><Laptop size={12} className="mt-0.5 shrink-0" /><span>Keep OpenMausBot open so it can receive requests.</span></div>
+                    <div className="mt-3 flex items-start gap-2 text-[10.5px] leading-relaxed text-ink-secondary"><Laptop size={12} className="mt-0.5 shrink-0" /><span>{uiText("ui.WebhooksPanel.959b6afa72")}</span></div>
 
-                    {selected.verificationSample && !selected.enabled && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-success/20 bg-success/5 px-3.5 py-3"><div><div className="flex items-center gap-2 text-[11.5px] font-medium text-success"><Check size={13} />Request received</div><p className="mt-1 max-w-[520px] truncate font-mono text-[10px] text-ink-secondary">{selected.verificationSample.preview || "Empty payload"}</p></div><button disabled={Boolean(working)} onClick={() => void invoke(selected, "toggle")} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[11px] font-medium text-white hover:brightness-110"><Play size={12} />Turn on</button></div>}
+                    {selected.verificationSample && !selected.enabled && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-success/20 bg-success/5 px-3.5 py-3"><div><div className="flex items-center gap-2 text-[11.5px] font-medium text-success"><Check size={13} />{uiText("ui.WebhooksPanel.4f2273f736")}</div><p className="mt-1 max-w-[520px] truncate font-mono text-[10px] text-ink-secondary">{selected.verificationSample.preview || uiText("triggers.emptyPayload")}</p></div><button disabled={Boolean(working)} onClick={() => void invoke(selected, "toggle")} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[11px] font-medium text-white hover:brightness-110"><Play size={12} />{uiText("mcp.turnOn")}</button></div>}
 
                     <div className="mt-7 border-t border-hairline/35 pt-5">
-                      <div className="grid gap-4 text-[11.5px] sm:grid-cols-2"><div><div className="text-[10px] uppercase tracking-wider text-ink-secondary">Tasks go to</div><div className="mt-1.5 font-medium text-ink">{selectedBot?.name ?? "Deleted MAUS"}</div></div><div><div className="text-[10px] uppercase tracking-wider text-ink-secondary">Runs on</div><div className="mt-1.5 font-medium text-ink">{selected.runOn === "cloud" ? "Cloud computer" : "This computer"}</div></div></div>
+                      <div className="grid gap-4 text-[11.5px] sm:grid-cols-2"><div><div className="text-[10px] uppercase tracking-wider text-ink-secondary">{uiText("ui.WebhooksPanel.598d97dd5a")}</div><div className="mt-1.5 font-medium text-ink">{selectedBot?.name ?? uiText("ui.WebhooksPanel.d6208da0ff")}</div></div><div><div className="text-[10px] uppercase tracking-wider text-ink-secondary">{uiText("routines.drawer.runsOn")}</div><div className="mt-1.5 font-medium text-ink">{selected.runOn === "cloud" ? uiText("routines.runsOn.boat") : uiText("usage.history.owner")}</div></div></div>
                     </div>
 
-                    <details className="group mt-5 border-t border-hairline/35 pt-4"><summary className="flex cursor-pointer list-none items-center justify-between text-[11.5px] font-medium text-ink"><span>Advanced</span><ChevronDown size={14} className="text-ink-secondary transition-transform group-open:rotate-180" /></summary><div className="mt-4 space-y-3 text-[10.5px] leading-relaxed text-ink-secondary">{selected.prompt ? <p><span className="font-medium text-ink">Default instruction:</span> {selected.prompt}</p> : <p>The task or message sent with each request becomes the MAUS instruction.</p>}{selected.eventTypes?.length ? <p><span className="font-medium text-ink">Accepted events:</span> {selected.eventTypes.join(", ")}</p> : <p>All event types are accepted.</p>}<p><span className="font-medium text-ink">Unfinished tasks at once:</span> {selected.maxPendingRuns ?? WEBHOOK_DEFAULT_MAX_PENDING_RUNS}. More requests get HTTP 429 until one finishes.</p><button onClick={() => setEditor(selected)} className="rounded-lg border border-hairline/50 px-3 py-2 text-[11px] font-medium text-ink hover:bg-raised">Edit settings</button></div></details>
+                    <details className="group mt-5 border-t border-hairline/35 pt-4"><summary className="flex cursor-pointer list-none items-center justify-between text-[11.5px] font-medium text-ink"><span>{uiText("organization.advanced")}</span><ChevronDown size={14} className="text-ink-secondary transition-transform group-open:rotate-180" /></summary><div className="mt-4 space-y-3 text-[10.5px] leading-relaxed text-ink-secondary">{selected.prompt ? <p><span className="font-medium text-ink">{uiText("triggers.defaultInstruction")}</span> {selected.prompt}</p> : <p>{uiText("triggers.requestInstruction")}</p>}{selected.eventTypes?.length ? <p><span className="font-medium text-ink">{uiText("triggers.acceptedEvents")}</span> {selected.eventTypes.join(", ")}</p> : <p>{uiText("triggers.allEvents")}</p>}<p><span className="font-medium text-ink">{uiText("triggers.pendingTasks")}</span> {selected.maxPendingRuns ?? WEBHOOK_DEFAULT_MAX_PENDING_RUNS}{uiText("ui.WebhooksPanel.7c2bb10a46")}</p><button onClick={() => setEditor(selected)} className="rounded-lg border border-hairline/50 px-3 py-2 text-[11px] font-medium text-ink hover:bg-raised">{uiText("triggers.editSettings")}</button></div></details>
                   </div>
                 </div>
               ) : (
                 <div className="px-5 py-5 md:px-7">
-                  <div className="mb-3"><h4 className="text-[13px] font-semibold text-ink">Recent deliveries</h4><p className="mt-1 text-[10.5px] text-ink-secondary">Accepted and rejected requests update automatically.</p></div>
+                  <div className="mb-3"><h4 className="text-[13px] font-semibold text-ink">{uiText("triggers.recentDeliveries")}</h4><p className="mt-1 text-[10.5px] text-ink-secondary">{uiText("ui.WebhooksPanel.cabc356ad2")}</p></div>
                   <div className="border-t border-hairline/35">
-                    {activity.length === 0 ? <div className="px-2 py-12 text-center text-[11.5px] text-ink-secondary">No requests yet. Use the command in Setup to send one.</div> : activity.map((item) => (
+                    {activity.length === 0 ? <div className="px-2 py-12 text-center text-[11.5px] text-ink-secondary">{uiText("ui.WebhooksPanel.5e6b1d194a")}</div> : activity.map((item) => (
                       <div key={item.id} className="flex items-center gap-2.5 border-b border-hairline/25 px-1 py-3.5">
                         <span className={cn("size-2 shrink-0 rounded-full", item.outcome === "rejected" || item.run?.status === "failed" ? "bg-danger" : item.run && ["queued", "running", "waiting"].includes(item.run.status) ? "animate-pulse bg-accent" : item.outcome === "ignored" || item.outcome === "duplicate" ? "bg-ink-secondary/50" : "bg-success")} />
-                        <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5 text-[11.5px]"><span className="truncate font-medium text-ink">{item.eventName}</span><span className="shrink-0 text-ink-secondary">· {relativeTime(item.at)}</span></div><div className="mt-0.5 truncate font-mono text-[10px] text-ink-tertiary">{item.reason || item.preview || "Empty payload"}</div></div>
+                        <div className="min-w-0 flex-1"><div className="flex items-center gap-1.5 text-[11.5px]"><span className="truncate font-medium text-ink">{item.eventName}</span><span className="shrink-0 text-ink-secondary">· {relativeTime(item.at)}</span></div><div className="mt-0.5 truncate font-mono text-[10px] text-ink-tertiary">{item.reason || item.preview || uiText("triggers.emptyPayload")}</div></div>
                         <span className={cn("shrink-0 text-[10px] font-medium", outcomeTone(item.outcome, item.run))}>{outcomeLabel(item.outcome, item.run)}</span>
-                        {item.run?.threadId && selectedBot && <button onClick={() => openBotThread(dispatch, selectedBot, item.run!.threadId!, showThreads)} className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-ink-secondary hover:bg-raised hover:text-ink" title="Open this execution in the MAUS chat"><ExternalLink size={11} />Open chat</button>}
+                        {item.run?.threadId && selectedBot && <button onClick={() => openBotThread(dispatch, selectedBot, item.run!.threadId!, showThreads)} className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] text-ink-secondary hover:bg-raised hover:text-ink" title={uiText("ui.WebhooksPanel.dedd0dcecf")}><ExternalLink size={11} />{uiText("canvas.openChat")}</button>}
                       </div>
                     ))}
                   </div>

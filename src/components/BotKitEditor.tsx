@@ -1,9 +1,11 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState } from "react";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import { MAUS_COLORS, type MausColor } from "@/lib/mascot";
 import { KIT_ACCESSORY_IDS, KIT_BODY_IDS, KIT_FACE_IDS, MAX_KIT_ACCESSORIES, type KitAccessory, type KitAccessoryId, type MascotAppearance } from "../../shared/mascot-kit";
 import { BotKitAvatar } from "./BotKitAvatar";
+import { Select } from "./Select";
 
 export function BotKitEditor({ appearance, color, disabled, onChange }: {
   appearance: MascotAppearance;
@@ -64,16 +66,16 @@ export function BotKitEditor({ appearance, color, disabled, onChange }: {
     {active && <div className="mt-4 rounded-lg border border-hairline/40 p-3">
       <label className="mb-3 block text-[12px] font-medium">
         {t("botKit.adjustAccessory")}
-        <select className="mt-1 w-full rounded-lg border border-hairline/40 bg-control p-2 text-ink" value={active.id} disabled={disabled}
+        <Select className="mt-1 w-full" value={active.id} disabled={disabled}
           onChange={event => setSelected(event.target.value as KitAccessoryId)} aria-label={t("botKit.adjustAccessory")}>
           {appearance.accessories.map(item => <option key={item.id} value={item.id}>{t(`botKit.accessory.${item.id}`)}</option>)}
-        </select>
+        </Select>
       </label>
       {([
         ["x", -64, 64, 1, "horizontal"], ["y", -64, 64, 1, "vertical"],
         ["scale", 0.4, 2, 0.05, "size"], ["rotation", -180, 180, 5, "rotation"],
       ] as const).map(([field, min, max, step, label]) => <label key={field} className="mb-2 block text-[12px] text-ink-secondary">
-        <span className="flex justify-between gap-2"><span>{t(`botKit.${label}`)}</span><output>{field === "scale" ? `${Math.round(active[field] * 100)}%` : field === "rotation" ? `${active[field]}°` : active[field]}</output></span>
+        <span className="flex justify-between gap-2"><span>{t(`botKit.${label}`)}</span><output>{field === "scale" ? uiText("ui.BotKitEditor.6a53a571fa", { value1: String(Math.round(active[field] * 100)) }) : field === "rotation" ? uiText("ui.BotKitEditor.ee82580ada", { value1: String(active[field]) }) : active[field]}</output></span>
         <input type="range" min={min} max={max} step={step} value={active[field]} disabled={disabled}
           aria-label={t(`botKit.${label}`)} className="mt-1 w-full accent-accent"
           onChange={event => updateAccessory({ [field]: Number(event.target.value) })} />

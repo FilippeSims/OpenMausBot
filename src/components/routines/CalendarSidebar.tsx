@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useMemo, useState, type DragEvent } from "react";
 import { GripVertical, Search, UsersRound } from "lucide-react";
 import { BotAvatar } from "@/components/Avatar";
@@ -30,7 +31,7 @@ export function CalendarSidebar({ bots, anchor, onSelectDate }: CalendarSidebarP
 
   return (
     <aside
-      aria-label="Schedule sidebar"
+      aria-label={uiText("ui.CalendarSidebar.5334e56ecf")}
       className="flex h-full w-[320px] shrink-0 flex-col overflow-hidden border-r border-hairline/40 bg-panel"
     >
       <MiniMonth anchor={anchor} onSelect={onSelectDate} />
@@ -40,16 +41,14 @@ export function CalendarSidebar({ bots, anchor, onSelectDate }: CalendarSidebarP
       <section aria-labelledby="calendar-bots-heading" className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3">
         <div className="mb-2 flex items-center justify-between px-1">
           <div id="calendar-bots-heading" className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-ink-secondary">
-            <UsersRound size={13} aria-hidden="true" />
-            My bots
-          </div>
+            <UsersRound size={13} aria-hidden="true" />{uiText("ui.CalendarSidebar.2337ba9c1f")}</div>
           <span className="rounded-full bg-raised px-1.5 py-0.5 text-[9px] tabular-nums text-ink-secondary">
             {bots.length}
           </span>
         </div>
 
         <label className="relative mb-2 block">
-          <span className="sr-only">Search bots</span>
+          <span className="sr-only">{uiText("ui.CalendarSidebar.05bed5c3a4")}</span>
           <Search
             size={13}
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-tertiary"
@@ -59,12 +58,12 @@ export function CalendarSidebar({ bots, anchor, onSelectDate }: CalendarSidebarP
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             type="search"
-            placeholder="Search bots"
+            placeholder={uiText("ui.CalendarSidebar.05bed5c3a4")}
             className="h-8 w-full rounded-lg border border-hairline/45 bg-control/55 pl-8 pr-2.5 text-[11.5px] text-ink outline-none placeholder:text-ink-tertiary focus:border-accent/60 focus:bg-control"
           />
         </label>
 
-        <div role="list" aria-label="Bots available to schedule" className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
+        <div role="list" aria-label={uiText("ui.CalendarSidebar.b98bb7443a")} className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-0.5">
           {filteredBots.map((bot) => (
             <div
               key={bot.id}
@@ -72,8 +71,8 @@ export function CalendarSidebar({ bots, anchor, onSelectDate }: CalendarSidebarP
               onDragStart={(event) => beginBotDrag(event, bot)}
               role="listitem"
               className="group flex cursor-grab items-center gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-raised/80 active:cursor-grabbing"
-              aria-label={`Drag ${bot.name} onto the schedule`}
-              title={`Drag ${bot.name} onto the schedule`}
+              aria-label={uiText("ui.CalendarSidebar.f2440f693c", { value1: String(bot.name) })}
+              title={uiText("ui.CalendarSidebar.f2440f693c", { value1: String(bot.name) })}
             >
               <GripVertical
                 size={13}
@@ -84,25 +83,21 @@ export function CalendarSidebar({ bots, anchor, onSelectDate }: CalendarSidebarP
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[11.5px] font-medium text-ink">{bot.name}</div>
                 <div className="truncate text-[9.5px] text-ink-tertiary">
-                  {bot.title || "BotAgent"}
+                  {bot.title || uiText("ui.CalendarSidebar.72760b65b1")}
                 </div>
               </div>
-              <span className="shrink-0 rounded-full border border-hairline/50 px-1.5 py-0.5 text-[8.5px] text-ink-tertiary opacity-0 transition-opacity group-hover:opacity-100">
-                Drag
-              </span>
+              <span className="shrink-0 rounded-full border border-hairline/50 px-1.5 py-0.5 text-[8.5px] text-ink-tertiary opacity-0 transition-opacity group-hover:opacity-100">{uiText("ui.CalendarSidebar.442e96ec9e")}</span>
             </div>
           ))}
 
           {filteredBots.length === 0 && (
             <div className="px-3 py-8 text-center text-[11px] leading-relaxed text-ink-secondary">
-              {bots.length === 0 ? "Create a bot to schedule work." : "No bots match your search."}
+              {bots.length === 0 ? uiText("ui.CalendarSidebar.4c97befe3f") : uiText("ui.CalendarSidebar.e6efc96629")}
             </div>
           )}
         </div>
 
-        <p className="mt-2 px-2 text-[9.5px] leading-relaxed text-ink-tertiary">
-          Drag a bot onto any time to schedule it.
-        </p>
+        <p className="mt-2 px-2 text-[9.5px] leading-relaxed text-ink-tertiary">{uiText("ui.CalendarSidebar.83220f3e22")}</p>
       </section>
     </aside>
   );

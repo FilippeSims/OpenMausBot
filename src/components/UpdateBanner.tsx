@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Loader2, PackageOpen, RefreshCw, Sparkles, X } from "lucide-react";
 import { useUpdaterState } from "@/lib/updater";
@@ -8,11 +9,11 @@ const primaryAction =
 
 // electron-updater surfaces failures as a whole HTTP dump (status line, every header, stack trace).
 function friendlyError(message?: string): string {
-  if (!message) return "Something went wrong.";
+  if (!message) return uiText("ui.UpdateBanner.0c953ab32c");
   if (/cannot find .*\.yml|404/i.test(message))
-    return "No update has been published for this platform yet.";
+    return uiText("ui.UpdateBanner.d756fe605d");
   if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|net::/i.test(message))
-    return "Couldn't reach the update server.";
+    return uiText("ui.UpdateBanner.74b104febe");
   return message.split("\n")[0].slice(0, 140);
 }
 
@@ -39,29 +40,29 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
 
   const title =
     s.status === "downloaded"
-      ? `${brand().name} ${s.version} is ready`
+      ? uiText("ui.UpdateBanner.2b3acef2e9", { value1: String(brand().name), value2: String(s.version) })
       : installing
         ? handoff
           ? "Opening a terminal…"
-          : "Restarting to update…"
+          : uiText("settings.updates.restarting")
         : s.status === "handed-off"
-          ? "Finish in a terminal"
-          : "Update failed";
+          ? uiText("ui.UpdateBanner.3149d8dc76")
+          : uiText("ui.UpdateBanner.e58282fd73");
   const subtitle =
     s.status === "downloaded"
       ? handoff
-        ? "Copy the install command and open a terminal."
-        : "Restart to finish updating."
+        ? uiText("ui.UpdateBanner.4d1652ff91")
+        : uiText("ui.UpdateBanner.d287d2c255")
       : installing
         ? handoff
-          ? "Copying the command…"
-          : s.message || `${brand().name} will reopen in a moment.`
+          ? uiText("ui.UpdateBanner.eb1b96371d")
+          : s.message || uiText("ui.UpdateBanner.eddb0fc1d0", { value1: String(brand().name) })
         : s.status === "handed-off"
           ? s.terminalOpened
-            ? "Command copied — paste it in the terminal that opened."
-            : "Command copied — paste it in a terminal to finish."
+            ? uiText("ui.UpdateBanner.3c510a77a4")
+            : uiText("ui.UpdateBanner.6207545468")
           : s.retryable === false
-            ? `${friendlyError(s.message?.split(" Quit and reopen ")[0])} Quit and reopen ${brand().name} before trying the update again.`
+            ? uiText("ui.UpdateBanner.a61176b5ef", { value1: String(friendlyError(s.message?.split(" Quit and reopen ")[0])), value2: String(brand().name) })
             : friendlyError(s.message);
 
   return (
@@ -80,7 +81,7 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
           <button
             onClick={() => setDismissed(key)}
             className="shrink-0 rounded-md p-1 text-ink-secondary hover:bg-control hover:text-ink"
-            title="Dismiss"
+            title={uiText("chat.error.dismiss")}
           >
             <X size={14} />
           </button>
@@ -99,7 +100,7 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             disabled
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-control py-1.5 text-[13px] font-medium text-ink-secondary"
           >
-            <Loader2 size={13} className="animate-spin" /> {handoff ? "Opening…" : "Restarting…"}
+            <Loader2 size={13} className="animate-spin" /> {handoff ? uiText("settings.updates.opening") : uiText("settings.updates.restartingShort")}
           </button>
         </div>
       )}
@@ -117,16 +118,14 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             >
               {pending === "install" ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" /> {handoff ? "Opening…" : "Restarting…"}
+                  <Loader2 size={13} className="animate-spin" /> {handoff ? uiText("settings.updates.opening") : uiText("settings.updates.restartingShort")}
                 </>
               ) : handoff ? (
                 <>
-                  <PackageOpen size={13} /> Install
-                </>
+                  <PackageOpen size={13} />{uiText("settings.updates.install")}</>
               ) : (
                 <>
-                  <RefreshCw size={13} /> Restart to update
-                </>
+                  <RefreshCw size={13} />{uiText("update.card.restart")}</>
               )}
             </button>
           )}
@@ -141,10 +140,9 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             >
               {pending === "check" ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" /> Checking…
-                </>
+                  <Loader2 size={13} className="animate-spin" />{uiText("common.checking")}</>
               ) : (
-                "Try again"
+                uiText("cloudAdd.tryAgain")
               )}
             </button>
           )}
@@ -153,7 +151,7 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             disabled={pending !== null}
             className="rounded-lg px-3 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50 disabled:hover:bg-transparent"
           >
-            {s.status === "handed-off" || s.retryable === false ? "Dismiss" : "Later"}
+            {s.status === "handed-off" || s.retryable === false ? uiText("chat.error.dismiss") : uiText("update.card.later")}
           </button>
         </div>
       )}

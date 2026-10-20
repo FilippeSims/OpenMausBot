@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { activeLocale, t } from "@/lib/i18n";
 import { useShowThreads } from "@/lib/thread-preferences";
@@ -284,7 +285,7 @@ function RoomTextMessage({
                 }}
               />}
               {m.via === "api" && (
-                <div className="mt-1 text-[11px] text-ink-secondary">Sent through the API, not typed here</div>
+                <div className="mt-1 text-[11px] text-ink-secondary">{uiText("ui.GroupView.a32ae46ee9")}</div>
               )}
               {collapsible && (
                 <button type="button" onClick={() => setExpanded(true)} className="mt-1 text-[12.5px] text-ink-secondary hover:text-ink">
@@ -892,8 +893,7 @@ function RoomSetup({ group, members }: { group: Group; members: Bot[] }) {
                 disabled={saving}
                 className="flex shrink-0 items-center gap-1.5 rounded-xl border border-hairline/50 bg-raised px-3 py-2 text-[13px] font-medium text-ink hover:bg-raised-hover disabled:opacity-50"
               >
-                <FolderOpen size={14} /> Choose
-              </button>
+                <FolderOpen size={14} />{uiText("widget.choose")}</button>
             )}
           </div>
         </label>
@@ -1269,7 +1269,7 @@ export function GroupView({ group }: { group: Group }) {
             ? t("room.holds.avatarHeld", { name: b.name })
             : queueTitle ?? (busyElsewhere
               ? t("room.memberWorkingElsewhere", { name: b.name })
-              : `${b.name}${busy ? " — working…" : ""}${contextWarning ? ` — ${t("contextWarning.short", { percent: contextWarning.percent })}` : ""}`)
+              : uiText("ui.GroupView.bae1f8e535", { value1: String(b.name), value2: String(busy ? " — working…" : ""), value3: String(contextWarning ? ` — ${uiText("contextWarning.short", { percent: contextWarning.percent })}` : "") }))
         }
         className={cn(
           "relative inline-flex rounded-full",

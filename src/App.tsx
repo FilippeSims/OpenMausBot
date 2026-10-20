@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { Loader2, Menu } from "lucide-react";
@@ -96,7 +97,8 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const language = effectiveLanguage(useLanguageChoice(), state.config?.language);
   const [, setLocaleEpoch] = useState(0);
   useEffect(() => {
-    setLocale(language || globalThis.navigator?.language);
+    const resolved = setLocale(language || globalThis.navigator?.language);
+    void window.ogb?.applyLanguage?.(resolved).catch(() => {});
     setLocaleEpoch((epoch) => epoch + 1);
   }, [language]);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -270,7 +272,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       {!calendarFocus && <button
         type="button"
         ref={menuButtonRef}
-        aria-label="Open bot list"
+        aria-label={uiText("ui.App.73f12d06c6")}
         aria-expanded={drawerOpen}
         onClick={() => setDrawerOpen(true)}
         className="absolute left-3 top-3 z-30 rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink md:hidden"
@@ -323,11 +325,10 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           <div className="w-full max-w-md"><ChatNotice notice={state.notice} /></div>
           <Loader2 size={20} className="animate-spin" />
           <div className="text-[14px]">
-            {state.connected ? "No bots yet" : "Connecting to the bot server…"}
+            {state.connected ? uiText("ui.App.33534a334f") : uiText("ui.App.a0b31a8123")}
           </div>
           {!state.connected && (
-            <div className="text-[12px]">
-              Start it with <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
+            <div className="text-[12px]"> {uiText("ui.App.8bf48e1d50")} <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
             </div>
           )}
         </main>

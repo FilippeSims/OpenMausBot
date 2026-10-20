@@ -1,3 +1,4 @@
+import { uiCopy as uiText } from "../../shared/ui-copy.ts";
 // Selection matching is adapted from T3 Code's assistantTextSelection.ts
 // (Copyright 2026 T3 Tools Inc., MIT License; see third_party/t3-code/LICENSE).
 
@@ -72,9 +73,9 @@ export function citationAttachment(
 ): CitationAttachment {
   const trimmedComment = comment.trim();
   if (!selector.text.trim() || selector.text.length > CITATION_MAX_QUOTE_LENGTH) {
-    throw new Error("Citation quote is empty or too long");
+    throw new Error(uiText("Citation quote is empty or too long"));
   }
-  if (trimmedComment.length > CITATION_MAX_COMMENT_LENGTH) throw new Error("Citation comment is too long");
+  if (trimmedComment.length > CITATION_MAX_COMMENT_LENGTH) throw new Error(uiText("Citation comment is too long"));
   return {
     kind: "citation",
     version: 1,
@@ -88,7 +89,7 @@ export function citationAttachment(
 
 export function withCitationComment(citation: CitationAttachment, comment: string): CitationAttachment {
   const trimmed = comment.trim();
-  if (trimmed.length > CITATION_MAX_COMMENT_LENGTH) throw new Error("Citation comment is too long");
+  if (trimmed.length > CITATION_MAX_COMMENT_LENGTH) throw new Error(uiText("Citation comment is too long"));
   const { comment: _old, ...rest } = citation;
   return { ...rest, ...(trimmed ? { comment: trimmed } : {}), size: byteLength(citation.quote) + byteLength(trimmed) };
 }

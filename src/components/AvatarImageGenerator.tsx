@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 
@@ -6,9 +7,9 @@ import { normalizeImageGenerationUrl, type AvatarImageProvider } from "../../sha
 import { Select } from "./Select";
 
 const PROVIDERS = {
-  openai: { label: "OpenAI", keyLabel: "OpenAI image API key", credential: "openaiImageApiKey" },
-  xai: { label: "Grok (xAI)", keyLabel: "Grok API key", credential: "xaiApiKey" },
-  custom: { label: "Custom", keyLabel: "Custom image API key", credential: "customImageApiKey" },
+  openai: { get label() { return uiText("ui.AvatarImageGenerator.8b7d1a3187"); }, get keyLabel() { return uiText("ui.AvatarImageGenerator.3c83ff65e9"); }, credential: "openaiImageApiKey" },
+  xai: { get label() { return uiText("voice.grok.label"); }, get keyLabel() { return uiText("ui.AvatarImageGenerator.c721f285a7"); }, credential: "xaiApiKey" },
+  custom: { get label() { return uiText("approvalMode.custom.chip"); }, get keyLabel() { return uiText("ui.AvatarImageGenerator.fad63e62cd"); }, credential: "customImageApiKey" },
 } as const;
 
 const INPUT_CLASS = "w-full min-w-0 rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[12.5px] text-ink placeholder:text-ink-secondary focus:outline-none disabled:opacity-50";
@@ -113,7 +114,7 @@ export function AvatarImageGenerator({
       const url = provider === "custom" ? normalizeImageGenerationUrl(customUrl.trim()) : "";
       const model = customModel.trim();
       if (provider === "custom" && (model.length > 200 || ["\r", "\n", "\0"].some((character) => model.includes(character)))) {
-        throw new Error("Use a model ID of at most 200 characters without control characters");
+        throw new Error(uiText("ui.AvatarImageGenerator.910705fd04"));
       }
       if (imageKey.trim()) await saveCredential(imageKey.trim());
       if (provider === "custom") {
@@ -150,9 +151,7 @@ export function AvatarImageGenerator({
     <div className="space-y-2.5">
       {provider === "custom" && (
         <>
-          <label className="block text-[11.5px] text-ink-secondary">
-            Base URL
-            <input
+          <label className="block text-[11.5px] text-ink-secondary"> {uiText("apiInstances.url")} <input
               type="url"
               value={customUrl}
               disabled={busy}
@@ -162,24 +161,20 @@ export function AvatarImageGenerator({
               className={`${INPUT_CLASS} mt-1`}
             />
           </label>
-          <label className="block text-[11.5px] text-ink-secondary">
-            Image model
-            <input
+          <label className="block text-[11.5px] text-ink-secondary"> {uiText("ui.AvatarImageGenerator.c1329b9fbe")} <input
               value={customModel}
               disabled={busy}
               onChange={(event) => setModelDraft(event.target.value)}
-              placeholder="Model ID from your image provider"
+              placeholder={uiText("ui.AvatarImageGenerator.a1ad3d9907")}
               autoComplete="off"
               className={`${INPUT_CLASS} mt-1`}
             />
           </label>
-          <p className="text-[11px] leading-relaxed text-ink-secondary">
-            OpenAI-compatible Images API. localhost refers to the OpenMausBot server, including when you open this page remotely.
-          </p>
+          <p className="text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.AvatarImageGenerator.65a86c817f")}</p>
         </>
       )}
       <label className="block text-[11.5px] text-ink-secondary">
-        {providerInfo.keyLabel}{provider === "custom" ? " (optional)" : ""}
+        {providerInfo.keyLabel}{provider === "custom" ? uiText("ui.AvatarImageGenerator.edbfc3dcbe") : ""}
         <input
           type="password"
           value={imageKey}
@@ -191,22 +186,20 @@ export function AvatarImageGenerator({
               void saveConnection();
             }
           }}
-          placeholder={keyConfigured ? "Saved key · paste to replace" : provider === "custom" ? "Leave blank for a keyless connection" : "Paste API key"}
+          placeholder={keyConfigured ? uiText("ui.AvatarImageGenerator.3fd11696b5") : provider === "custom" ? uiText("ui.AvatarImageGenerator.30754b8365") : uiText("ui.AvatarImageGenerator.8358f1f0a9")}
           autoComplete="off"
           className={`${INPUT_CLASS} mt-1`}
         />
       </label>
       {provider === "xai" && (
-        <p className="text-[11px] leading-relaxed text-ink-secondary">Shares the Grok API key in Settings. Changing or removing it also affects other Grok features.</p>
+        <p className="text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.AvatarImageGenerator.3ee013a3e4")}</p>
       )}
       {provider === "custom" && keyConfigured && (
-        <p className="text-[11px] leading-relaxed text-ink-secondary">The saved custom key will be used. Remove it for a keyless connection.</p>
+        <p className="text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.AvatarImageGenerator.720abbef0b")}</p>
       )}
       <div className="flex items-center justify-end gap-2">
         {keyConfigured && (
-          <button type="button" onClick={() => void removeKey()} disabled={busy} className="mr-auto rounded-md py-1.5 text-[11.5px] text-ink-secondary hover:text-danger disabled:opacity-50">
-            Remove saved key
-          </button>
+          <button type="button" onClick={() => void removeKey()} disabled={busy} className="mr-auto rounded-md py-1.5 text-[11.5px] text-ink-secondary hover:text-danger disabled:opacity-50">{uiText("ui.AvatarImageGenerator.946b51ef67")}</button>
         )}
         <button
           type="button"
@@ -215,7 +208,7 @@ export function AvatarImageGenerator({
           className={BUTTON_CLASS}
         >
           {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-          {provider === "custom" ? "Save connection" : "Save key"}
+          {provider === "custom" ? uiText("ui.AvatarImageGenerator.df24ef128a") : uiText("ui.AvatarImageGenerator.b6e0aef2a9")}
         </button>
       </div>
     </div>
@@ -224,24 +217,20 @@ export function AvatarImageGenerator({
   return (
     <div className="mt-5 border-t border-hairline/40 pt-4">
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
-        <Sparkles size={14} className="text-accent" /> Generate with AI
-      </div>
-      <label className="mt-3 block text-[11.5px] text-ink-secondary">
-        Image provider
-        <Select value={provider} onChange={(event) => void chooseProvider(event.target.value as AvatarImageProvider)} disabled={busy || !state.config} className="mt-1 w-full">
+        <Sparkles size={14} className="text-accent" />{uiText("ui.AvatarImageGenerator.0dbd840373")}</div>
+      <label className="mt-3 block text-[11.5px] text-ink-secondary"> {uiText("ui.AvatarImageGenerator.45b2ecbc11")} <Select value={provider} onChange={(event) => void chooseProvider(event.target.value as AvatarImageProvider)} disabled={busy || !state.config} className="mt-1 w-full">
           {Object.entries(PROVIDERS).map(([value, info]) => <option key={value} value={value}>{info.label}</option>)}
         </Select>
       </label>
       <p className="mt-1.5 text-[11px] leading-relaxed text-ink-secondary">
-        {provider === "openai" ? "GPT Image 2 · low-quality square draft. Billed to your OpenAI API account."
-          : provider === "xai" ? "Grok Imagine · API billing is separate from your Grok subscription."
-            : "Connect a local router or image provider."}
-        {" "}This connection is shared by all bot avatars.
-      </p>
+        {provider === "openai" ? uiText("ui.AvatarImageGenerator.290588644a")
+          : provider === "xai" ? uiText("ui.AvatarImageGenerator.f22e9bf267")
+            : uiText("ui.AvatarImageGenerator.23837c54f4")}
+        {" "}{uiText("ui.AvatarImageGenerator.c86b88619b")} </p>
 
       {configured ? (
         <details key={provider} className="mt-3 rounded-lg border border-hairline/40 px-3 py-2">
-          <summary className="cursor-pointer text-[11.5px] text-ink-secondary">Connection settings</summary>
+          <summary className="cursor-pointer text-[11.5px] text-ink-secondary">{uiText("ui.AvatarImageGenerator.b4ddb3c1ca")}</summary>
           <div className="mt-3">{connectionForm}</div>
         </details>
       ) : <div className="mt-3">{connectionForm}</div>}
@@ -251,8 +240,8 @@ export function AvatarImageGenerator({
         disabled={busy}
         onChange={(event) => setDirection(event.target.value.slice(0, 400))}
         maxLength={400}
-        placeholder={`Optional direction, e.g. “a calm navigator inspired by ${botLabel}”`}
-        aria-label="Avatar generation direction"
+        placeholder={uiText("ui.AvatarImageGenerator.b44d534913", { value1: String(botLabel) })}
+        aria-label={uiText("ui.AvatarImageGenerator.8390024003")}
         className={`${INPUT_CLASS} mt-3 min-h-[72px] resize-none`}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
@@ -269,10 +258,10 @@ export function AvatarImageGenerator({
           className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white hover:brightness-110 disabled:opacity-50"
         >
           {generating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-          {generating ? "Generating…" : "Generate avatar"}
+          {generating ? uiText("ui.AvatarImageGenerator.d20a4476a0") : uiText("ui.AvatarImageGenerator.ef312e379b")}
         </button>
       </div>
-      {unsaved && <p role="status" className="mt-2 text-[11px] text-ink-secondary">Save your connection changes before generating.</p>}
+      {unsaved && <p role="status" className="mt-2 text-[11px] text-ink-secondary">{uiText("ui.AvatarImageGenerator.3932693b62")}</p>}
       {error && <div role="alert" className="mt-3 text-[12px] text-danger">{error}</div>}
     </div>
   );

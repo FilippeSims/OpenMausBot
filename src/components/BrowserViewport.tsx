@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { t } from "@/lib/i18n";
 
@@ -112,8 +113,8 @@ export function BrowserViewport({ frame, width, height, driving, input: sendInpu
     return () => image.removeEventListener("wheel", wheel);
   }, [driving, input, frameWidth, frameHeight, src]);
   return <>
-    <img ref={screen} src={src} alt="Live bot browser" draggable={false} tabIndex={driving ? 0 : -1}
-      title={driving ? "Shift+Escape returns to the browser address bar." : undefined}
+    <img ref={screen} src={src} alt={uiText("ui.BrowserViewport.0e1becab8f")} draggable={false} tabIndex={driving ? 0 : -1}
+      title={driving ? uiText("ui.BrowserViewport.c8e8ec4031") : undefined}
       aria-description={driving ? t("browser.viewport.keysHint") : undefined}
       aria-keyshortcuts={driving ? "Shift+Escape" : undefined}
       className={`block h-full w-full object-contain select-none outline-none focus:ring-2 focus:ring-inset focus:ring-accent ${driving ? "cursor-default touch-none" : "cursor-not-allowed"}`}

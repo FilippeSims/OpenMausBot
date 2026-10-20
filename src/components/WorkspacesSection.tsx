@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
@@ -109,7 +110,7 @@ function NewWorkspaceForm({ domain, onCreated, disabled }: { domain: string; onC
         <label className="flex flex-col gap-1 text-[12px] text-ink-secondary">
           {t("workspaces.name")}
           <div className="flex items-center gap-1">
-            <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="acme" pattern="[a-z][a-z0-9-]{1,30}" required disabled={disabled || saving} aria-label={t("workspaces.name")} className={field} />
+            <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={uiText("ui.WorkspacesSection.822b33ad87")} pattern="[a-z][a-z0-9-]{1,30}" required disabled={disabled || saving} aria-label={t("workspaces.name")} className={field} />
             <span className="whitespace-nowrap text-[12px] text-ink-secondary">.{domain}</span>
           </div>
         </label>

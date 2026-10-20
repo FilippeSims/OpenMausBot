@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
@@ -9,13 +10,13 @@ import type { Message } from "@/state/store";
 const DETAIL_LIMIT = 280;
 
 const COPY = {
-  queued: { label: "Queued", tone: "text-ink-secondary" },
-  running: { label: "Running", tone: "text-accent" },
-  waiting: { label: "Waiting", tone: "text-warning" },
-  completed: { label: "Completed", tone: "text-ink-secondary" },
-  failed: { label: "Failed", tone: "text-danger" },
-  cancelled: { label: "Cancelled", tone: "text-ink-secondary" },
-  missed: { label: "Missed", tone: "text-danger" },
+  queued: { get label() { return uiText("task.queued"); }, tone: "text-ink-secondary" },
+  running: { get label() { return uiText("toolDetail.running"); }, tone: "text-accent" },
+  waiting: { get label() { return uiText("chat.callRecord.waiting"); }, tone: "text-warning" },
+  completed: { get label() { return uiText("toolDetail.completed"); }, tone: "text-ink-secondary" },
+  failed: { get label() { return uiText("toolDetail.failed"); }, tone: "text-danger" },
+  cancelled: { get label() { return uiText("approval.status.cancelled"); }, tone: "text-ink-secondary" },
+  missed: { get label() { return uiText("routines.status.missed"); }, tone: "text-danger" },
 } satisfies Record<
   RoutineRunCardData["status"],
   { label: string; tone: string }
@@ -23,11 +24,11 @@ const COPY = {
 
 const GOAL_COPY = {
   completed: COPY.completed,
-  "needs-input": { label: "Needs your input", tone: "text-warning" },
-  blocked: { label: "Blocked", tone: "text-danger" },
-  "limit-reached": { label: "Turn limit reached", tone: "text-warning" },
-  paused: { label: "Paused", tone: "text-warning" },
-  stopped: { label: "Stopped", tone: "text-ink-secondary" },
+  "needs-input": { get label() { return uiText("routines.goal.needs-input"); }, tone: "text-warning" },
+  blocked: { get label() { return uiText("routines.goal.blocked"); }, tone: "text-danger" },
+  "limit-reached": { get label() { return uiText("routines.goal.limit-reached"); }, tone: "text-warning" },
+  paused: { get label() { return uiText("vm.state.paused"); }, tone: "text-warning" },
+  stopped: { get label() { return uiText("chat.turnStopped"); }, tone: "text-ink-secondary" },
   failed: COPY.failed,
 } satisfies Record<
   NonNullable<RoutineRunCardData["goalStatus"]>,
@@ -68,18 +69,18 @@ export function RoutineRunCard({
   const copy = run.goalStatus
     ? GOAL_COPY[run.goalStatus]
     : run.status === "queued" && run.deferredAt != null
-      ? { label: "Deferred: target busy", tone: "text-warning" }
+      ? { label: uiText("ui.RoutineRunCard.502ceddbc0"), tone: "text-warning" }
       : COPY[run.status];
   const detail = compactDetail(
     run.status === "failed" || run.status === "missed"
       ? (run.error ?? run.summary)
       : (run.summary ?? run.error),
   );
-  const actionLabel = run.goalStatus === "needs-input" ? "Review" : "Open run";
+  const actionLabel = run.goalStatus === "needs-input" ? "Review" : uiText("ui.RoutineRunCard.95fe7393c8");
 
   return (
     <section
-      aria-label={`${run.routineName} routine run: ${copy.label}`}
+      aria-label={uiText("ui.RoutineRunCard.e841deaf9c", { value1: String(run.routineName), value2: String(copy.label) })}
       className="w-full max-w-[680px] rounded-xl border border-hairline/45 bg-card px-4 py-3"
     >
       <div className="flex items-start gap-3">
@@ -104,7 +105,7 @@ export function RoutineRunCard({
           <button
             type="button"
             onClick={onOpen}
-            aria-label={`${actionLabel} for ${run.routineName}`}
+            aria-label={uiText("ui.RoutineRunCard.0ceb816a3d", { value1: String(actionLabel), value2: String(run.routineName) })}
             className={cn(
               "flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
               run.goalStatus === "needs-input"

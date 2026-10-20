@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { ArrowUp, CalendarClock, Check, Folder, Plug } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
@@ -20,8 +21,8 @@ const REPLY_AT = SEND_AT + 650;
 const STEP_AT = REPLY_AT + 350;
 const STEP_GAP = 420;
 const APPS = [
-  { slug: "discord", label: "Discord", domain: "discord.com" },
-  { slug: "linear", label: "Linear", domain: "linear.app" },
+  { slug: "discord", get label() { return uiText("ui.Setup.053bc65874"); }, domain: "discord.com" },
+  { slug: "linear", get label() { return uiText("ui.Setup.e6950b45d2"); }, domain: "linear.app" },
 ];
 
 type Phase = "compose" | "sent" | "reply" | "configured";
@@ -169,9 +170,7 @@ export function Setup({ playing, onCue, onEnded, label }: SceneProps) {
                 />
               </div>
               {replied ? (
-                <div className="animate-spot-in origin-left rounded-2xl rounded-tl-md bg-card px-3 py-2 text-[12.5px] text-ink">
-                  Got it. Setting myself up.
-                </div>
+                <div className="animate-spot-in origin-left rounded-2xl rounded-tl-md bg-card px-3 py-2 text-[12.5px] text-ink">{uiText("ui.Setup.69f7cc3d8a")}</div>
               ) : (
                 <div className="animate-spot-in inline-flex origin-left items-center gap-1 rounded-2xl rounded-tl-md bg-card px-3 py-2.5">
                   {[0, 1, 2].map((i) => (
@@ -189,7 +188,7 @@ export function Setup({ playing, onCue, onEnded, label }: SceneProps) {
           <div className="mt-1 flex items-end gap-2 rounded-2xl border border-hairline/50 bg-card px-3 py-2.5 shadow-lg shadow-black/20">
             <div className="min-h-[34px] min-w-0 flex-1">
               {sent ? (
-                <span className="text-[12.5px] text-ink-secondary">Message</span>
+                <span className="text-[12.5px] text-ink-secondary">{uiText("ui.Setup.2f77668a9d")}</span>
               ) : (
                 <Typed text={TYPED.slice(0, typed)} caret />
               )}
@@ -216,19 +215,15 @@ export function Setup({ playing, onCue, onEnded, label }: SceneProps) {
             <MausAvatar color="green" state={configured ? "proud" : sent ? "working" : "idle"} size={34} animated={!still} trackPointer={false} />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold text-ink">
-                <Reveal shown={steps >= 1} bar="w-24">
-                  Bug triager
-                </Reveal>
+                <Reveal shown={steps >= 1} bar="w-24">{uiText("ui.Setup.a015989b5f")}</Reveal>
               </div>
               <div className="mt-1 text-[10.5px] text-ink-secondary">
-                {configured ? "Ready" : sent ? "Setting up…" : "New bot"}
+                {configured ? uiText("model.ready") : sent ? uiText("ui.Setup.c894bba9c3") : uiText("ui.Setup.b88293aa25")}
               </div>
             </div>
           </div>
-          <Row icon={CalendarClock} label="When" done={steps >= 2}>
-            Every 15 min
-          </Row>
-          <Row icon={Plug} label="Apps" done={steps >= 3} bar="w-14">
+          <Row icon={CalendarClock} label={uiText("routines.editor.when")} done={steps >= 2}>{uiText("ui.Setup.1dad488be7")}</Row>
+          <Row icon={Plug} label={uiText("botSettings.simple.apps")} done={steps >= 3} bar="w-14">
             <span className="inline-flex items-center gap-3">
               {APPS.map((app) => (
                 <span key={app.slug} className="inline-flex items-center gap-1">
@@ -238,8 +233,8 @@ export function Setup({ playing, onCue, onEnded, label }: SceneProps) {
               ))}
             </span>
           </Row>
-          <Row icon={Folder} label="Folder" done={steps >= 4} bar="w-16">
-            <code className="font-mono text-[11.5px]">~/bug-triage</code>
+          <Row icon={Folder} label={uiText("ui.Setup.74ccd43303")} done={steps >= 4} bar="w-16">
+            <code className="font-mono text-[11.5px]">{uiText("ui.Setup.c221fb6d97")}</code>
           </Row>
         </div>
       </div>

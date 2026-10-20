@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Keyboard, Search, X } from "lucide-react";
 
@@ -74,18 +75,14 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               <Keyboard size={18} />
             </span>
             <div>
-              <h2 id="shortcuts-dialog-title" className="text-[16px] font-semibold text-ink">
-                Keyboard Shortcuts
-              </h2>
-              <p className="text-[12px] text-ink-secondary">
-                Quick commands and navigation
-              </p>
+              <h2 id="shortcuts-dialog-title" className="text-[16px] font-semibold text-ink">{uiText("ui.KeyboardShortcutsModal.59cdaa26dd")}</h2>
+              <p className="text-[12px] text-ink-secondary">{uiText("ui.KeyboardShortcutsModal.5e1ba0d9d3")}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close keyboard shortcuts"
+            aria-label={uiText("ui.KeyboardShortcutsModal.6a992e67dc")}
             className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised hover:text-ink"
           >
             <X size={18} />
@@ -99,8 +96,8 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search shortcuts…"
-              aria-label="Search shortcuts"
+              placeholder={uiText("ui.KeyboardShortcutsModal.009bf8458f")}
+              aria-label={uiText("ui.KeyboardShortcutsModal.1ed2647cd6")}
               className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
             />
           </div>
@@ -108,8 +105,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
 
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
           {groups.length === 0 ? (
-            <div className="py-8 text-center text-[13px] text-ink-secondary">
-              No shortcuts found for “{query}”
+            <div className="py-8 text-center text-[13px] text-ink-secondary"> {uiText("ui.KeyboardShortcutsModal.07f2f7cc97")}{query}”
             </div>
           ) : (
             groups.map((group) => (
@@ -128,16 +124,12 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
         </div>
 
         <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-[11.5px] text-ink-secondary">
-          <span>
-            Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[10.5px]">?</kbd> when not typing to open
-          </span>
+          <span>{uiText("ui.KeyboardShortcutsModal.9ed1273e9b")} <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[10.5px]">?</kbd> {uiText("ui.KeyboardShortcutsModal.667f4e2e20")}</span>
           <button
             type="button"
             onClick={onClose}
             className="ui-button ui-button-md"
-          >
-            Done
-          </button>
+          >{uiText("cloudMove.ok")}</button>
         </div>
       </div>
     </dialog>

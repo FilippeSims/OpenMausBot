@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { boatCapableEngine } from "@/lib/remote-desktop";
 import {
   useCallback,
@@ -83,7 +85,7 @@ import {
   toLocalTimeInput,
   type RoutineCalendarItem,
 } from "@/lib/routine-calendar";
-import { DAY_NAMES, durationLabel, intervalLabel, niceDate, niceTime, scheduleLabel } from "@/lib/schedule-label";
+import { dayNames, durationLabel, intervalLabel, niceDate, niceTime, scheduleLabel } from "@/lib/schedule-label";
 import { Select } from "./Select";
 import { Switch } from "./SettingsPrimitives";
 import {
@@ -272,7 +274,7 @@ function AttachmentChips({
         <div key={attachment.id} className="flex max-w-[260px] items-center gap-2 rounded-lg border border-hairline/50 bg-inset px-2.5 py-2 text-[12px] text-ink">
           <FileText size={14} className="shrink-0 text-accent" />
           <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
-          {onRemove && <button type="button" onClick={() => onRemove(attachment.id)} className="rounded p-0.5 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={`Remove ${attachment.name}`}><X size={12} /></button>}
+          {onRemove && <button type="button" onClick={() => onRemove(attachment.id)} className="rounded p-0.5 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={uiText("ui.RoutineCalendarPage.0ab4d0cee3", { value1: String(attachment.name) })}><X size={12} /></button>}
         </div>
       ))}
     </div>
@@ -299,7 +301,7 @@ function BotPicker({
       {!locked && bots.length > 5 && (
         <label className="mb-2 flex items-center gap-2 rounded-lg border border-transparent bg-panel px-2.5 py-2 text-ink-secondary focus-within:border-focus">
           <Search size={14} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a bot" className="min-w-0 flex-1 bg-transparent text-[12px] text-ink outline-none placeholder:text-ink-tertiary" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={uiText("ui.RoutineCalendarPage.4db9d1538b")} className="min-w-0 flex-1 bg-transparent text-[12px] text-ink outline-none placeholder:text-ink-tertiary" />
         </label>
       )}
       <div className="grid max-h-48 grid-cols-1 gap-1 overflow-y-auto sm:grid-cols-2">
@@ -530,7 +532,7 @@ export function EventEditor({
         const savedAt = Date.now();
         const intervalAnchorAt = intervalAnchorForSave(savedAt, intervalMinutes, existingIntervalSchedule);
         if (recurrence === "interval" && intervalEndsAt != null && intervalEndsAt < nextIntervalForSave(savedAt, intervalMinutes, existingIntervalSchedule)) {
-          throw new Error("Choose an end date after the first run.");
+          throw new Error(uiText("ui.RoutineCalendarPage.b7f629b423"));
         }
         const nextSchedule = isCronChoice(recurrence) ? cron?.schedule : makeRoutineSchedule(recurrence, at, weekdays, intervalMinutes, {
           anchorAt: intervalAnchorAt,
@@ -538,7 +540,7 @@ export function EventEditor({
           window: selectedIntervalWindow ?? null,
           endsAt: intervalEndsAt,
         });
-        if (!nextSchedule) throw new Error(cron?.error || "Choose a valid schedule.");
+        if (!nextSchedule) throw new Error(cron?.error || uiText("ui.RoutineCalendarPage.b89d807459"));
         const input: RoutineInput = {
           name,
           prompt: description,
@@ -562,7 +564,7 @@ export function EventEditor({
         });
         dispatch({ type: "routinePatched", routine: response.routine });
       } else {
-        if (recurrence === "interval" || isCronChoice(recurrence)) throw new Error("Choose a supported call schedule.");
+        if (recurrence === "interval" || isCronChoice(recurrence)) throw new Error(uiText("ui.RoutineCalendarPage.7270771c62"));
         const nextSchedule = makeCalendarSchedule(recurrence, at, weekdays);
         const input: CalendarCallInput = {
           name,
@@ -615,13 +617,13 @@ export function EventEditor({
 
   const kindSwitchControl = canSwitchKind && (
             <div className={cn(advanced && "ml-10", "inline-flex rounded-lg bg-inset p-1")}>
-              <button type="button" onClick={() => { setKind("routine"); setBotIds((ids) => ids.slice(0, 1)); }} className={cn("rounded-md px-4 py-1.5 text-[12.5px] font-medium", kind === "routine" ? "bg-raised text-ink shadow" : "text-ink-secondary")}>Routine</button>
-              <button type="button" onClick={() => { setKind("call"); if (recurrence === "interval" || isCronChoice(recurrence)) setRecurrence("none"); }} className={cn("rounded-md px-4 py-1.5 text-[12.5px] font-medium", kind === "call" ? "bg-raised text-ink shadow" : "text-ink-secondary")}>Call</button>
+              <button type="button" onClick={() => { setKind("routine"); setBotIds((ids) => ids.slice(0, 1)); }} className={cn("rounded-md px-4 py-1.5 text-[12.5px] font-medium", kind === "routine" ? "bg-raised text-ink shadow" : "text-ink-secondary")}>{uiText("usage.history.byRoutine")}</button>
+              <button type="button" onClick={() => { setKind("call"); if (recurrence === "interval" || isCronChoice(recurrence)) setRecurrence("none"); }} className={cn("rounded-md px-4 py-1.5 text-[12.5px] font-medium", kind === "call" ? "bg-raised text-ink shadow" : "text-ink-secondary")}>{uiText("ui.RoutineCalendarPage.d6e645b7d2")}</button>
             </div>
           );
   const routineTypeControl = kind === "routine" && !lockedBotId && (
             <div className={cn(advanced && "ml-10")}>
-              <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-ink-secondary">Routine type</div>
+              <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-ink-secondary">{uiText("ui.RoutineCalendarPage.be712455a0")}</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
@@ -629,7 +631,7 @@ export function EventEditor({
                   className={cn("flex items-start gap-3 rounded-xl border p-3 text-left transition", routineTarget === "bot" ? "border-accent/60 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised")}
                 >
                   <UserRoundPlus size={17} className={cn("mt-0.5 shrink-0", routineTarget === "bot" ? "text-accent" : "text-ink-secondary")} />
-                  <span><span className="block text-[12.5px] font-medium text-ink">Bot task</span><span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">One bot owns and completes each run.</span></span>
+                  <span><span className="block text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.309e9eb0c0")}</span><span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.f1bc303fbf")}</span></span>
                 </button>
                 <button
                   type="button"
@@ -637,21 +639,21 @@ export function EventEditor({
                   className={cn("flex items-start gap-3 rounded-xl border p-3 text-left transition", routineTarget === "room-goal" ? "border-accent/60 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised")}
                 >
                   <Target size={17} className={cn("mt-0.5 shrink-0", routineTarget === "room-goal" ? "text-accent" : "text-ink-secondary")} />
-                  <span><span className="block text-[12.5px] font-medium text-ink">Team goal</span><span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">A lead coordinates the group until the goal settles.</span></span>
+                  <span><span className="block text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.80d487a096")}</span><span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.a22bee375f")}</span></span>
                 </button>
               </div>
             </div>
           );
   const whenControls = recurrence !== "interval" && !isCronChoice(recurrence) && (
                 <div className="flex flex-wrap items-center gap-2">
-                  {kind === "routine" && recurrence === "none" && <span className="text-[12px] font-medium text-ink-secondary">Starts</span>}
-                  {kind === "routine" && recurrence === "weekly" && <span className="text-[12px] font-medium text-ink-secondary">On</span>}
+                  {kind === "routine" && recurrence === "none" && <span className="text-[12px] font-medium text-ink-secondary">{uiText("ui.RoutineCalendarPage.96dbedeca7")}</span>}
+                  {kind === "routine" && recurrence === "weekly" && <span className="text-[12px] font-medium text-ink-secondary">{uiText("bot.keepWarm.on")}</span>}
                   {(kind === "call" || recurrence === "none" || recurrence === "weekly") && <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]" />}
                   <input type="time" step={CALENDAR_SLOT_MINUTES * 60} value={startTime} onChange={(event) => setStartTime(event.target.value)} className="rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]" />
                   {kind === "call" && <>
-                    <span className="text-[12px] text-ink-secondary">to</span>
+                    <span className="text-[12px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.663ea1bfff")}</span>
                     <span className="rounded-lg border border-hairline/40 bg-inset/60 px-3 py-2 text-[13px] text-ink">{niceTime(endAt)}</span>
-                    <Select aria-label="Call duration" value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))}>
+                    <Select aria-label={uiText("ui.RoutineCalendarPage.851fbb163b")} value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))}>
                       {EVENT_DURATION_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{durationLabel(minutes)}</option>)}
                     </Select>
                   </>}
@@ -660,14 +662,14 @@ export function EventEditor({
   const repeatSelect = (
               <div className="flex flex-wrap items-center gap-2">
                 <Repeat2 size={14} className="text-ink-secondary" />
-                <Select aria-label="Repeat" value={recurrence} onChange={(event) => selectRecurrence(event.target.value as RecurrenceChoice)}>
-                  <option value="none">Does not repeat</option>
-                  {kind === "routine" && <option value="interval">Every X minutes</option>}
-                  <option value="daily">Daily</option>
-                  <option value="weekdays">Every weekday (Monday to Friday)</option>
-                  <option value="weekly">Weekly on {DAY_NAMES[new Date(at).getDay()]}</option>
-                  <option value="custom">Selected weekdays</option>
-                  {kind === "routine" && <><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="cron">Custom cron (advanced)</option></>}
+                <Select aria-label={uiText("routines.editor.repeat")} value={recurrence} onChange={(event) => selectRecurrence(event.target.value as RecurrenceChoice)}>
+                  <option value="none">{uiText("ui.RoutineCalendarPage.621d129ab8")}</option>
+                  {kind === "routine" && <option value="interval">{uiText("ui.RoutineCalendarPage.3c29738dcf")}</option>}
+                  <option value="daily">{uiText("ui.RoutineCalendarPage.b36c2611dc")}</option>
+                  <option value="weekdays">{uiText("ui.RoutineCalendarPage.e13e295b51")}</option>
+                  <option value="weekly">{uiText("ui.RoutineCalendarPage.4c587682b4")} {dayNames()[new Date(at).getDay()]}</option>
+                  <option value="custom">{uiText("ui.RoutineCalendarPage.cd3d44d9cf")}</option>
+                  {kind === "routine" && <><option value="monthly">{uiText("ui.RoutineCalendarPage.9b11f6b707")}</option><option value="yearly">{uiText("ui.RoutineCalendarPage.6e69b59ed3")}</option><option value="cron">{uiText("ui.RoutineCalendarPage.a3a7df406a")}</option></>}
                 </Select>
               </div>
   );
@@ -677,20 +679,20 @@ export function EventEditor({
               {isCronChoice(recurrence) && kind === "routine" && cron && <CronScheduleFields choice={recurrence} value={cronDraft} onChange={(draft) => { setCronDraft(draft); setCronChanged(true); }} runs={cron.runs} error={cron.error} />}
               {recurrence === "custom" && (
                 <div className="flex flex-wrap gap-1.5">
-                  {DAY_NAMES.map((label, day) => <button key={label} type="button" onClick={() => setWeekdays((current) => current.includes(day) ? (current.length === 1 ? current : current.filter((value) => value !== day)) : [...current, day].sort())} className={cn("size-8 rounded-full text-[10px] font-semibold", weekdays.includes(day) ? "bg-accent text-white" : "bg-inset text-ink-secondary hover:bg-raised hover:text-ink")}>{label[0]}</button>)}
+                  {dayNames().map((label, day) => <button key={label} type="button" onClick={() => setWeekdays((current) => current.includes(day) ? (current.length === 1 ? current : current.filter((value) => value !== day)) : [...current, day].sort())} className={cn("size-8 rounded-full text-[10px] font-semibold", weekdays.includes(day) ? "bg-accent text-white" : "bg-inset text-ink-secondary hover:bg-raised hover:text-ink")}>{label[0]}</button>)}
                 </div>
               )}
               {recurrence === "interval" && kind === "routine" && (
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-ink">
-                    <span className="font-medium">Runs every</span>
+                    <span className="font-medium">{uiText("ui.RoutineCalendarPage.49ee810990")}</span>
                     <Select
                       value={INTERVAL_PRESETS.includes(intervalMinutes) ? String(intervalMinutes) : "custom"}
                       onChange={(event) => setIntervalMinutes(event.target.value === "custom" ? 0 : Number(event.target.value))}
-                      aria-label="How often this routine runs"
+                      aria-label={uiText("ui.RoutineCalendarPage.fdcc1a1c54")}
                     >
                       {INTERVAL_PRESETS.map((minutes) => <option key={minutes} value={minutes}>{minutes}</option>)}
-                      <option value="custom">Custom…</option>
+                      <option value="custom">{uiText("room.turnLimit.custom")}</option>
                     </Select>
                     {!INTERVAL_PRESETS.includes(intervalMinutes) && (
                       <input
@@ -700,79 +702,79 @@ export function EventEditor({
                         step={1}
                         value={intervalMinutes || ""}
                         onChange={(event) => setIntervalMinutes(Number(event.target.value))}
-                        aria-label="Custom interval in minutes"
+                        aria-label={uiText("ui.RoutineCalendarPage.d2c44e0eb6")}
                         aria-invalid={intervalInvalid}
                         aria-describedby={intervalInvalid ? "routine-interval-error" : "routine-interval-help"}
                         autoFocus
                         className={cn("w-20 rounded-lg border bg-inset px-3 py-2 text-[12.5px] tabular-nums text-ink outline-none focus:border-accent", intervalInvalid ? "border-danger/70" : "border-hairline/50")}
                       />
                     )}
-                    <span>minutes</span>
+                    <span>{uiText("settings.roomTurns.minutes")}</span>
                   </div>
 
                   <div className="grid items-center gap-2 text-[12.5px] text-ink sm:flex sm:flex-wrap">
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                      <span className="font-medium">On</span>
+                      <span className="font-medium">{uiText("bot.keepWarm.on")}</span>
                       <Select
                         value={intervalDays}
                         onChange={(event) => selectIntervalDays(event.target.value as IntervalDayChoice)}
-                        aria-label="Days this interval runs"
+                        aria-label={uiText("ui.RoutineCalendarPage.f1ff0427d9")}
                         aria-invalid={intervalDaysInvalid}
                         aria-describedby={intervalDaysInvalid ? "routine-interval-days-error" : undefined}
                       >
-                        <option value="every-day">Every day</option>
-                        <option value="weekdays">Weekdays</option>
-                        <option value="custom">Custom…</option>
+                        <option value="every-day">{uiText("computer.routine.everyDay")}</option>
+                        <option value="weekdays">{uiText("computer.routine.weekdays")}</option>
+                        <option value="custom">{uiText("room.turnLimit.custom")}</option>
                       </Select>
                     </span>
                     <span aria-hidden="true" className="hidden text-ink-secondary sm:inline">·</span>
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                      <span className="font-medium">During</span>
+                      <span className="font-medium">{uiText("ui.RoutineCalendarPage.6259eafc62")}</span>
                       <Select
                         value={intervalWindow}
                         onChange={(event) => setIntervalWindow(event.target.value as IntervalWindowChoice)}
-                        aria-label="Hours this interval runs"
+                        aria-label={uiText("ui.RoutineCalendarPage.fb6d16a09b")}
                         aria-invalid={intervalWindowInvalid}
                         aria-describedby={intervalWindowInvalid ? "routine-interval-window-error" : undefined}
                       >
-                        <option value="all-day">All day</option>
-                        <option value="custom">Custom hours…</option>
+                        <option value="all-day">{uiText("ui.RoutineCalendarPage.34233e542b")}</option>
+                        <option value="custom">{uiText("ui.RoutineCalendarPage.234e32e017")}</option>
                       </Select>
                     </span>
                     <span aria-hidden="true" className="hidden text-ink-secondary sm:inline">·</span>
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                      <span className="font-medium">Ends</span>
+                      <span className="font-medium">{uiText("ui.RoutineCalendarPage.e98982c9f2")}</span>
                       <Select
                         value={intervalEnd}
                         onChange={(event) => setIntervalEnd(event.target.value as IntervalEndChoice)}
-                        aria-label="When this interval ends"
+                        aria-label={uiText("ui.RoutineCalendarPage.08f1da6837")}
                         aria-invalid={intervalEndInvalid}
                         aria-describedby={intervalEndInvalid ? "routine-interval-end-error" : undefined}
                       >
-                        <option value="never">Never</option>
-                        <option value="on-date">On a date…</option>
+                        <option value="never">{uiText("people.never")}</option>
+                        <option value="on-date">{uiText("ui.RoutineCalendarPage.8fb10dbad2")}</option>
                       </Select>
                     </span>
                   </div>
 
                   {intervalDays === "custom" && (
                     <div>
-                      <div className="mb-2 text-[11px] font-medium text-ink-secondary">Choose the days</div>
+                      <div className="mb-2 text-[11px] font-medium text-ink-secondary">{uiText("ui.RoutineCalendarPage.004c93938f")}</div>
                       <div
                         role="group"
-                        aria-label="Custom interval days"
+                        aria-label={uiText("ui.RoutineCalendarPage.8bdcf31a5e")}
                         aria-invalid={intervalDaysInvalid}
                         aria-describedby={intervalDaysInvalid ? "routine-interval-days-error" : undefined}
                         className="flex flex-wrap gap-1.5"
                       >
-                        {DAY_NAMES.map((label, day) => (
+                        {dayNames().map((label, day) => (
                           <button
                             key={label}
                             type="button"
                             onClick={() => setIntervalWeekdays((current) => current.includes(day)
                               ? current.filter((value) => value !== day)
                               : [...current, day].sort())}
-                            aria-label={`${label}, ${intervalWeekdays.includes(day) ? "selected" : "not selected"}`}
+                            aria-label={uiText("ui.RoutineCalendarPage.c0c13bfc62", { value1: String(label), value2: String(intervalWeekdays.includes(day) ? "selected" : uiText("ui.RoutineCalendarPage.5ad0f89769")) })}
                             aria-pressed={intervalWeekdays.includes(day)}
                             className={cn("size-8 rounded-full text-[10px] font-semibold", intervalWeekdays.includes(day) ? "bg-accent text-white" : "bg-inset text-ink-secondary hover:bg-raised hover:text-ink")}
                           >
@@ -785,31 +787,31 @@ export function EventEditor({
 
                   {intervalWindow === "custom" && (
                     <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink">
-                      <span className="font-medium text-ink-secondary">Run between</span>
-                      <input aria-label="Interval window start" aria-invalid={intervalWindowInvalid} aria-describedby={intervalWindowInvalid ? "routine-interval-window-error" : undefined} type="time" step={CALENDAR_SLOT_MINUTES * 60} value={intervalWindowStart} onChange={(event) => setIntervalWindowStart(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalWindowInvalid ? "border-danger/70" : "border-hairline/50")} />
-                      <span className="text-ink-secondary">and</span>
-                      <input aria-label="Interval window end" aria-invalid={intervalWindowInvalid} aria-describedby={intervalWindowInvalid ? "routine-interval-window-error" : undefined} type="time" step={CALENDAR_SLOT_MINUTES * 60} value={intervalWindowEnd} onChange={(event) => setIntervalWindowEnd(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalWindowInvalid ? "border-danger/70" : "border-hairline/50")} />
+                      <span className="font-medium text-ink-secondary">{uiText("ui.RoutineCalendarPage.831c504db6")}</span>
+                      <input aria-label={uiText("ui.RoutineCalendarPage.41fa41ccfd")} aria-invalid={intervalWindowInvalid} aria-describedby={intervalWindowInvalid ? "routine-interval-window-error" : undefined} type="time" step={CALENDAR_SLOT_MINUTES * 60} value={intervalWindowStart} onChange={(event) => setIntervalWindowStart(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalWindowInvalid ? "border-danger/70" : "border-hairline/50")} />
+                      <span className="text-ink-secondary">{uiText("ui.RoutineCalendarPage.6201111b83")}</span>
+                      <input aria-label={uiText("ui.RoutineCalendarPage.42a3c67b75")} aria-invalid={intervalWindowInvalid} aria-describedby={intervalWindowInvalid ? "routine-interval-window-error" : undefined} type="time" step={CALENDAR_SLOT_MINUTES * 60} value={intervalWindowEnd} onChange={(event) => setIntervalWindowEnd(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalWindowInvalid ? "border-danger/70" : "border-hairline/50")} />
                     </div>
                   )}
 
                   {intervalEnd === "on-date" && (
                     <label className="flex flex-wrap items-center gap-2 text-[12px] text-ink">
-                      <span className="font-medium text-ink-secondary">Stop scheduling after</span>
-                      <input aria-label="Interval end date" aria-invalid={intervalEndInvalid} aria-describedby={intervalEndInvalid ? "routine-interval-end-error" : undefined} type="date" min={toLocalDateInput(intervalEndMinimumAt)} value={intervalEndDate} onChange={(event) => setIntervalEndDate(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalEndInvalid ? "border-danger/70" : "border-hairline/50")} />
+                      <span className="font-medium text-ink-secondary">{uiText("ui.RoutineCalendarPage.3024b35f7b")}</span>
+                      <input aria-label={uiText("ui.RoutineCalendarPage.9507d8054f")} aria-invalid={intervalEndInvalid} aria-describedby={intervalEndInvalid ? "routine-interval-end-error" : undefined} type="date" min={toLocalDateInput(intervalEndMinimumAt)} value={intervalEndDate} onChange={(event) => setIntervalEndDate(event.target.value)} className={cn("rounded-lg border bg-inset px-3 py-2 text-[13px] text-ink outline-none focus:border-accent [color-scheme:dark]", intervalEndInvalid ? "border-danger/70" : "border-hairline/50")} />
                     </label>
                   )}
 
                   {intervalInvalid && (
-                    <div id="routine-interval-error" className="text-[11px] text-danger">Choose a whole number from 5 to 1,440 minutes.</div>
+                    <div id="routine-interval-error" className="text-[11px] text-danger">{uiText("ui.RoutineCalendarPage.689a1a7c9b")}</div>
                   )}
                   {intervalDaysInvalid && (
-                    <div id="routine-interval-days-error" className="text-[11px] text-danger">Choose at least one day.</div>
+                    <div id="routine-interval-days-error" className="text-[11px] text-danger">{uiText("ui.RoutineCalendarPage.56f423871f")}</div>
                   )}
                   {intervalWindowInvalid && (
-                    <div id="routine-interval-window-error" className="text-[11px] text-danger">Choose a same-day window at least {intervalMinutes || 5} minutes long.</div>
+                    <div id="routine-interval-window-error" className="text-[11px] text-danger">{uiText("ui.RoutineCalendarPage.fc554dd749")} {intervalMinutes || 5} {uiText("ui.RoutineCalendarPage.34427595e2")}</div>
                   )}
                   {intervalEndInvalid && (
-                    <div id="routine-interval-end-error" className="text-[11px] text-danger">Choose an end date after the first run.</div>
+                    <div id="routine-interval-end-error" className="text-[11px] text-danger">{uiText("ui.RoutineCalendarPage.b7f629b423")}</div>
                   )}
                   <div id="routine-interval-help" className="text-[11px] leading-relaxed text-ink-secondary">{t(overlap === "queue" ? "routines.overlapQueueHelp" : "routines.overlapSkipHelp")}</div>
                 </div>
@@ -818,18 +820,17 @@ export function EventEditor({
   );
   const runLimitControls = kind === "routine" && (
                 <details className="rounded-xl border border-hairline/40 bg-inset/40 px-3 py-2.5">
-                  <summary className="cursor-pointer select-none text-[11.5px] font-medium text-ink-secondary hover:text-ink">
-                    Advanced · {timeoutMinutes == null ? "no run limit" : `${durationLabel(timeoutMinutes)} run limit`}
+                  <summary className="cursor-pointer select-none text-[11.5px] font-medium text-ink-secondary hover:text-ink"> {uiText("ui.RoutineCalendarPage.cc818385af")} {timeoutMinutes == null ? uiText("ui.RoutineCalendarPage.6648574a8a") : uiText("ui.RoutineCalendarPage.2a3ff7c8f9", { value1: String(durationLabel(timeoutMinutes)) })}
                   </summary>
                   <div className="mt-3 border-t border-hairline/35 pt-3">
                     <label className="flex flex-wrap items-center gap-2 text-[12px] text-ink">
-                      <span>Stop if still running after</span>
-                      <Select aria-label="Routine safety limit" value={timeoutMinutes ?? ""} onChange={(event) => setTimeoutMinutes(event.target.value ? Number(event.target.value) : null)}>
-                        <option value="">No limit</option>
+                      <span>{uiText("ui.RoutineCalendarPage.164bf53b5b")}</span>
+                      <Select aria-label={uiText("ui.RoutineCalendarPage.8600999a5a")} value={timeoutMinutes ?? ""} onChange={(event) => setTimeoutMinutes(event.target.value ? Number(event.target.value) : null)}>
+                        <option value="">{uiText("ui.RoutineCalendarPage.f7fcff0d8f")}</option>
                         {EVENT_DURATION_OPTIONS.map((minutes) => <option key={minutes} value={minutes}>{durationLabel(minutes)}</option>)}
                       </Select>
                     </label>
-                    <div className="mt-1.5 text-[10.5px] leading-relaxed text-ink-secondary">Optional. The clock starts when work actually begins and does not control how often the routine starts.</div>
+                    <div className="mt-1.5 text-[10.5px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.7df3faafb5")}</div>
                     {recurrence !== "none" && <div className="mt-3">
                       <label className="flex flex-wrap items-center gap-2 text-[12px] text-ink">
                         <span>{t("routines.overlapLabel")}</span>
@@ -867,19 +868,19 @@ export function EventEditor({
             <Paperclip size={18} className="mt-2.5 shrink-0 text-ink-secondary" />
             {isRoomGoal ? (
               <div className="min-w-0 flex-1 rounded-xl border border-hairline/50 bg-inset px-3.5 py-3">
-                <div className="text-[12.5px] font-medium text-ink">Use the group’s shared context</div>
-                <div className="mt-1 text-[11px] leading-relaxed text-ink-secondary">Team goals cannot carry routine attachments. Put shared context in the goal instructions or the group instructions.</div>
+                <div className="text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.3a2b5924d3")}</div>
+                <div className="mt-1 text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.0acd3a4cb7")}</div>
               </div>
             ) : <div className="min-w-0 flex-1 space-y-2">
               <input ref={fileInput} type="file" multiple className="hidden" onChange={(event) => { void pickFiles(event.target.files); event.target.value = ""; }} />
-              <button type="button" onClick={() => fileInput.current?.click()} className="rounded-lg border border-hairline/50 px-3 py-2 text-[12.5px] font-medium text-ink hover:bg-raised">Add attachment</button>
+              <button type="button" onClick={() => fileInput.current?.click()} className="rounded-lg border border-hairline/50 px-3 py-2 text-[12.5px] font-medium text-ink hover:bg-raised">{uiText("ui.RoutineCalendarPage.ebda695e76")}</button>
               <AttachmentChips attachments={attachments} onRemove={(id) => setAttachments((current) => current.filter((attachment) => attachment.id !== id))} />
               <div className="text-[11px] leading-relaxed text-ink-secondary">
                 {kind === "routine"
-                  ? "Attachments are passed to each local routine run and excluded from shared team files."
+                  ? uiText("ui.RoutineCalendarPage.5ced08860f")
                   : selectedBots.length > 1
-                    ? "References will be shared in the group when the event starts."
-                    : "References stay with the event and are available when you join the group."}
+                    ? uiText("ui.RoutineCalendarPage.9ffba8cb0a")
+                    : uiText("ui.RoutineCalendarPage.bc64613f7c")}
               </div>
               {attachmentNotice && <div className="text-[11.5px] text-warning">{attachmentNotice}</div>}
             </div>}
@@ -891,11 +892,11 @@ export function EventEditor({
               <div className="min-w-0 flex-1">
                 {isRoomGoal ? (
                   <div className="rounded-xl border border-accent/35 bg-accent/[0.07] p-3">
-                    <div className="text-[12.5px] font-medium text-ink">{cloudHome ? "Runs on My Cloud" : "Runs on this computer"}</div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-ink-secondary">OpenMausBot keeps the group and its member hand-offs together for the full goal.</div>
+                    <div className="text-[12.5px] font-medium text-ink">{cloudHome ? uiText("ui.RoutineCalendarPage.52d204f4f9") : uiText("ui.RoutineCalendarPage.cb935775c4")}</div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.7b72d4484a")}</div>
                   </div>
                 ) : <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setRunOn("maus")} className={cn("rounded-xl border p-3 text-left", runOn === "maus" ? "border-accent/60 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised")}><div className="text-[12.5px] font-medium text-ink">Bot’s current setup</div><div className="mt-1 text-[11px] text-ink-secondary">Keeps its model and configured computer, including a self-hosted VPS.</div></button>
+                  <button type="button" onClick={() => setRunOn("maus")} className={cn("rounded-xl border p-3 text-left", runOn === "maus" ? "border-accent/60 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised")}><div className="text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.a1c7bd485d")}</div><div className="mt-1 text-[11px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.390549ea17")}</div></button>
                   <button type="button" disabled={!cloudReady || attachments.length > 0} onClick={() => setRunOn("cloud")} className={cn("rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-45", runOn === "cloud" ? "border-accent/60 bg-accent/10" : "border-hairline/50 bg-inset hover:bg-raised")}><div className="text-[12.5px] font-medium text-ink">{t("routines.runsOn.boat")}</div><div className="mt-1 text-[11px] text-ink-secondary">{t(cloudHome ? "routines.runsOn.boatHintCloudHome" : "routines.runsOn.boatHint")}</div></button>
                 </div>}
               </div>
@@ -903,7 +904,7 @@ export function EventEditor({
           );
   const headerTitle = !advanced && kind === "routine"
     ? t(existingRoutine ? "routines.editor.edit" : "routines.editor.new")
-    : existingRoutine || existingCall ? "Edit event" : "New event";
+    : existingRoutine || existingCall ? uiText("ui.RoutineCalendarPage.a5eca6bbab") : uiText("ui.RoutineCalendarPage.7cdc2e2760");
   const repeatChoices = [
     ["none", "routines.repeat.once"],
     ["daily", "routines.repeat.daily"],
@@ -913,10 +914,10 @@ export function EventEditor({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={existingRoutine || existingCall ? "Edit calendar event" : "Create calendar event"} tabIndex={-1} className="max-h-[94vh] w-full max-w-[760px] overflow-y-auto rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={existingRoutine || existingCall ? uiText("ui.RoutineCalendarPage.1e9e7c515c") : uiText("ui.RoutineCalendarPage.cb1e1075a3")} tabIndex={-1} className="max-h-[94vh] w-full max-w-[760px] overflow-y-auto rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-hairline/40 bg-panel/95 px-5 py-3.5 backdrop-blur">
           <div className="text-[15px] font-semibold text-ink">{headerTitle}</div>
-          <button onClick={onClose} className="rounded-full p-2 text-ink-secondary hover:bg-raised hover:text-ink" aria-label="Close"><X size={18} /></button>
+          <button onClick={onClose} className="rounded-full p-2 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={uiText("cloudAdd.close")}><X size={18} /></button>
         </div>
 
         <div className="space-y-5 px-5 py-5 sm:px-8">
@@ -926,7 +927,7 @@ export function EventEditor({
 
           <div className="flex items-start gap-4">
             <span className="mt-3 size-4 shrink-0 rounded bg-accent" />
-            <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder={kind === "routine" ? (advanced ? "Add title" : t("routines.editor.titlePlaceholder")) : "Add call title"} className="min-w-0 flex-1 border-b border-hairline/60 bg-transparent px-1 pb-2 text-[22px] font-medium text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
+            <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder={kind === "routine" ? (advanced ? uiText("ui.RoutineCalendarPage.680afd17b9") : t("routines.editor.titlePlaceholder")) : uiText("ui.RoutineCalendarPage.af2ab110c4")} className="min-w-0 flex-1 border-b border-hairline/60 bg-transparent px-1 pb-2 text-[22px] font-medium text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
           </div>
 
           {advanced ? (
@@ -970,42 +971,42 @@ export function EventEditor({
               {isRoomGoal ? (
                 <div className="space-y-3">
                   <div>
-                    <label htmlFor="routine-goal-room" className="mb-2 block text-[12.5px] font-medium text-ink">Choose a group</label>
+                    <label htmlFor="routine-goal-room" className="mb-2 block text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.005a6177be")}</label>
                     {rooms.length > 0 ? (
                       <Select id="routine-goal-room" value={groupId} onChange={(event) => selectRoom(event.target.value)} className="w-full">
-                        <option value="">Select a group</option>
+                        <option value="">{uiText("ui.RoutineCalendarPage.e1bf7d9ad3")}</option>
                         {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
                       </Select>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-hairline/60 bg-inset px-3.5 py-3 text-[11.5px] leading-relaxed text-ink-secondary">Create a group from the sidebar first, then come back to schedule its goal.</div>
+                      <div className="rounded-xl border border-dashed border-hairline/60 bg-inset px-3.5 py-3 text-[11.5px] leading-relaxed text-ink-secondary">{uiText("ui.RoutineCalendarPage.528b23052a")}</div>
                     )}
                   </div>
                   {selectedRoom && (
                     <div>
-                      <div className="mb-2 text-[12.5px] font-medium text-ink">Choose the lead</div>
+                      <div className="mb-2 text-[12.5px] font-medium text-ink">{uiText("ui.RoutineCalendarPage.6c638429ce")}</div>
                       {roomMembers.length > 0 ? (
                         <>
                           <BotPicker bots={roomMembers} selected={botIds} multiple={false} onChange={selectBots} />
-                          <div className="mt-2 text-[11.5px] text-ink-secondary">The lead coordinates {selectedRoom.name} and assigns work to its active members.</div>
+                          <div className="mt-2 text-[11.5px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.aeec0f4c84")} {selectedRoom.name} {uiText("ui.RoutineCalendarPage.f584687466")}</div>
                         </>
                       ) : (
-                        <div className="rounded-xl border border-warning/30 bg-warning/10 px-3.5 py-3 text-[11.5px] text-warning">This group has no active members. Add or restore a bot before scheduling the goal.</div>
+                        <div className="rounded-xl border border-warning/30 bg-warning/10 px-3.5 py-3 text-[11.5px] text-warning">{uiText("ui.RoutineCalendarPage.ce2a2d6410")}</div>
                       )}
                     </div>
                   )}
                 </div>
               ) : (
                 <>
-                  <div className="mb-2 text-[12.5px] font-medium text-ink">{kind === "routine" ? (advanced ? "Assign a bot" : t("routines.editor.who")) : "Add guests"}</div>
+                  <div className="mb-2 text-[12.5px] font-medium text-ink">{kind === "routine" ? (advanced ? uiText("ui.RoutineCalendarPage.b71af6ed12") : t("routines.editor.who")) : uiText("ui.RoutineCalendarPage.ef33054fab")}</div>
                   {bots.length > 0 ? (
                 <>
                   <BotPicker bots={bots} selected={botIds} multiple={kind === "call"} locked={Boolean(lockedBotId)} onChange={selectBots} />
-                  <div className="mt-2 text-[11.5px] text-ink-secondary">{kind === "routine" ? "This bot owns each scheduled run." : `${selectedBots.length || "No"} bot${selectedBots.length === 1 ? "" : "s"} invited to the call.`}</div>
+                  <div className="mt-2 text-[11.5px] text-ink-secondary">{kind === "routine" ? uiText("ui.RoutineCalendarPage.57c6c03731") : uiText("ui.RoutineCalendarPage.1c9e335cf8", { value1: String(selectedBots.length || "No"), value2: String(selectedBots.length === 1 ? "" : "s") })}</div>
                 </>
               ) : (
                 <button type="button" onClick={() => { dispatch({ type: "toggleNewBot", open: true }); onClose(); }} className="w-full rounded-xl border border-dashed border-accent/45 bg-accent/[0.06] px-4 py-4 text-left hover:bg-accent/10">
-                  <div className="text-[12.5px] font-medium text-accent">Create your first bot</div>
-                  <div className="mt-1 text-[11.5px] text-ink-secondary">A calendar event needs at least one bot.</div>
+                  <div className="text-[12.5px] font-medium text-accent">{uiText("ui.RoutineCalendarPage.326bf8b5d9")}</div>
+                  <div className="mt-1 text-[11.5px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.faf354d266")}</div>
                 </button>
                   )}
                 </>
@@ -1016,7 +1017,7 @@ export function EventEditor({
           {advanced && resultsControl}
           <div className="flex items-start gap-4">
             <FileText size={18} className="mt-2.5 shrink-0 text-ink-secondary" />
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} placeholder={isRoomGoal ? "What should the team accomplish?" : kind === "routine" ? (advanced ? "Add instructions for the bot" : t("routines.editor.instructionsPlaceholder")) : "Add description or agenda"} className="min-w-0 flex-1 resize-y rounded-xl border border-hairline/50 bg-inset px-3.5 py-3 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
+            <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} placeholder={isRoomGoal ? uiText("ui.RoutineCalendarPage.77f91d8ea2") : kind === "routine" ? (advanced ? uiText("ui.RoutineCalendarPage.589727e0aa") : t("routines.editor.instructionsPlaceholder")) : uiText("ui.RoutineCalendarPage.ad91a4b4bb")} className="min-w-0 flex-1 resize-y rounded-xl border border-hairline/50 bg-inset px-3.5 py-3 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
           </div>
           {continuityControl}
 
@@ -1059,8 +1060,8 @@ export function EventEditor({
 
 
         <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-hairline/40 bg-panel/95 px-5 py-3.5 backdrop-blur">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-[12.5px] text-ink-secondary hover:bg-raised hover:text-ink">Cancel</button>
-          <button onClick={save} disabled={saving || attachmentPending || !valid} className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-[12.5px] font-semibold text-white hover:brightness-110 disabled:opacity-40">{(saving || attachmentPending) && <Loader2 size={14} className="animate-spin" />}{attachmentPending ? "Attaching…" : existingRoutine || existingCall ? "Save" : kind === "call" ? "Schedule call" : isRoomGoal ? "Schedule team goal" : "Schedule routine"}</button>
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-[12.5px] text-ink-secondary hover:bg-raised hover:text-ink">{uiText("cloudAdd.cancel")}</button>
+          <button onClick={save} disabled={saving || attachmentPending || !valid} className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-[12.5px] font-semibold text-white hover:brightness-110 disabled:opacity-40">{(saving || attachmentPending) && <Loader2 size={14} className="animate-spin" />}{attachmentPending ? uiText("ui.RoutineCalendarPage.513d9a0a73") : existingRoutine || existingCall ? uiText("common.save") : kind === "call" ? uiText("ui.RoutineCalendarPage.ccd57f2bc0") : isRoomGoal ? uiText("ui.RoutineCalendarPage.44431b2d56") : uiText("ui.RoutineCalendarPage.dca4beef3a")}</button>
         </div>
       </div>
     </div>
@@ -1167,33 +1168,33 @@ function QuickComposer({
 
   const valid = Boolean(name.trim() && botIds.length && (kind === "call" || description.trim()));
   return (
-    <div ref={dialogRef} role="dialog" aria-label="Quick create" style={dialogPosition ?? undefined} className={cn("fixed z-50 max-h-[calc(100vh-24px)] w-[min(430px,calc(100vw-24px))] overflow-y-auto rounded-2xl border border-hairline/60 bg-panel shadow-2xl", !dialogPosition && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2")}>
+    <div ref={dialogRef} role="dialog" aria-label={uiText("ui.RoutineCalendarPage.366fd6d84d")} style={dialogPosition ?? undefined} className={cn("fixed z-50 max-h-[calc(100vh-24px)] w-[min(430px,calc(100vw-24px))] overflow-y-auto rounded-2xl border border-hairline/60 bg-panel shadow-2xl", !dialogPosition && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2")}>
       <div className="flex items-center justify-between bg-raised/70 px-4 py-2.5">
-        <div className="text-[12px] font-medium text-ink-secondary">New calendar event</div>
-        <button onClick={onClose} className="rounded-full p-1.5 text-ink-secondary hover:bg-inset hover:text-ink" aria-label="Close"><X size={16} /></button>
+        <div className="text-[12px] font-medium text-ink-secondary">{uiText("ui.RoutineCalendarPage.163095cc38")}</div>
+        <button onClick={onClose} className="rounded-full p-1.5 text-ink-secondary hover:bg-inset hover:text-ink" aria-label={uiText("cloudAdd.close")}><X size={16} /></button>
       </div>
       <div className="space-y-3 p-4">
-        <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="Add title" onKeyDown={(event) => { if (event.key === "Enter" && valid) void save(); }} className="w-full border-b border-hairline/60 bg-transparent pb-2 text-[18px] font-medium text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
+        <input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder={uiText("ui.RoutineCalendarPage.680afd17b9")} onKeyDown={(event) => { if (event.key === "Enter" && valid) void save(); }} className="w-full border-b border-hairline/60 bg-transparent pb-2 text-[18px] font-medium text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
         {!routinesOnly && (
           <div className="flex items-center gap-1 border-b border-hairline/35 pb-2">
-            <button type="button" onClick={() => { setKind("routine"); setBotIds((ids) => ids.slice(0, 1)); }} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "routine" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>Routine</button>
-            <button type="button" onClick={() => setKind("call")} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "call" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>Call</button>
+            <button type="button" onClick={() => { setKind("routine"); setBotIds((ids) => ids.slice(0, 1)); }} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "routine" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>{uiText("usage.history.byRoutine")}</button>
+            <button type="button" onClick={() => setKind("call")} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "call" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>{uiText("ui.RoutineCalendarPage.d6e645b7d2")}</button>
           </div>
         )}
         <div className="flex items-start gap-3 text-[12.5px] text-ink">
           <Clock3 size={16} className="mt-0.5 shrink-0 text-ink-secondary" />
-          <div><div>{niceDate(seed.at)}</div><div className="mt-0.5 text-ink-secondary">{niceTime(seed.at)}{kind === "call" ? ` – ${niceTime(seed.at + durationMinutes * 60_000)}` : ""}</div></div>
+          <div><div>{niceDate(seed.at)}</div><div className="mt-0.5 text-ink-secondary">{niceTime(seed.at)}{kind === "call" ? uiText("ui.RoutineCalendarPage.d3e67227c9", { value1: String(niceTime(seed.at + durationMinutes * 60_000)) }) : ""}</div></div>
         </div>
         <div className="flex items-start gap-3">
           <UserRoundPlus size={16} className="mt-2.5 shrink-0 text-ink-secondary" />
           {bots.length === 0 ? (
             <button type="button" onClick={() => { dispatch({ type: "toggleNewBot", open: true }); onClose(); }} className="min-w-0 flex-1 rounded-xl border border-dashed border-accent/45 bg-accent/[0.06] px-3 py-3 text-left hover:bg-accent/10">
-              <div className="text-[12px] font-medium text-accent">Create your first bot</div>
-              <div className="mt-0.5 text-[10.5px] text-ink-secondary">Then come back to schedule it.</div>
+              <div className="text-[12px] font-medium text-accent">{uiText("ui.RoutineCalendarPage.326bf8b5d9")}</div>
+              <div className="mt-0.5 text-[10.5px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.01c1f6e0b4")}</div>
             </button>
           ) : kind === "routine" ? (
             <Select value={botIds[0] ?? ""} onChange={(event) => selectBots([event.target.value])} className="flex-1">
-              <option value="">Assign a bot</option>
+              <option value="">{uiText("ui.RoutineCalendarPage.b71af6ed12")}</option>
               {bots.map((bot) => <option key={bot.id} value={bot.id}>{bot.name}</option>)}
             </Select>
           ) : (
@@ -1202,14 +1203,14 @@ function QuickComposer({
         </div>
         <div className="flex items-start gap-3">
           <FileText size={16} className="mt-2.5 shrink-0 text-ink-secondary" />
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} placeholder={kind === "routine" ? "What should the bot do?" : "Add a description (optional)"} className="min-w-0 flex-1 resize-none rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-[12.5px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} placeholder={kind === "routine" ? uiText("ui.RoutineCalendarPage.627df2a96f") : uiText("ui.RoutineCalendarPage.d9d468c50d")} className="min-w-0 flex-1 resize-none rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-[12.5px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
         </div>
         {kind === "routine" && <ResultsDestination bot={bots.find((bot) => bot.id === botIds[0])} value={resultsThreadId} onChange={(threadId) => setResultsThreadId(threadId ?? null)} />}
         {error && <div className="rounded-lg bg-danger/10 px-3 py-2 text-[11.5px] text-danger">{error}</div>}
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-hairline/40 px-4 py-3">
-        <button onClick={() => onMore({ ...seed, kind, botIds, name, description, durationMinutes, resultsThreadId })} title="Choose repeating schedules and other options" className="rounded-lg px-3 py-2 text-[12px] font-medium text-accent hover:bg-accent/10">More options</button>
-        <button onClick={save} disabled={!valid || working} className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-white hover:brightness-110 disabled:opacity-40">{working && <Loader2 size={13} className="animate-spin" />}Save</button>
+        <button onClick={() => onMore({ ...seed, kind, botIds, name, description, durationMinutes, resultsThreadId })} title={uiText("ui.RoutineCalendarPage.0c84c3f115")} className="rounded-lg px-3 py-2 text-[12px] font-medium text-accent hover:bg-accent/10">{uiText("routines.editor.more")}</button>
+        <button onClick={save} disabled={!valid || working} className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-white hover:brightness-110 disabled:opacity-40">{working && <Loader2 size={13} className="animate-spin" />}{uiText("common.save")}</button>
       </div>
     </div>
   );
@@ -1270,7 +1271,7 @@ function CalendarEventCard({
       document.removeEventListener("pointermove", move);
       document.removeEventListener("pointerup", up);
       if (next === item.durationMinutes) return;
-      if (recurring && !window.confirm("Resize this entire recurring series?")) {
+      if (recurring && !window.confirm(uiText("ui.RoutineCalendarPage.f130f9f9b0"))) {
         setPreviewDuration(item.durationMinutes);
         return;
       }
@@ -1285,7 +1286,7 @@ function CalendarEventCard({
       data-event-card
       type="button"
       draggable={canMove}
-      title={routine?.schedule.type === "cron" ? "Open this routine to edit its repeating schedule and time zone." : undefined}
+      title={routine?.schedule.type === "cron" ? uiText("ui.RoutineCalendarPage.f8e828efc8") : undefined}
       onDragStart={(event) => {
         if (!canMove) return event.preventDefault();
         event.dataTransfer.effectAllowed = "move";
@@ -1293,7 +1294,7 @@ function CalendarEventCard({
       }}
       onClick={(event) => { event.stopPropagation(); onOpen(); }}
       aria-pressed={selected}
-      aria-label={`${name}, ${niceTime(item.at)}${paused ? `, ${t("routines.pausedSchedule")}` : statusLabel ? `, ${statusLabel}` : ""}`}
+      aria-label={uiText("ui.RoutineCalendarPage.c73dad81c2", { value1: String(name), value2: String(niceTime(item.at)), value3: String(paused ? `, ${uiText("routines.pausedSchedule")}` : statusLabel ? `, ${statusLabel}` : "") })}
       className={cn(
         "group absolute z-10 overflow-hidden rounded-md border border-l-[3px] text-left transition hover:z-20 focus:z-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         previewDuration < 30 ? "px-1.5 py-0" : "px-1.5 py-1",
@@ -1317,11 +1318,11 @@ function CalendarEventCard({
         {previewDuration >= 30 && (isCall ? <Video size={compact ? 11 : 13} className="mt-0.5 shrink-0" /> : primary ? <BotAvatar bot={primary} state={status ? statusState(status) : paused ? "sleeping" : "idle"} size={compact ? 18 : 22} animated={status === "running" || status === "waiting"} /> : null)}
         <div className="min-w-0 flex-1">
           <div className={cn("truncate text-[11px] font-semibold", previewDuration < 30 ? "leading-none" : "leading-tight")}>{name}</div>
-          {previewDuration >= 30 && <div className="mt-0.5 truncate text-[9.5px] opacity-80">{niceTime(item.at)} · {paused ? t("routines.pausedSchedule") : intervalCadence ?? (isCall ? `${ownerBots.length} bot${ownerBots.length === 1 ? "" : "s"}` : isRoomGoal ? `Team goal · ${room?.name ?? "Group"}${statusLabel ? ` · ${statusLabel}` : ""}` : statusLabel ?? primary?.name)}</div>}
+          {previewDuration >= 30 && <div className="mt-0.5 truncate text-[9.5px] opacity-80">{niceTime(item.at)} · {paused ? t("routines.pausedSchedule") : intervalCadence ?? (isCall ? uiText("ui.RoutineCalendarPage.501dda6fe6", { value1: String(ownerBots.length), value2: String(ownerBots.length === 1 ? "" : "s") }) : isRoomGoal ? uiText("ui.RoutineCalendarPage.bba29812e8", { value1: String(room?.name ?? "Group"), value2: String(statusLabel ? ` · ${statusLabel}` : "") }) : statusLabel ?? primary?.name)}</div>}
         </div>
         {previewDuration >= 30 && ownerBots.length > 1 && <span className="rounded bg-inset/60 px-1 py-0.5 text-[8px]">+{ownerBots.length - 1}</span>}
       </div>
-      {isCall && <div onPointerDown={beginResize} className="absolute inset-x-1 bottom-0 h-1.5 cursor-ns-resize rounded-full opacity-0 transition group-hover:opacity-100" aria-label="Resize event"><div className="mx-auto mt-0.5 h-0.5 w-5 rounded-full bg-current opacity-50" /></div>}
+      {isCall && <div onPointerDown={beginResize} className="absolute inset-x-1 bottom-0 h-1.5 cursor-ns-resize rounded-full opacity-0 transition group-hover:opacity-100" aria-label={uiText("ui.RoutineCalendarPage.78cbfe89e8")}><div className="mx-auto mt-0.5 h-0.5 w-5 rounded-full bg-current opacity-50" /></div>}
     </button>
   );
 }
@@ -1419,12 +1420,12 @@ function CalendarGrid({
         {starts.map((start) => {
           const date = new Date(start);
           const isToday = start === today;
-          return <div key={start} role="columnheader" className={cn("border-b border-r border-hairline/40 px-2 py-2 text-center last:border-r-0", isToday && "bg-accent/[0.035]")}><div className={cn("text-[10px] font-medium uppercase tracking-[0.14em]", isToday ? "text-accent" : "text-ink-secondary")}>{DAY_NAMES[date.getDay()]}</div><div className={cn("mx-auto mt-1 flex size-8 items-center justify-center rounded-full text-[15px] font-medium", isToday ? "bg-accent text-accent-ink" : "text-ink")}>{date.getDate()}</div></div>;
+          return <div key={start} role="columnheader" className={cn("border-b border-r border-hairline/40 px-2 py-2 text-center last:border-r-0", isToday && "bg-accent/[0.035]")}><div className={cn("text-[10px] font-medium uppercase tracking-[0.14em]", isToday ? "text-accent" : "text-ink-secondary")}>{dayNames()[date.getDay()]}</div><div className={cn("mx-auto mt-1 flex size-8 items-center justify-center rounded-full text-[15px] font-medium", isToday ? "bg-accent text-accent-ink" : "text-ink")}>{date.getDate()}</div></div>;
         })}
       </div>
-      <div role="grid" aria-label="Routine and call calendar" onDragEnd={() => setDragPreview(null)} className="relative grid" style={{ height: HOUR_HEIGHT * 24, gridTemplateColumns, minWidth }}>
+      <div role="grid" aria-label={uiText("ui.RoutineCalendarPage.bade908842")} onDragEnd={() => setDragPreview(null)} className="relative grid" style={{ height: HOUR_HEIGHT * 24, gridTemplateColumns, minWidth }}>
         <div className="relative border-r border-hairline/40">
-          {Array.from({ length: 24 }, (_, hour) => <div key={hour} className="absolute right-2 -translate-y-1/2 text-[9.5px] tabular-nums text-ink-tertiary" style={{ top: hour * HOUR_HEIGHT }}>{hour === 0 ? "" : new Date(2000, 0, 1, hour).toLocaleTimeString([], { hour: "numeric" })}</div>)}
+          {Array.from({ length: 24 }, (_, hour) => <div key={hour} className="absolute right-2 -translate-y-1/2 text-[9.5px] tabular-nums text-ink-tertiary" style={{ top: hour * HOUR_HEIGHT }}>{hour === 0 ? "" : new Date(2000, 0, 1, hour).toLocaleTimeString(uiLocale(), { hour: "numeric" })}</div>)}
         </div>
         {starts.map((start) => {
           const now = new Date();
@@ -1434,7 +1435,7 @@ function CalendarGrid({
           const selected = selection?.day === start ? selection : null;
           const preview = dragPreview?.day === start ? dragPreview : null;
           return (
-            <div key={start} role="gridcell" aria-label={`${niceDate(start)} calendar`} onPointerDown={(event) => beginSelection(event, start)} onDragOver={(event) => previewDrop(event, start)} onDragLeave={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDragPreview(null); }} onDrop={(event) => drop(event, start)} className={cn("relative border-r border-hairline/40 last:border-r-0", start === today && "bg-accent/[0.025]")}>
+            <div key={start} role="gridcell" aria-label={uiText("ui.RoutineCalendarPage.0889ec88e3", { value1: String(niceDate(start)) })} onPointerDown={(event) => beginSelection(event, start)} onDragOver={(event) => previewDrop(event, start)} onDragLeave={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDragPreview(null); }} onDrop={(event) => drop(event, start)} className={cn("relative border-r border-hairline/40 last:border-r-0", start === today && "bg-accent/[0.025]")}>
               {Array.from({ length: 48 }, (_, half) => <div key={half} className={cn("pointer-events-none absolute inset-x-0 border-t", half % 2 === 0 ? "border-hairline/30" : "border-hairline/10")} style={{ top: (half / 2) * HOUR_HEIGHT }} />)}
               {start === today && <div className="pointer-events-none absolute inset-x-0 z-20 flex items-center" style={{ top: nowTop }}><span className="-ml-1 size-2 rounded-full bg-danger" /><span className="h-px flex-1 bg-danger/80" /></div>}
               {selected && <div className="pointer-events-none absolute inset-x-1 z-10 rounded-md border border-accent/70 bg-accent/20" style={{ top: ((new Date(selected.start).getHours() * 60 + new Date(selected.start).getMinutes()) / 60) * HOUR_HEIGHT, height: Math.max(16, ((selected.end - selected.start) / 3_600_000) * HOUR_HEIGHT) }} />}
@@ -1597,7 +1598,7 @@ export function EventDetails({
           <div className="break-words text-[15px] font-semibold leading-snug text-ink">{title}</div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {routine && <span className={cn("rounded-full px-2 py-0.5 text-[10.5px] font-medium", routine.enabled ? "bg-success/15 text-success" : "bg-inset text-ink-secondary")}>{routineScheduleState(routine)}</span>}
-            <span className="text-[11px] text-ink-secondary">{niceDate(item.at)} · {niceTime(item.at)}{isCall ? ` – ${niceTime(item.at + item.durationMinutes * 60_000)}` : ""}</span>
+            <span className="text-[11px] text-ink-secondary">{niceDate(item.at)} · {niceTime(item.at)}{isCall ? uiText("ui.RoutineCalendarPage.d3e67227c9", { value1: String(niceTime(item.at + item.durationMinutes * 60_000)) }) : ""}</span>
           </div>
         </div>
         <button type="button" onClick={onClose} className="rounded-full p-1.5 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={t("routines.drawer.close")}><X size={16} /></button>
@@ -1606,7 +1607,7 @@ export function EventDetails({
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {run && <div role="status" aria-live="polite" className="rounded-xl border border-hairline/40 bg-inset p-3"><div className="flex items-center gap-2 text-[12px] font-medium text-ink">{run.status === "running" && <Loader2 size={13} className="animate-spin text-accent" />}{routineRunLabel(run)}</div>{run.output && <div className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap text-[11.5px] leading-relaxed text-ink-secondary">{run.output}</div>}{run.error && <div className="mt-2 text-[11.5px] text-danger">{run.error}</div>}</div>}
         {run?.attention && <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2.5 text-warning"><CircleAlert size={15} className="mt-0.5 shrink-0" /><div className="min-w-0 whitespace-pre-wrap text-[11.5px] leading-relaxed">{run.attention}</div></div>}
-        {run?.status === "waiting" && !run.attention && <div className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2.5 text-[11.5px] text-warning">This run is waiting. Open its execution thread for more context.</div>}
+        {run?.status === "waiting" && !run.attention && <div className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2.5 text-[11.5px] text-warning">{uiText("ui.RoutineCalendarPage.04d95feb1b")}</div>}
 
         <DrawerField label={isCall ? t("routines.drawer.guests") : isRoomGoal ? t("routines.drawer.lead") : t("routines.drawer.bot")}>
           <div className="flex flex-wrap gap-1.5">
@@ -1614,7 +1615,7 @@ export function EventDetails({
             {invited.length === 0 && <span className="text-[12.5px] text-ink-secondary">{t("routines.unavailableBot")}</span>}
           </div>
         </DrawerField>
-        {isRoomGoal && <DrawerField label={t("routines.drawer.group")}><div className="text-[12.5px] text-ink">{goalGroup?.name ?? "Group unavailable"}</div></DrawerField>}
+        {isRoomGoal && <DrawerField label={t("routines.drawer.group")}><div className="text-[12.5px] text-ink">{goalGroup?.name ?? uiText("ui.RoutineCalendarPage.183c167c7b")}</div></DrawerField>}
         {(routine || call) && (
           <DrawerField label={t("routines.drawer.schedule")}>
             <div className="text-[12.5px] text-ink">{scheduleLabel((routine ?? call)!.schedule)}</div>
@@ -1629,8 +1630,8 @@ export function EventDetails({
           </DrawerField>
         )}
         {!isCall && !isRoomGoal && <DrawerField label={t("routines.results.label")}><div className="text-[12.5px] text-ink">{resultsTitle}</div></DrawerField>}
-        {attachments.length > 0 && <DrawerField label="Attachments"><AttachmentChips attachments={attachments} />{call && <div className="mt-1.5 text-[11px] leading-relaxed text-ink-secondary">{call.botIds.length > 1 ? "These references will be shared in the group when the event starts." : "These references stay with the event and are available when you join the group."}</div>}</DrawerField>}
-        {advanced && !isCall && <DrawerField label={t("routines.drawer.runLimit")}><div className="text-[12.5px] text-ink">{safetyLimit == null ? "No time limit" : `Stops if still running after ${durationLabel(safetyLimit)}`}</div></DrawerField>}
+        {attachments.length > 0 && <DrawerField label={uiText("attach.gallery")}><AttachmentChips attachments={attachments} />{call && <div className="mt-1.5 text-[11px] leading-relaxed text-ink-secondary">{call.botIds.length > 1 ? uiText("ui.RoutineCalendarPage.4a4555e38c") : uiText("ui.RoutineCalendarPage.68998956a2")}</div>}</DrawerField>}
+        {advanced && !isCall && <DrawerField label={t("routines.drawer.runLimit")}><div className="text-[12.5px] text-ink">{safetyLimit == null ? uiText("ui.RoutineCalendarPage.436b4b94e3") : uiText("ui.RoutineCalendarPage.5fad29b056", { value1: String(durationLabel(safetyLimit)) })}</div></DrawerField>}
         {!isCall && (
           <DrawerField label={t("routines.logs")} action={routine && <button type="button" onClick={() => { dispatch({ type: "showRoutines", section: "logs", routineId: routine.id, botId: routine.botId }); onClose(); }} className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-accent-text hover:bg-raised"><FileText size={11} />{t("routines.drawer.allRuns")}</button>}>
             {recentRuns.length === 0
@@ -1645,16 +1646,16 @@ export function EventDetails({
         {routine && (
           <div className="flex items-center gap-2">
             <button onClick={runRoutineNow} disabled={working} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12px] font-semibold text-accent-ink hover:brightness-110 disabled:opacity-50">{starting ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}{starting ? t("routines.starting") : t("routines.runNow")}</button>
-            <button disabled={working} onClick={() => void invoke(`/api/routines/${routine.id}`, "PATCH", { enabled: !routine.enabled })} title={routine.enabled ? "Pause routine" : "Resume routine"} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-hairline/50 bg-control px-3 py-2 text-[12px] font-medium text-ink hover:bg-raised-hover disabled:opacity-40">{routine.enabled ? <Pause size={13} /> : <Play size={13} />}{routine.enabled ? t("routines.pause") : t("routines.resume")}</button>
+            <button disabled={working} onClick={() => void invoke(`/api/routines/${routine.id}`, "PATCH", { enabled: !routine.enabled })} title={routine.enabled ? uiText("ui.RoutineCalendarPage.8026fe7502") : uiText("ui.RoutineCalendarPage.773345cd2d")} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-hairline/50 bg-control px-3 py-2 text-[12px] font-medium text-ink hover:bg-raised-hover disabled:opacity-40">{routine.enabled ? <Pause size={13} /> : <Play size={13} />}{routine.enabled ? t("routines.pause") : t("routines.resume")}</button>
           </div>
         )}
         <div className="flex flex-wrap items-center gap-1">
-          {roomId && <button onClick={() => onOpenRoom(roomId)} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12px] font-semibold text-accent-ink hover:brightness-110"><ExternalLink size={13} />Join group</button>}
-          {call && call.botIds.length > 1 && <button onClick={joinRoom} disabled={working} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12px] font-semibold text-accent-ink hover:brightness-110 disabled:opacity-50"><ExternalLink size={13} />Join group</button>}
-          {isRoomGoal && goalGroup && !executionThreadId && <button onClick={() => { onOpenRoom(goalGroup.id); onClose(); }} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink"><ExternalLink size={13} />Open group</button>}
-          {canOpenExecution && <button onClick={openRunTask} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink"><ExternalLink size={13} />{isRoomGoal ? "Open group thread" : "Open thread"}</button>}
+          {roomId && <button onClick={() => onOpenRoom(roomId)} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12px] font-semibold text-accent-ink hover:brightness-110"><ExternalLink size={13} />{uiText("ui.RoutineCalendarPage.48a2587a6c")}</button>}
+          {call && call.botIds.length > 1 && <button onClick={joinRoom} disabled={working} className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12px] font-semibold text-accent-ink hover:brightness-110 disabled:opacity-50"><ExternalLink size={13} />{uiText("ui.RoutineCalendarPage.48a2587a6c")}</button>}
+          {isRoomGoal && goalGroup && !executionThreadId && <button onClick={() => { onOpenRoom(goalGroup.id); onClose(); }} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink"><ExternalLink size={13} />{uiText("ui.RoutineCalendarPage.83ffa7c96e")}</button>}
+          {canOpenExecution && <button onClick={openRunTask} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink"><ExternalLink size={13} />{isRoomGoal ? uiText("ui.RoutineCalendarPage.aeb3df1d57") : uiText("ui.RoutineCalendarPage.a901aa25b8")}</button>}
           {canOpenResults && openResultsId && <button type="button" onClick={() => { openNotificationTarget(dispatch, { botId: botIds[0], threadId: openResultsId }, state, showThreads); onClose(); }} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink"><ExternalLink size={13} />{t("routines.results.open")}</button>}
-          {run && ["queued", "running", "waiting"].includes(run.status) && <button onClick={() => void invoke(`/api/routine-runs/${run.id}/cancel`)} disabled={working} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink disabled:opacity-40"><X size={13} />Cancel run</button>}
+          {run && ["queued", "running", "waiting"].includes(run.status) && <button onClick={() => void invoke(`/api/routine-runs/${run.id}/cancel`)} disabled={working} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink disabled:opacity-40"><X size={13} />{uiText("ui.RoutineCalendarPage.56bccd9d49")}</button>}
           <div className="ml-auto flex items-center gap-1">
             {(routine || call) && <button onClick={onEdit} className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-ink hover:bg-raised">{t("routines.edit")}</button>}
             {(routine || call) && <button onClick={() => void deleteEvent()} className="rounded-lg p-2 text-ink-secondary hover:bg-danger/10 hover:text-danger" title={t("routines.delete")} aria-label={t("routines.delete")}><Trash2 size={14} /></button>}
@@ -1705,8 +1706,8 @@ function RecentRunRow({ run, current, onOpen }: { run: RoutineRun; current: bool
           : active
             ? <Loader2 size={14} className="shrink-0 animate-spin text-accent" aria-hidden="true" />
             : <CircleAlert size={14} className="shrink-0 text-ink-tertiary" aria-hidden="true" />}
-      <span className="min-w-0 flex-1 truncate text-[12px] text-ink">{new Date(at).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
-      <span className="shrink-0 text-[11px] tabular-nums text-ink-secondary">{niceTime(at)}{duration ? ` · ${duration}` : ""}</span>
+      <span className="min-w-0 flex-1 truncate text-[12px] text-ink">{new Date(at).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" })}</span>
+      <span className="shrink-0 text-[11px] tabular-nums text-ink-secondary">{niceTime(at)}{duration ? uiText("ui.RoutineCalendarPage.f6b53f9c8a", { value1: String(duration) }) : ""}</span>
     </button>
   );
 }
@@ -1731,8 +1732,8 @@ export function PausedList({
   useModalDialog(dialogRef, onClose);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Paused routines" tabIndex={-1} className="w-full max-w-[520px] rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
-        <div className="flex items-center justify-between border-b border-hairline/40 px-5 py-4"><div><div className="text-[16px] font-semibold text-ink">Paused routines</div><div className="mt-0.5 text-[11.5px] text-ink-secondary">History is kept; no new tasks will run.</div></div><button onClick={onClose} className="rounded-full p-2 text-ink-secondary hover:bg-raised" aria-label={t("routines.paused.close")}><X size={17} /></button></div>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={uiText("ui.RoutineCalendarPage.278b5af0d5")} tabIndex={-1} className="w-full max-w-[520px] rounded-2xl border border-hairline/60 bg-panel shadow-2xl">
+        <div className="flex items-center justify-between border-b border-hairline/40 px-5 py-4"><div><div className="text-[16px] font-semibold text-ink">{uiText("ui.RoutineCalendarPage.278b5af0d5")}</div><div className="mt-0.5 text-[11.5px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.8dd4696667")}</div></div><button onClick={onClose} className="rounded-full p-2 text-ink-secondary hover:bg-raised" aria-label={t("routines.paused.close")}><X size={17} /></button></div>
         <div className="max-h-[55vh] space-y-1 overflow-y-auto p-3">
           {routines.map((routine) => {
             const bot = bots.find((candidate) => candidate.id === routine.botId);
@@ -1744,11 +1745,11 @@ export function PausedList({
                 {room ? <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent"><UsersRound size={17} /></span> : bot && <BotAvatar bot={bot} state="sleeping" size={36} animated={false} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[12.5px] font-medium text-ink">{routine.name}</div>
-                  <div className="mt-0.5 truncate text-[10.5px] text-ink-secondary">{room ? `Team goal · ${room.name} · ` : ""}{scheduleLabel(routine.schedule)}</div>
+                  <div className="mt-0.5 truncate text-[10.5px] text-ink-secondary">{room ? uiText("ui.RoutineCalendarPage.0b1b6059c9", { value1: String(room.name) }) : ""}{scheduleLabel(routine.schedule)}</div>
                 </div>
-                {room && <button onClick={() => { onOpenRoom(room.id); onClose(); }} className="rounded-lg px-2 py-1.5 text-[11px] text-ink-secondary hover:bg-inset">Group</button>}
-                <button onClick={() => dispatch({ type: "updateRoutine", routineId: routine.id, patch: { enabled: true } })} className="rounded-lg bg-accent/15 px-2.5 py-1.5 text-[11px] font-medium text-accent">Resume</button>
-                <button onClick={() => onEdit(routine)} className="rounded-lg px-2 py-1.5 text-[11px] text-ink-secondary hover:bg-inset">Edit</button>
+                {room && <button onClick={() => { onOpenRoom(room.id); onClose(); }} className="rounded-lg px-2 py-1.5 text-[11px] text-ink-secondary hover:bg-inset">{uiText("routines.drawer.group")}</button>}
+                <button onClick={() => dispatch({ type: "updateRoutine", routineId: routine.id, patch: { enabled: true } })} className="rounded-lg bg-accent/15 px-2.5 py-1.5 text-[11px] font-medium text-accent">{uiText("workspaces.resume")}</button>
+                <button onClick={() => onEdit(routine)} className="rounded-lg px-2 py-1.5 text-[11px] text-ink-secondary hover:bg-inset">{uiText("cloudIntent.edit")}</button>
               </div>
             );
           })}
@@ -1930,14 +1931,14 @@ export function RoutinesPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
       if (dragged.kind === "routine") {
         const routine = state.routines.find((candidate) => candidate.id === dragged.id);
         if (!routine) return;
-        if (routine.schedule.type === "cron") throw new Error("Open this routine to edit its repeating schedule and time zone.");
-        if (routine.schedule.type !== "once" && !window.confirm("Move this entire recurring series?")) return;
+        if (routine.schedule.type === "cron") throw new Error(uiText("ui.RoutineCalendarPage.f8e828efc8"));
+        if (routine.schedule.type !== "once" && !window.confirm(uiText("ui.RoutineCalendarPage.e5403291d5"))) return;
         const response = await api(`/api/routines/${routine.id}`, { method: "PATCH", body: JSON.stringify({ schedule: scheduleAt(routine.schedule, dragged.at, nextAt) }) });
         dispatch({ type: "routinePatched", routine: response.routine });
       } else {
         const call = calls.find((candidate) => candidate.id === dragged.id);
         if (!call) return;
-        if (call.schedule.type === "daily" && !window.confirm("Move this entire recurring series?")) return;
+        if (call.schedule.type === "daily" && !window.confirm(uiText("ui.RoutineCalendarPage.e5403291d5"))) return;
         const response = await api(`/api/calendar-calls/${call.id}`, { method: "PATCH", body: JSON.stringify({ schedule: scheduleAt(call.schedule, dragged.at, nextAt) }) });
         upsertCall(response.call);
       }
@@ -1980,8 +1981,8 @@ export function RoutinesPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
             type="button"
             ref={backButtonRef}
             onClick={onBack}
-            aria-label="Back"
-            title="Back"
+            aria-label={uiText("onboarding.back")}
+            title={uiText("onboarding.back")}
             className="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-secondary hover:bg-raised hover:text-ink"
             style={windowNoDragStyle}
           >
@@ -2011,11 +2012,11 @@ export function RoutinesPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
         </div>
         {shownSection !== "webhooks" && <div className="mt-2 flex flex-wrap items-center gap-2" style={windowNoDragStyle}>
           {unseenFailures > 0 && <button type="button" onClick={() => dispatch({ type: "markAllRoutineRunsSeen" })} className="flex items-center gap-1.5 rounded-lg border border-hairline/50 bg-panel px-2.5 py-1.5 text-[11.5px] text-ink-secondary hover:bg-raised hover:text-ink" title={t("routines.markAllSeen")} aria-label={t("routines.markAllSeen")}><CheckCheck size={12} />{t("routines.markAllSeen")}</button>}
-          {running > 0 && <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1.5 text-[10.5px] text-accent-text"><Loader2 size={11} className="animate-spin" />{running} active</span>}
-          {unseenFailures > 0 && <button type="button" onClick={() => dispatch({ type: "showRoutines", section: "logs", runStatus: "problems" })} className="flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1.5 text-[10.5px] text-danger" title="Open problem run logs" aria-label="Open problem run logs"><CircleAlert size={11} />{unseenFailures}</button>}
-          {paused.length > 0 && <button type="button" onClick={() => setPausedOpen(true)} aria-label="View paused routines" className="flex items-center gap-1.5 rounded-full border border-hairline/50 px-2.5 py-1.5 text-[10.5px] text-ink-secondary hover:bg-raised"><Pause size={11} />{paused.length}</button>}
+          {running > 0 && <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1.5 text-[10.5px] text-accent-text"><Loader2 size={11} className="animate-spin" />{running} {uiText("ui.RoutineCalendarPage.9687961165")}</span>}
+          {unseenFailures > 0 && <button type="button" onClick={() => dispatch({ type: "showRoutines", section: "logs", runStatus: "problems" })} className="flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1.5 text-[10.5px] text-danger" title={uiText("ui.RoutineCalendarPage.ba20c15f0f")} aria-label={uiText("ui.RoutineCalendarPage.ba20c15f0f")}><CircleAlert size={11} />{unseenFailures}</button>}
+          {paused.length > 0 && <button type="button" onClick={() => setPausedOpen(true)} aria-label={uiText("ui.RoutineCalendarPage.763b86053a")} className="flex items-center gap-1.5 rounded-full border border-hairline/50 px-2.5 py-1.5 text-[10.5px] text-ink-secondary hover:bg-raised"><Pause size={11} />{paused.length}</button>}
           <div className="ml-auto flex items-center gap-2">
-            <Select size="sm" aria-label="Filter schedule by bot" value={botFilter} onChange={(event) => { setBotFilter(event.target.value); setRoutineFilter(undefined); }} className="max-w-[180px]"><option value="all">All bots</option>{visibleBots.map((bot) => <option key={bot.id} value={bot.id}>{bot.name}</option>)}</Select>
+            <Select size="sm" aria-label={uiText("ui.RoutineCalendarPage.3393087eca")} value={botFilter} onChange={(event) => { setBotFilter(event.target.value); setRoutineFilter(undefined); }} className="max-w-[180px]"><option value="all">{uiText("notifications.allBots")}</option>{visibleBots.map((bot) => <option key={bot.id} value={bot.id}>{bot.name}</option>)}</Select>
           </div>
           {error && <button type="button" onClick={() => setError("")} className="flex items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-[10.5px] text-danger"><CircleAlert size={11} />{error}<X size={11} /></button>}
           {datedView && state.routinesLoadState === "error" && <p role="alert" className="w-full text-[11.5px] text-danger">{t("routines.loadError")}</p>}
@@ -2030,9 +2031,9 @@ export function RoutinesPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
             <div className="min-h-0 flex-1 overflow-y-auto"><RoutineLogs runs={filteredRuns} bots={state.bots} loading={state.routinesLoadState === "loading" && filteredRuns.length === 0} error={state.routinesLoadState === "error"} routineId={routineFilter} status={statusFilter} onStatusChange={setStatusFilter} onClearRoutine={() => setRoutineFilter(undefined)} onOpen={openRun} /></div>
           ) : layout === "list" ? (
             <div className="min-h-0 flex-1 overflow-y-auto"><div className="mx-auto w-full max-w-4xl space-y-5 p-4 sm:p-6">
-              <div><h2 className="text-[17px] font-semibold text-ink">{t("routines.title")}</h2><p className="mt-1 text-[12px] text-ink-secondary">All schedules, including paused and finished routines.</p></div>
+              <div><h2 className="text-[17px] font-semibold text-ink">{t("routines.title")}</h2><p className="mt-1 text-[12px] text-ink-secondary">{uiText("ui.RoutineCalendarPage.2aa38bf51e")}</p></div>
               <RoutineList routines={filteredRoutines} runs={state.routineRuns} bots={state.bots} loading={state.routinesLoadState === "loading" && filteredRoutines.length === 0} error={state.routinesLoadState === "error"} onOpen={openRoutine} onLogs={openLogs} onToggle={(routine) => dispatch({ type: "updateRoutine", routineId: routine.id, patch: { enabled: !routine.enabled } })} />
-              {!routinesOnly && calls.some((call) => botFilter === "all" || call.botIds.includes(botFilter)) && <section className="space-y-2" aria-label="Scheduled calls"><h2 className="text-[15px] font-semibold text-ink">Scheduled calls</h2>{calls.filter((call) => botFilter === "all" || call.botIds.includes(botFilter)).map((call) => <button key={call.id} type="button" onClick={() => setSelected({ kind: "call", id: call.id, at: call.schedule.type === "once" ? call.schedule.at : atLocalTime(Date.now(), call.schedule.time), durationMinutes: call.durationMinutes, call })} className="flex w-full items-center gap-3 rounded-xl border border-hairline/40 bg-card p-4 text-left hover:bg-raised"><Video size={17} className="text-accent" /><span><span className="block text-[13px] font-medium text-ink">{call.name}</span><span className="mt-1 block text-[11.5px] text-ink-secondary">{scheduleLabel(call.schedule)}</span></span></button>)}</section>}
+              {!routinesOnly && calls.some((call) => botFilter === "all" || call.botIds.includes(botFilter)) && <section className="space-y-2" aria-label={uiText("ui.RoutineCalendarPage.8e5a390d04")}><h2 className="text-[15px] font-semibold text-ink">{uiText("ui.RoutineCalendarPage.8e5a390d04")}</h2>{calls.filter((call) => botFilter === "all" || call.botIds.includes(botFilter)).map((call) => <button key={call.id} type="button" onClick={() => setSelected({ kind: "call", id: call.id, at: call.schedule.type === "once" ? call.schedule.at : atLocalTime(Date.now(), call.schedule.time), durationMinutes: call.durationMinutes, call })} className="flex w-full items-center gap-3 rounded-xl border border-hairline/40 bg-card p-4 text-left hover:bg-raised"><Video size={17} className="text-accent" /><span><span className="block text-[13px] font-medium text-ink">{call.name}</span><span className="mt-1 block text-[11.5px] text-ink-secondary">{scheduleLabel(call.schedule)}</span></span></button>)}</section>}
             </div></div>
           ) : (
             <div className="flex min-h-0 flex-1">
@@ -2073,21 +2074,21 @@ function RoutineWakeBar() {
   }, [bridge]);
   if (!bridge || !state) return null;
   const status = !state.keepAwake
-    ? "Off — this computer may sleep through a scheduled routine."
+    ? uiText("ui.RoutineCalendarPage.d07f9b526d")
     : state.onBattery
-      ? "On battery, so not holding; plug in to keep it awake."
+      ? uiText("ui.RoutineCalendarPage.0539a0e5b8")
       : state.hold
-        ? state.reason === "running" ? "Holding it awake now: a routine is running." : `Holding it awake now: a routine is due at ${state.at ? niceTime(state.at) : "the top of the hour"}.`
-        : "Holds it awake for the hour before a routine and while one runs, while plugged in. A closed lid still sleeps.";
+        ? state.reason === "running" ? uiText("ui.RoutineCalendarPage.56e1138a9f") : uiText("ui.RoutineCalendarPage.595e1a5b2b", { value1: String(state.at ? niceTime(state.at) : "the top of the hour") })
+        : uiText("ui.RoutineCalendarPage.d54882dddb");
   return (
     <div className="flex items-center justify-between gap-4 border-b border-hairline/35 bg-panel/60 px-4 py-2.5">
       <div className="min-w-0 text-[12px] leading-relaxed text-ink-secondary">
-        <span className="font-medium text-ink">Keep this computer awake for routines.</span> {status}
+        <span className="font-medium text-ink">{uiText("ui.RoutineCalendarPage.696a096a6c")}</span> {status}
       </div>
       <Switch
         checked={state.keepAwake}
         disabled={busy}
-        aria-label="Keep this computer awake for scheduled routines"
+        aria-label={uiText("ui.RoutineCalendarPage.d30129013c")}
         onClick={() => {
           setBusy(true);
           bridge.keepAwake(!state.keepAwake).then(setState).catch(() => {}).finally(() => setBusy(false));

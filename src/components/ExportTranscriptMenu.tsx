@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Download, Share } from "lucide-react";
 
@@ -97,7 +98,7 @@ export function ExportTranscriptMenu({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="Export conversation"
+        aria-label={uiText("ui.ExportTranscriptMenu.5d974f9e80")}
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
@@ -105,7 +106,7 @@ export function ExportTranscriptMenu({
           open ? "text-accent" : "text-ink-secondary hover:text-ink",
           className,
         )}
-        title="Export conversation as Markdown"
+        title={uiText("ui.ExportTranscriptMenu.e166050a63")}
       >
         <Share size={18} />
       </button>
@@ -113,17 +114,13 @@ export function ExportTranscriptMenu({
       {motion.shown && (
         <div
           role="menu"
-          aria-label="Export options"
+          aria-label={uiText("ui.ExportTranscriptMenu.81dd4c062b")}
           className={cn("absolute right-0 top-full z-40 mt-1 w-[220px] overflow-hidden rounded-xl border border-hairline/50 bg-card py-1.5 shadow-2xl shadow-black/50", motion.className)} {...motion.exitProps}
         >
-          <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">
-            Export Conversation
-          </div>
+          <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">{uiText("ui.ExportTranscriptMenu.c3bef39c0b")}</div>
 
           {!hasMessages ? (
-            <div className="px-3 py-2 text-[12px] text-ink-secondary">
-              No messages to export yet.
-            </div>
+            <div className="px-3 py-2 text-[12px] text-ink-secondary">{uiText("ui.ExportTranscriptMenu.1b49747d94")}</div>
           ) : (
             <>
               <button
@@ -138,14 +135,12 @@ export function ExportTranscriptMenu({
                   <Copy size={14} className="shrink-0 text-ink-secondary" />
                 )}
                 <span className="flex-1 truncate">
-                  {copied ? "Copied to clipboard!" : "Copy as Markdown"}
+                  {copied ? uiText("ui.ExportTranscriptMenu.916fa4a51e") : uiText("chat.export.copy")}
                 </span>
               </button>
 
               {copyFailed && (
-                <div role="status" className="px-3 py-2 text-[12px] text-ink-secondary">
-                  Clipboard unavailable. Download the Markdown file instead.
-                </div>
+                <div role="status" className="px-3 py-2 text-[12px] text-ink-secondary">{uiText("ui.ExportTranscriptMenu.9edceb6778")}</div>
               )}
 
               <button
@@ -155,7 +150,7 @@ export function ExportTranscriptMenu({
                 className="ui-menu-row text-ink"
               >
                 <Download size={14} className="shrink-0 text-ink-secondary" />
-                <span className="flex-1 truncate">Download as .md</span>
+                <span className="flex-1 truncate">{uiText("chat.export.download")}</span>
               </button>
             </>
           )}

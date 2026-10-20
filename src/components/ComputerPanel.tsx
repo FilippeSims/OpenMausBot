@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { boatCapableEngine, cloudEngineOf } from "@/lib/remote-desktop";
 import { canWorkOnCloud } from "../../shared/cloud-computer";
 import { Switch } from "./SettingsPrimitives";
@@ -966,14 +967,14 @@ export function ComputerPanel({
         await transitionControl("take");
         tookControl = true;
       }
-      if (!ownsConnection()) throw new DOMException("The selected conversation changed", "AbortError");
+      if (!ownsConnection()) throw new DOMException(uiText("ui.ComputerPanel.224f053493"), "AbortError");
 
       let viewerUrl = vmViewerUrl;
       if (cloudPreviewReady) {
         const result = await api(threadPath("computer/join"), { method: "POST", signal: controller.signal });
         viewerUrl = result.joinUrl?.constructor === String ? String(result.joinUrl) : null;
       }
-      if (!ownsConnection()) throw new DOMException("The selected conversation changed", "AbortError");
+      if (!ownsConnection()) throw new DOMException(uiText("ui.ComputerPanel.224f053493"), "AbortError");
       if (!viewerUrl) throw new LocalizedPanelError("computer.err.noDesktopLink");
 
       if (window.ogb?.desktopViewer) {
@@ -1645,8 +1646,8 @@ export function ComputerPanel({
           <div className="mt-3 rounded-xl border border-accent/25 bg-accent/10 p-4">
             <div className="text-[13px] leading-relaxed text-ink">
               {t("computer.youHaveWheel")}
-              {cloudPreviewReady && ` ${t(advanced ? "computer.useOpenDesktop" : "computer.simple.useFullScreen")}`}
-              {phase === "vm" && ` ${t(advanced ? "computer.useOpenDesktopVm" : "computer.simple.useFullScreenVm")}`}
+              {cloudPreviewReady && uiText("ui.ComputerPanel.50843318c9", { value1: String(uiText(advanced ? "computer.useOpenDesktop" : "computer.simple.useFullScreen")) })}
+              {phase === "vm" && uiText("ui.ComputerPanel.50843318c9", { value1: String(uiText(advanced ? "computer.useOpenDesktopVm" : "computer.simple.useFullScreenVm")) })}
             </div>
             <button
               onClick={() => {
@@ -1834,7 +1835,7 @@ export function ComputerPanel({
           <CalendarClock size={17} className="mt-0.5 shrink-0 text-accent" />
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-medium text-ink">{t("computer.tab.routines")} <span className="ml-1 text-[11px] text-ink-secondary">{botRoutines.length}</span></span>
-            <span className={cn("mt-1 block truncate text-[11.5px]", activeRoutineRun ? routineRunTone(activeRoutineRun) : "text-ink-secondary")}>{activeRoutineRun ? `${activeRoutineRun.routineName} · ${routineRunLabel(activeRoutineRun)}` : t("computer.routines.openTitle")}</span>
+            <span className={cn("mt-1 block truncate text-[11.5px]", activeRoutineRun ? routineRunTone(activeRoutineRun) : "text-ink-secondary")}>{activeRoutineRun ? uiText("ui.ComputerPanel.7c639bc99b", { value1: String(activeRoutineRun.routineName), value2: String(routineRunLabel(activeRoutineRun)) }) : t("computer.routines.openTitle")}</span>
           </span>
           <span className="text-ink-secondary" aria-hidden="true">→</span>
         </button>

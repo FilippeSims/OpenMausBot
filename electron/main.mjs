@@ -81,6 +81,7 @@ import capabilitiesModule from "./capabilities.cjs";
 import environmentsModule from "./environments.cjs";
 import localOriginModule from "./local-origin.cjs";
 import { buildApplicationMenu } from "./menu.mjs";
+import { desktopText, setDesktopLanguage } from "./desktop-i18n.mjs";
 import { createComputerSharing, validateSharedFolders } from "./computer-sharing.mjs";
 import { acquireDataDirLease } from "./data-dir-lease.mjs";
 import { switchLocalEnvironment } from "./environment-switch.mjs";
@@ -364,7 +365,7 @@ const serverSupervisor = createServerSupervisor({
   onExhausted() {
     slog("server recovery paused after repeated failures; quit and reopen to retry");
     dialog.showErrorBox(
-      "The bot server stopped",
+      desktopText("The bot server stopped"),
       "Automatic recovery could not restart the background server. Quit and reopen OpenMausBot to try again. Interrupted chat turns were not resent.\n\n" +
         `Server log: ${path.join(LOG_DIR, "server.log")}`,
     );
@@ -1617,9 +1618,9 @@ async function offerComputerSharing(win) {
     const info = await sharingController().observe(env);
     if (!info || win.isDestroyed() || activeEnvironment(environmentsState)?.id !== env.id || new URL(win.webContents.getURL()).origin !== env.origin) return;
     const choice = await dialog.showMessageBox(win, {
-      type: "question", message: `Share this computer with ${env.name}?`,
-      detail: "Let this server’s bots use folders and capabilities you choose while this desktop app is running. Nothing is shared unless you enable it. You can change this later in Settings → Servers.",
-      buttons: ["Choose access", "Not now"], defaultId: 1, cancelId: 1,
+      type: "question", message: desktopText("Share this computer with {value1}?", { value1: env.name }),
+      detail: desktopText("Let this server’s bots use folders and capabilities you choose while this desktop app is running. Nothing is shared unless you enable it. You can change this later in Settings → Servers."),
+      buttons: [desktopText("Choose access"), desktopText("Not now")], defaultId: 1, cancelId: 1,
     });
     sharingController().decline(env, info);
     if (choice.response === 0) openWorkspaceSettings(env.id);
@@ -1692,7 +1693,7 @@ function persistEnvironments(next) {
 
 async function workspaceMenuAction(action) {
   try { await action(); } catch (error) {
-    await dialog.showMessageBox({ type: "error", message: "Could not update servers", detail: error.message });
+    await dialog.showMessageBox({ type: "error", message: desktopText("Could not update servers"), detail: error.message });
   }
 }
 
@@ -1719,8 +1720,8 @@ async function switchLocalEnvironmentTo(targetDir, targetId) {
   let switchSucceeded = false;
   const failedSwitch = () => {
     dialog.showErrorBox(
-      "Could not switch environments",
-      "OpenMausBot could not switch to that environment. The app log has the details.",
+      desktopText("Could not switch environments"),
+      desktopText("OpenMausBot could not switch to that environment. The app log has the details."),
     );
     return { ok: false, error: "switch-failed" };
   };
@@ -1854,10 +1855,10 @@ const organizationEntry = createOrganizationEntry({
   confirm: async ({ kind, name, origin }) => {
     const { response } = await dialog.showMessageBox({
       type: "question",
-      buttons: [kind === "companion" ? "Disconnect and restart locally" : "Use this computer", "Cancel"],
+      buttons: [kind === "companion" ? "Disconnect and restart locally" : "Use this computer", desktopText("Cancel")],
       defaultId: 1, cancelId: 1,
       message: kind === "companion" ? `Disconnect from ${name} to sign in locally?` : `Leave ${name} and sign in on this computer?`,
-      detail: `${origin}\n\nOrganization sign-in connects company models to this computer. ${kind === "companion" ? "This disconnects desktop companion access and restarts the app. You can pair again later." : "The hosted connection stays saved and can be selected again from the Server menu."} No remote bots, conversations or provider accounts are moved or deleted.`,
+      detail: desktopText("{value1}\n\nOrganization sign-in connects company models to this computer. {value2} No remote bots, conversations or provider accounts are moved or deleted.", { value1: origin, value2: kind === "companion" ? "This disconnects desktop companion access and restarts the app. You can pair again later." : "The hosted connection stays saved and can be selected again from the Server menu." }),
     });
     return response === 0;
   },
@@ -1940,7 +1941,7 @@ async function addServerFromClipboard() {
   try {
     return await connectHostedWorkspace(clipboard.readText());
   } catch (error) {
-    await dialog.showMessageBox({ type: "info", message: "Could not connect to the server", detail: `${error.message}\nYou can also choose Connect to a server to enter an address in Settings.` });
+    await dialog.showMessageBox({ type: "info", message: desktopText("Could not connect to the server"), detail: desktopText("{value1}\nYou can also choose Connect to a server to enter an address in Settings.", { value1: error.message }) });
     return false;
   }
 }
@@ -1953,10 +1954,10 @@ async function connectHostedWorkspace(input, name) {
   const host = new URL(link.origin).host;
   const { response } = await dialog.showMessageBox({
     type: "question",
-    buttons: ["Connect", "Cancel"],
+    buttons: [desktopText("Connect"), desktopText("Cancel")],
     defaultId: 0,
     cancelId: 1,
-    message: `Connect to ${host}?`,
+    message: desktopText("Connect to {value1}?", { value1: host }),
     detail: link.code
       ? "The pairing code in the link is used once, then this app stays signed in to that server."
       : "The link has no pairing code; the server will ask for one.",
@@ -2012,11 +2013,11 @@ function askRemoteMicrophone(origin) {
     const ask = (async () => {
       const options = {
         type: "question",
-        buttons: ["Allow", "Don’t Allow"],
+        buttons: [desktopText("Allow"), desktopText("Don’t Allow")],
         defaultId: 1,
         cancelId: 1,
-        message: `Allow “${env.name}” to use the microphone?`,
-        detail: `${new URL(origin).host} wants to hear you for a Live call. Allow only a server you trust; this app remembers your answer for this server until you forget it.`,
+        message: desktopText("Allow “{value1}” to use the microphone?", { value1: env.name }),
+        detail: desktopText("{value1} wants to hear you for a Live call. Allow only a server you trust; this app remembers your answer for this server until you forget it.", { value1: new URL(origin).host }),
       };
       const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
       const { response } = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options);
@@ -2035,11 +2036,11 @@ async function forgetEnvironment(id, purge = false) {
   if (env.kind !== "local") {
     const { response } = await dialog.showMessageBox({
       type: "warning",
-      buttons: ["Forget", "Cancel"],
+      buttons: [desktopText("Forget"), desktopText("Cancel")],
       defaultId: 1,
       cancelId: 1,
-      message: `Forget “${env.name}”?`,
-      detail: "This app signs out of that server. The server keeps its own session list; revoke it there too if the device is gone.",
+      message: desktopText("Forget “{value1}”?", { value1: env.name }),
+      detail: desktopText("This app signs out of that server. The server keeps its own session list; revoke it there too if the device is gone."),
     });
     if (response !== 0) return;
   }
@@ -2076,7 +2077,7 @@ async function forgetEnvironment(id, purge = false) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   } catch (error) {
     slog(`forget server: logout skipped (${error?.message ?? error})`);
-    await dialog.showMessageBox({ type: "warning", message: "Connection forgotten; server sign-out could not be confirmed", detail: "Computer sharing is stopped. Revoke this desktop’s session on that server when it is reachable again." });
+    await dialog.showMessageBox({ type: "warning", message: desktopText("Connection forgotten; server sign-out could not be confirmed"), detail: desktopText("Computer sharing is stopped. Revoke this desktop’s session on that server when it is reachable again.") });
   }
   try {
     // Not cookies: Chromium's cookie storage is host-wide, not port-scoped, so other saved servers would sign out.
@@ -2101,20 +2102,20 @@ function showContextMenu(win, params) {
   }
   if (params.linkURL) {
     menuItems.push(
-      { label: "Copy Link", click: () => clipboard.writeText(params.linkURL) },
+      { label: desktopText("Copy Link"), click: () => clipboard.writeText(params.linkURL) },
       { type: "separator" },
     );
   }
   menuItems.push(
-    { label: "Undo", role: "undo", enabled: params.editFlags.canUndo },
-    { label: "Redo", role: "redo", enabled: params.editFlags.canRedo },
+    { label: desktopText("Undo"), role: "undo", enabled: params.editFlags.canUndo },
+    { label: desktopText("Redo"), role: "redo", enabled: params.editFlags.canRedo },
     { type: "separator" },
-    { label: "Cut", role: "cut", enabled: params.editFlags.canCut },
-    { label: "Copy", role: "copy", enabled: params.editFlags.canCopy },
+    { label: desktopText("Cut"), role: "cut", enabled: params.editFlags.canCut },
+    { label: desktopText("Copy"), role: "copy", enabled: params.editFlags.canCopy },
     pasteMenuItem(params, clipboard, win.webContents),
-    { label: "Paste and Match Style", role: "pasteAndMatchStyle", enabled: params.editFlags.canPaste },
+    { label: desktopText("Paste and Match Style"), role: "pasteAndMatchStyle", enabled: params.editFlags.canPaste },
     { type: "separator" },
-    { label: "Select All", role: "selectAll", enabled: params.editFlags.canSelectAll },
+    { label: desktopText("Select All"), role: "selectAll", enabled: params.editFlags.canSelectAll },
   );
   Menu.buildFromTemplate(menuItems).popup({ window: win, frame: params.frame });
 }
@@ -2220,8 +2221,8 @@ function createWindow({ deferNavigation = false } = {}) {
     slog(`remote server unreachable (${errorDescription}); back to Local`);
     void dialog.showMessageBox({
       type: "warning",
-      message: `${remote.name} is not reachable`,
-      detail: `${errorDescription}. Showing the local server instead; choose it again from the Server menu when it is back.`,
+      message: desktopText("{value1} is not reachable", { value1: remote.name }),
+      detail: desktopText("{value1}. Showing the local server instead; choose it again from the Server menu when it is back.", { value1: errorDescription }),
     });
     void workspaceMenuAction(() => switchEnvironment(LOCAL_ID));
   });
@@ -2380,7 +2381,7 @@ ipcMain.handle("clipboard:write-text", localOnly("clipboard:write-text", (_event
 ipcMain.handle("desktop:pick-folder", localOnly("desktop:pick-folder", async (event, current) => {
   const win = BrowserWindow.fromWebContents(event.sender) ?? undefined;
   const result = await dialog.showOpenDialog(win, {
-    title: "Choose a working folder",
+    title: desktopText("Choose a working folder"),
     properties: ["openDirectory", "createDirectory"],
     ...(typeof current === "string" && current ? { defaultPath: current } : {}),
   });
@@ -2392,7 +2393,7 @@ ipcMain.handle("desktop:export-diagnostics", localOnly("desktop:export-diagnosti
   const owner = BrowserWindow.fromWebContents(event.sender) ?? undefined;
   const report = await gatherDiagnostics();
   const result = await dialog.showSaveDialog(owner, {
-    title: "Export diagnostics",
+    title: desktopText("Export diagnostics"),
     defaultPath: diagnosticsFileName(),
     filters: [{ name: "Text", extensions: ["txt"] }],
   });
@@ -2418,8 +2419,8 @@ ipcMain.handle("desktop:save-file", localOnly("desktop:save-file", async (event,
     const parent = BrowserWindow.fromWebContents(event.sender);
     const defaultPath = await defaultSaveName(app.getPath("downloads"), defaultName);
     const choice = await dialog.showSaveDialog(parent ?? undefined, {
-      title: "Where do you want to save it?",
-      message: "Where do you want to save it?",
+      title: desktopText("Where do you want to save it?"),
+      message: desktopText("Where do you want to save it?"),
       defaultPath,
       buttonLabel: "Save",
       properties: ["createDirectory", "showOverwriteConfirmation"],
@@ -2445,6 +2446,18 @@ ipcMain.handle("desktop:skin", (event, skin) => {
       try { win.setBackgroundColor(color); } catch {}
     }
   } catch {}
+  return true;
+});
+
+ipcMain.handle("desktop:language", (event, language) => {
+  requireMainWindowSender(event);
+  if (typeof language !== "string" || language.length > 35) return false;
+  setDesktopLanguage(language);
+  try {
+    fs.writeFileSync(path.join(app.getPath("userData"), "language.json"), JSON.stringify({ language }), { mode: 0o600 });
+  } catch {}
+  refreshApplicationMenu();
+  desktopTray?.refreshLanguage?.();
   return true;
 });
 
@@ -2918,7 +2931,7 @@ ipcMain.handle("sharing:state", localWorkspaceOnly("sharing:state", async (_even
 }));
 ipcMain.handle("sharing:folder", localWorkspaceOnly("sharing:folder", async () => {
   await requireSharedComputers();
-  const picked = await dialog.showOpenDialog(mainWindow, { title: "Choose a folder to share", properties: ["openDirectory"] });
+  const picked = await dialog.showOpenDialog(mainWindow, { title: desktopText("Choose a folder to share"), properties: ["openDirectory"] });
   if (picked.canceled || !picked.filePaths[0]) return null;
   return (await validateSharedFolders([{ id: randomUUID(), path: picked.filePaths[0], write: false }]))[0];
 }));
@@ -2943,7 +2956,7 @@ ipcMain.handle("sharing:save", localWorkspaceOnly("sharing:save", async (_event,
     input?.computer === true ? "Computer control: can view your screen and operate logged-in apps. Can access information outside the folders above." : "Computer control: off",
     "Shared content is sent to this server and may reach its model provider. Bots on this server can use these permissions until you revoke them. Closing the desktop stops access.",
   ].join("\n\n");
-  const confirmation = await dialog.showMessageBox(mainWindow, { type: "warning", message: `Allow computer access for ${env.name}?`, detail, buttons: ["Allow access", "Cancel"], defaultId: 1, cancelId: 1 });
+  const confirmation = await dialog.showMessageBox(mainWindow, { type: "warning", message: desktopText("Allow computer access for {value1}?", { value1: env.name }), detail, buttons: [desktopText("Allow access"), desktopText("Cancel")], defaultId: 1, cancelId: 1 });
   if (confirmation.response !== 0) return null;
   savedWorkspace(id);
   return sharingController().save(env, { folders, terminal: input?.terminal === true, computer: input?.computer === true }, info);
@@ -2967,7 +2980,7 @@ const lendingEnv = () => {
 ipcMain.handle("lending:state", localWorkspaceOnly("lending:state", () => lendingSnapshot()));
 ipcMain.handle("lending:folder", localWorkspaceOnly("lending:folder", async () => {
   lendingEnv();
-  const picked = await dialog.showOpenDialog(mainWindow, { title: "Choose a folder My Cloud can use", properties: ["openDirectory"] });
+  const picked = await dialog.showOpenDialog(mainWindow, { title: desktopText("Choose a folder My Cloud can use"), properties: ["openDirectory"] });
   if (picked.canceled || !picked.filePaths[0]) return null;
   return (await validateSharedFolders([{ id: randomUUID(), path: picked.filePaths[0], write: false }]))[0];
 }));
@@ -2993,7 +3006,7 @@ ipcMain.handle("dialog:confirm", localWorkspaceOnly("dialog:confirm", async (_ev
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: "warning",
     message,
-    buttons: ["OK", "Cancel"],
+    buttons: [desktopText("OK"), desktopText("Cancel")],
     defaultId: 1,
     cancelId: 1,
   });
@@ -3127,6 +3140,14 @@ setCuaStateListener((connection) => {
 });
 
 app.whenReady().then(async () => {
+  let language = app.getLocale();
+  try {
+    language = JSON.parse(fs.readFileSync(path.join(desktopDataDir(), "config.json"), "utf8")).language || language;
+  } catch {}
+  try {
+    language = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "language.json"), "utf8")).language || language;
+  } catch {}
+  setDesktopLanguage(language);
   await evictStartupCacheOnce({
     userData: app.getPath("userData"),
     currentVersion: app.getVersion(),
@@ -3167,8 +3188,8 @@ app.whenReady().then(async () => {
       slog(`boot environment ${boot.missingDir} is missing; falling back to the default data dir`);
       persistEnvironments({ ...environmentsState, activeId: LOCAL_ID });
       dialog.showErrorBox(
-        "The environment's folder is missing",
-        `${boot.missingDir} is not there anymore, so OpenMausBot came up on this computer's default data folder instead. Restore or remount that folder, then choose the environment again from the Server menu.`,
+        desktopText("The environment's folder is missing"),
+        desktopText("{value1} is not there anymore, so OpenMausBot came up on this computer's default data folder instead. Restore or remount that folder, then choose the environment again from the Server menu.", { value1: boot.missingDir }),
       );
     }
     bootDataDir = boot.dataDir;
@@ -3182,7 +3203,7 @@ app.whenReady().then(async () => {
       runningDataDir = bootDataDir;
     } catch (error) {
       dialog.showErrorBox(
-        "OpenMausBot could not start safely",
+        desktopText("OpenMausBot could not start safely"),
         error?.message ?? "Another process is using this OpenMausBot data folder.",
       );
       app.quit();
@@ -3310,7 +3331,7 @@ app.whenReady().then(async () => {
         runningDataDir = desktopDataDir();
       } catch (error) {
         dialog.showErrorBox(
-          "OpenMausBot could not start safely",
+          desktopText("OpenMausBot could not start safely"),
           error?.message ?? "Another process is using this OpenMausBot data folder.",
         );
         app.quit();
@@ -3319,13 +3340,13 @@ app.whenReady().then(async () => {
       const retried = await startServerPackaged();
       if (retried) {
         dialog.showErrorBox(
-          "The environment was unhealthy",
-          `OpenMausBot could not start on ${bootDataDir} and came up on this computer's default data folder instead. Choose that environment again from the Server menu once it is available.`,
+          desktopText("The environment was unhealthy"),
+          desktopText("OpenMausBot could not start on {value1} and came up on this computer's default data folder instead. Choose that environment again from the Server menu once it is available.", { value1: bootDataDir }),
         );
       } else {
         dialog.showErrorBox(
-          "OpenMausBot could not start",
-          `OpenMausBot could not start on ${bootDataDir} or on this computer's default data folder. Check that both folders are readable, then start the app again.`,
+          desktopText("OpenMausBot could not start"),
+          desktopText("OpenMausBot could not start on {value1} or on this computer's default data folder. Check that both folders are readable, then start the app again.", { value1: bootDataDir }),
         );
         app.quit();
       }

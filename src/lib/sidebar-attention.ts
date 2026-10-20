@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 export type SidebarAttentionBot = {
   unread?: boolean;
   busy?: boolean;
@@ -37,7 +38,7 @@ export function sidebarSectionAttention(
 export function sidebarAttentionLabel(attention: SidebarSectionAttention): string {
   const parts: string[] = [];
   if (attention.waiting > 0) {
-    parts.push(`${attention.waiting} waiting for you`);
+    parts.push(uiText("ui.sidebar-attention.a849991f7c", { value1: String(attention.waiting) }));
   }
   if (attention.unread > 0) {
     parts.push(`${attention.unread} unread`);

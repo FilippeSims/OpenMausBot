@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { AlertTriangle, Check, Copy, Download, ExternalLink, KeyRound, Loader2, LogIn, TerminalSquare, X } from "lucide-react";
 import { api, type EngineInstall, type InstanceInfo, useStore } from "@/state/store";
@@ -585,7 +586,7 @@ export function EngineSetup({
           {t("engineSetup.needsNode").split("{npm}").flatMap((part, index) =>
             index === 0
               ? [part]
-              : [<code key="npm" className="font-mono">npm</code>, part],
+              : [<code key="npm" className="font-mono">{uiText("ui.EngineSetup.d796771886")}</code>, part],
           )}
         </p>
       )}

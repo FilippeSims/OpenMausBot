@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState } from "react";
 import {
   AlertTriangle,
@@ -102,7 +103,7 @@ export function LinuxLocalControl() {
               {t("computer.linux.enableBefore")}{" "}
               <strong className="font-medium text-ink">{t("vm.dest.local")}</strong>{" "}
               {t("computer.linux.enableAfter")}
-              {wayland && ` ${t("computer.linux.waylandInput")}`}
+              {wayland && uiText("ui.LinuxLocalControl.50843318c9", { value1: String(uiText("computer.linux.waylandInput")) })}
             </span>
           </div>
         </div>
@@ -125,7 +126,7 @@ export function LinuxLocalControl() {
           {local.driverPath && (
             <div className="mt-2 break-all font-mono text-[10px] text-ink-tertiary" title={local.driverPath}>
               {bundledDriver ? t("computer.linux.bundledDriver") : local.driverPath}
-              {local.driverVersion ? ` · ${local.driverVersion}` : ""}
+              {local.driverVersion ? uiText("ui.LinuxLocalControl.f6b53f9c8a", { value1: String(local.driverVersion) }) : ""}
             </div>
           )}
         </div>

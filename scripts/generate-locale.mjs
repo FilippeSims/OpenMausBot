@@ -228,7 +228,7 @@ export function checkCatalogs() {
     if (file === SOURCE_FILE) continue;
     targetCodes.add(stem);
     const catalog = readCatalog(file);
-    errors.push(...validateTranslationCatalog(source, catalog).map((problem) => `${file}: ${problem}`));
+    errors.push(...validateTranslationCatalog(source, catalog, { requireComplete: stem === "pt-br" }).map((problem) => `${file}: ${problem}`));
     errors.push(...validateTranslationHashes(source, catalog, state.locales[stem] ?? {}).map(
       (problem) => `${file}: ${problem}`,
     ));

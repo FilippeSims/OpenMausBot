@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // Security: secrets are write-only; GET /api/config returns configured flags, never values.
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, CircleHelp, ExternalLink, Loader2, TriangleAlert } from "lucide-react";
@@ -607,7 +608,7 @@ export function VpsConnection() {
           value={alias}
           onChange={(e) => setAlias(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder="my-vps"
+          placeholder={uiText("ui.ApiKeys.8ab1477908")}
           aria-label={t("keys.vps.aria")}
           autoComplete="off"
           className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Plus, Users, X } from "lucide-react";
 import { openBot, useStore, type Bot } from "@/state/store";
@@ -203,7 +204,7 @@ export function SidebarNewChatPanel({
                 // mousemove, not mouseenter: a list scrolling under a resting pointer must not steal the keyboard
                 // selection.
                 onMouseMove={() => setCursor(index)}
-                aria-label={`${bot.name}${subtext ? `, ${subtext}` : ""}. ${rowLabel}`}
+                aria-label={uiText("ui.SidebarNewChatPanel.b088a88950", { value1: String(bot.name), value2: String(subtext ? `, ${subtext}` : ""), value3: String(rowLabel) })}
                 title={subtext || undefined}
                 className={rowClass(index)}
               >

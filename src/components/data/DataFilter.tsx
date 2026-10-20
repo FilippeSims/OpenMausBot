@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { ArrowLeft, CalendarDays, Check, Columns3, Hash, ListFilter, Search, ToggleLeft, Type } from "lucide-react";
 import type { DataColumn } from "../../../shared/data-surface";
@@ -38,7 +39,7 @@ export function DataFilter({ columns, value, onChange }: { columns: DataColumn[]
     if (event.relatedTarget && !root.current?.contains(event.relatedTarget as Node)) setOpen(false);
   }}>
     <button ref={trigger} type="button" aria-label={t("data.filter.button")} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? id : undefined}
-      title={active ? `${selected}: ${value.text}` : t("data.filter.button")} data-active={active}
+      title={active ? uiText("ui.DataFilter.efae3eb968", { value1: String(selected), value2: String(value.text) }) : t("data.filter.button")} data-active={active}
       onClick={() => { setChoosing(!active); setSearch(""); setOpen(!open); }}
       className={`flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${active ? "border-accent/40 bg-accent/10 text-accent" : "border-hairline/50 text-ink-secondary hover:bg-inset hover:text-ink"}`}>
       <ListFilter size={14} aria-hidden="true" /><span>{t("data.filter.button")}</span>
@@ -58,7 +59,7 @@ export function DataFilter({ columns, value, onChange }: { columns: DataColumn[]
           </button>
           {matches.map((column) => {
             const Icon = isNumericType(column.type) ? Hash : isTemporalType(column.type) ? CalendarDays : /^BOOLEAN$/i.test(column.type) ? ToggleLeft : Type;
-            return <button key={column.name} type="button" data-filter-option aria-label={column.name} title={`${column.name} · ${column.type}`} onClick={() => choose(column.name)}
+            return <button key={column.name} type="button" data-filter-option aria-label={column.name} title={uiText("ui.DataFilter.7c639bc99b", { value1: String(column.name), value2: String(column.type) })} onClick={() => choose(column.name)}
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs hover:bg-inset focus-visible:bg-inset focus-visible:outline-none">
               <Icon size={14} className="shrink-0 text-ink-tertiary" aria-hidden="true" /><span className="min-w-0 flex-1 truncate">{column.name}</span>{value.column === column.name && <Check size={13} aria-hidden="true" />}
             </button>;

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { api, desktopApprovalBridge, persistBotUpdate, persistTaskApproval, type Bot } from "@/state/store";
 import type { Routine } from "./routines";
 import type { BotCreationDraft } from "./bot-creation-draft";
@@ -8,10 +9,10 @@ import { botAvatarUrlFromStoredPath } from "../../shared/bot-avatar";
 export async function preparedBotTemplate(draft: BotCreationDraft) {
   const template = draft.export();
   if (template.profile.avatarUrl?.startsWith("blob:")) {
-    if (!draft.avatarFile) throw new Error("Choose the avatar image again");
+    if (!draft.avatarFile) throw new Error(uiText("ui.create-configured-bot.538f815a48"));
     const uploaded = await imageAttachmentFromFile(draft.avatarFile);
     const avatarUrl = uploaded && botAvatarUrlFromStoredPath(uploaded.path);
-    if (!avatarUrl) throw new Error("Could not store the avatar image");
+    if (!avatarUrl) throw new Error(uiText("ui.create-configured-bot.067267c4e6"));
     template.profile.avatarUrl = avatarUrl;
   }
   return template;
@@ -27,7 +28,7 @@ export async function createConfiguredBot(
 ): Promise<{ bot: Bot; warnings: string[] }> {
   const template = await preparedBotTemplate(draft);
   const { chiefOfStaff, managedSections, toolScope, ...profile } = template.profile;
-  if (!profile.name?.trim()) throw new Error("Give the bot a name");
+  if (!profile.name?.trim()) throw new Error(uiText("ui.create-configured-bot.5ac80cb07f"));
   const preset = draft.preset;
   const response = await request<{ bot: Bot }>("/api/bots", {
     method: "POST", body: JSON.stringify({ name: profile.name, title: profile.title,
@@ -46,14 +47,14 @@ export async function createConfiguredBot(
     bot = { ...bot, ...patched };
     if (profile.approvalMode === "full" || profile.approvalMode === "custom") {
       if (patched.approvalMode !== profile.approvalMode) {
-        throw new Error("The bot's requested approval level was not granted");
+        throw new Error(uiText("ui.create-configured-bot.50678cae54"));
       }
       const granted = await persistTaskApproval(bot.id, bot.threadId, {
         approvalMode: profile.approvalMode,
         acknowledgeLocalAuto: draft.consent.acknowledgeLocalAuto === true,
       }, approvals, request);
       if (granted.approvalMode !== profile.approvalMode) {
-        throw new Error("The initial thread's requested approval level was not granted");
+        throw new Error(uiText("ui.create-configured-bot.89b83ec96b"));
       }
     }
     for (const [path, text] of Object.entries(template.memory)) {
@@ -81,7 +82,7 @@ export async function createConfiguredBot(
     try { await request(`/api/bots/${bot.id}`, { method: "DELETE" }); }
     catch { cleanup.push(`bot ${bot.name} (${bot.id})`); }
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(cleanup.length ? `${message}. Cleanup failed for ${cleanup.join(", ")}; remove them before retrying.` : message);
+    throw new Error(cleanup.length ? uiText("ui.create-configured-bot.292b3bae3b", { value1: String(message), value2: String(cleanup.join(", ")) }) : message);
   }
   // Creation is complete: never delete a bot whose routine may have run, undo a Chief handover, or invite a duplicate retry.
   if (chiefOfStaff) {
@@ -91,12 +92,12 @@ export async function createConfiguredBot(
       });
       bot = { ...bot, ...result.bot };
     } catch (error) {
-      warnings.push(`Review this bot's Chief of Staff setting: ${error instanceof Error ? error.message : String(error)}`);
+      warnings.push(uiText("ui.create-configured-bot.044beaea85", { value1: String(error instanceof Error ? error.message : String(error)) }));
     }
   }
   for (const routine of routines.filter(routine => routine.enabled)) {
     try { await request(`/api/routines/${routine.id}`, { method: "PATCH", body: JSON.stringify({ enabled: true }) }); }
-    catch (error) { warnings.push(`Could not activate a routine: ${error instanceof Error ? error.message : String(error)}`); }
+    catch (error) { warnings.push(uiText("ui.create-configured-bot.94afbe31ff", { value1: String(error instanceof Error ? error.message : String(error)) })); }
   }
   return { bot, warnings };
 }

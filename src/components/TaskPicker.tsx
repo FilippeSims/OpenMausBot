@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Check, ChevronDown, FolderInput, Pencil, Pin, PinOff, Plus, Search, Trash2 } from "lucide-react";
 import { useStore, type Bot, type BotProject, type Group, type Task } from "@/state/store";
@@ -345,10 +346,10 @@ function ConversationTaskPicker({
                     >
                       <div dir="auto" className="truncate text-[13px] text-ink">{task.title}</div>
                       <div className="text-[11px] text-ink-secondary">
-                        {task.activity === "waiting-on-you" ? `${t("task.waiting")} · ` : task.waitingForTeammates ? `${t("task.waitingOnTeammate")} · ` : task.busy ? `${t("chat.activity.working")} · ` : task.unread ? `${t("task.unread")} · ` : ""}
+                        {task.activity === "waiting-on-you" ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.waiting")) }) : task.waitingForTeammates ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.waitingOnTeammate")) }) : task.busy ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("chat.activity.working")) }) : task.unread ? uiText("ui.TaskPicker.210eac6879", { value1: String(uiText("task.unread")) }) : ""}
                         <TaskUpdatedTime task={task} now={now} />
                         <TaskUsage usage={task.usage} />
-                        {opener && ` · ${opener}`}
+                        {opener && uiText("ui.TaskPicker.f6b53f9c8a", { value1: String(opener) })}
                       </div>
                     </button>
                   )}
@@ -380,7 +381,7 @@ function ConversationTaskPicker({
                       onFocus={clearDismiss} onChange={(event) => { clearDismiss(); onMove(task.threadId, event.target.value || null); }}
                       className="absolute inset-0 w-full cursor-pointer opacity-0">
                       <option value="">{t("folder.none")}</option>
-                      {bot.projects?.map((project) => <option key={project.id} value={project.id}>{project.emoji ? `${project.emoji} ` : ""}{project.name}</option>)}
+                      {bot.projects?.map((project) => <option key={project.id} value={project.id}>{project.emoji ? uiText("ui.TaskPicker.05549c141d", { value1: String(project.emoji) }) : ""}{project.name}</option>)}
                     </select>
                   </label>}
                   <button

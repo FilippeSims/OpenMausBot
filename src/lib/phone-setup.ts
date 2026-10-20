@@ -1,3 +1,5 @@
+import { tLiteral } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import type { CompanionAccountState } from "../types/ogb";
 import { t } from "./i18n";
 import type { CompanionEndpoint, CompanionPairingRouteMode } from "./companion-pairing";
@@ -324,7 +326,7 @@ export function companionPairingOpenFailure(
     || !Number.isFinite(pairing.expiresAt)
     || (pairing.expiresAt ?? 0) <= now
   ) {
-    return PAIRING_OPEN_FAILURE_MESSAGE;
+    return tLiteral(PAIRING_OPEN_FAILURE_MESSAGE);
   }
   return null;
 }
@@ -434,7 +436,7 @@ export function normalizePhoneSetupActionError(cause: unknown, fallback: string)
   const message = unwrapped.replace(REQUEST_REFERENCE, "").trim();
   const forbiddenCodeRequest =
     /remote method ['"]companion-account:request-code['"]/i.test(raw)
-    && message.startsWith("The secure connection request was not allowed.");
+    && message.startsWith(uiText("ui.phone-setup.1d21af419b"));
   const publicMessage = !forbiddenCodeRequest
     && PUBLIC_ACCOUNT_MESSAGES.some((pattern) => pattern.test(message))
     ? message

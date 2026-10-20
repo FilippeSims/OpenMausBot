@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import type { Message } from "@/state/store";
 import { splitTranscriptAttachments } from "./composer-attachments";
 import { copyText } from "./copy-text";
@@ -13,7 +15,7 @@ export interface ExportTranscriptOptions {
 
 export function formatExportDate(date: Date): string {
   try {
-    return date.toLocaleString("en-US", {
+    return date.toLocaleString(uiLocale(), {
       dateStyle: "long",
       timeStyle: "short",
     });
@@ -24,7 +26,7 @@ export function formatExportDate(date: Date): string {
 
 export function formatMessageTime(timestamp: number): string {
   try {
-    return new Date(timestamp).toLocaleTimeString("en-US", {
+    return new Date(timestamp).toLocaleTimeString(uiLocale(), {
       hour: "numeric",
       minute: "2-digit",
     });
@@ -60,13 +62,13 @@ export function formatTranscriptMarkdown(options: ExportTranscriptOptions): stri
   const headerTitle = isGroup ? `# Group: ${markdownLabel(title)}` : `# Thread with ${markdownLabel(title)}`;
   const lines: string[] = [
     headerTitle,
-    `_Exported on ${formatExportDate(exportedAt)}_`,
+    uiText("ui.export-transcript.adca33c69b", { value1: String(formatExportDate(exportedAt)) }),
     "",
     "---",
   ];
 
   if (!messages || messages.length === 0) {
-    lines.push("", "_No messages in this conversation yet._");
+    lines.push("", uiText("ui.export-transcript.afa8741fdb"));
     return lines.join("\n");
   }
 
@@ -116,7 +118,7 @@ export function formatTranscriptMarkdown(options: ExportTranscriptOptions): stri
     }
 
     if (message.kind === "screen" && (message.hasImage || message.png)) {
-      messageLines.push("📷 _Screen capture (image not included in Markdown export)._");
+      messageLines.push(uiText("ui.export-transcript.640bae6cab"));
     }
 
     if (messageLines.length > 0) {

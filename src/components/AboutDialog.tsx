@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef } from "react";
 
 import {
@@ -46,27 +47,22 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
         <h2 id="about-dialog-title" className="mt-3 text-[17px] font-semibold text-ink">
           {APP_NAME}
         </h2>
-        <p className="mt-1 text-[13px] text-ink-secondary">
-          Version {appVersion()}
-          {platform ? ` · ${platform}` : ""}
+        <p className="mt-1 text-[13px] text-ink-secondary"> {uiText("teamShare.release")} {appVersion()}
+          {platform ? uiText("ui.AboutDialog.f6b53f9c8a", { value1: String(platform) }) : ""}
         </p>
-        <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
-          An open-source desktop home for your agents. Apache 2.0 licensed.
-        </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">{uiText("ui.AboutDialog.1a6121c782")}</p>
         <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[13px]">
-          <AboutLink href={APP_REPOSITORY} label="GitHub" />
-          <AboutLink href={DOCS_URL} label="Docs" />
-          <AboutLink href={RELEASES_URL} label="Releases" />
-          <AboutLink href={LICENSE_URL} label="License" />
+          <AboutLink href={APP_REPOSITORY} label={uiText("ui.AboutDialog.f911e414cf")} />
+          <AboutLink href={DOCS_URL} label={uiText("ui.AboutDialog.7af023c430")} />
+          <AboutLink href={RELEASES_URL} label={uiText("ui.AboutDialog.1a6f7cae06")} />
+          <AboutLink href={LICENSE_URL} label={uiText("ui.AboutDialog.c011d6097b")} />
         </div>
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
           className="mt-5 w-full rounded-xl bg-raised px-4 py-2 text-[13px] font-medium text-ink hover:brightness-110"
-        >
-          Close
-        </button>
+        >{uiText("cloudAdd.close")}</button>
       </div>
     </div>
   );

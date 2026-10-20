@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from "react";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { ThreadLinkContext } from "@/components/ThreadLinkMenu";
@@ -243,7 +244,7 @@ export function ErrorRow({
   const currentPermissions = missingMacCuaPermissions(capabilities.localComputer.message);
   const macCuaReason = ready && capabilities.host.platform === "darwin" &&
     capabilities.localComputer.available === false && capabilities.localComputer.reasonCode !== "remote-server" &&
-    message.startsWith("CUA Driver is not ready for this computer — ") &&
+    message.startsWith(uiText("ui.ChatView.1efc8a4661")) &&
     failedPermissions.length > 0 && failedPermissions.join(",") === currentPermissions.join(",")
     ? macCuaPermissionMessage(currentPermissions)
     : null;
@@ -266,7 +267,7 @@ export function ErrorRow({
         ) : isProviderSafetyBlock(message) ? (
           <p className="mt-2 text-[12.5px] leading-relaxed text-ink-secondary">
             {PROVIDER_SAFETY_GUIDANCE}{" "}
-            <a href={PROVIDER_SAFETY_HELP_URL} target="_blank" rel="noreferrer" className="underline">About provider safety checks</a>
+            <a href={PROVIDER_SAFETY_HELP_URL} target="_blank" rel="noreferrer" className="underline">{uiText("ui.ChatView.ce520f4ec4")}</a>
           </p>
         ) : setupInstance &&
         !(setupInstance.snapshot.state === "available" && setupInstance.snapshot.authenticated !== false) ? (
@@ -1281,7 +1282,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
             </button>
           )}
           <span role="status" className="sr-only" data-chathead-status>{bot.busy ? t("sidebar.preview.working") : ""}</span>
-          {!bot.busy && bot.waitingForTeammates && <span className="truncate text-[12px] text-ink-secondary" role="status">Teammates working</span>}
+          {!bot.busy && bot.waitingForTeammates && <span className="truncate text-[12px] text-ink-secondary" role="status">{uiText("ui.ChatView.4e25bf7062")}</span>}
           {awayFromMainThread(profile, showThreads) && (
             <button
               type="button"
@@ -1321,7 +1322,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
               "relative rounded-md p-1.5 hover:bg-raised",
               state.computerOpen ? "text-accent" : "text-ink-secondary hover:text-ink",
             )}
-            title={t("chat.computer")} aria-label={busy && place === "browser" ? `${t("chat.computer")}, ${t("place.live")}` : t("chat.computer")}
+            title={t("chat.computer")} aria-label={busy && place === "browser" ? uiText("ui.ChatView.c0c13bfc62", { value1: String(uiText("chat.computer")), value2: String(uiText("place.live")) }) : t("chat.computer")}
           >
             <Monitor size={18} />{busy && place === "browser" && <span aria-hidden="true" className="absolute right-1 top-1 size-1.5 animate-pulse rounded-full bg-success" data-testid="computer-button-live" />}
           </button>
@@ -1559,7 +1560,7 @@ function ChatHeaderMenu({ bot, messages, findOpen, onFind }: {
     } satisfies SidebarMenuItem] : []),
     ...(remoteClient ? [] : [{
       key: "activity",
-      label: "Activity",
+      label: uiText("settings.section.activity"),
       icon: <ListChecks size={16} />,
       active: state.activityOpen,
       separatorBefore: !usage,

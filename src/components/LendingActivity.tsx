@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 
@@ -19,7 +20,7 @@ export function LendingActivityList({ entries }: { entries: DesktopLendingActivi
     {entries && entries.length > 0 && <ul aria-label={t("lending.activity.title")} className="flex max-h-56 flex-col gap-1 overflow-y-auto text-[12px]">
       {entries.map((entry, index) => <li key={`${entry.at}-${index}`} className="flex flex-wrap gap-x-2 text-ink-secondary">
         <time dateTime={new Date(entry.at).toISOString()} className="shrink-0 tabular-nums">{new Date(entry.at).toLocaleString()}</time>
-        <span className={entry.ok ? "text-ink" : "text-danger"}>{t(ACTIONS[entry.action] ?? "lending.action.other")}{entry.ok ? "" : ` · ${t("lending.activity.refused")}`}</span>
+        <span className={entry.ok ? "text-ink" : "text-danger"}>{t(ACTIONS[entry.action] ?? "lending.action.other")}{entry.ok ? "" : uiText("ui.LendingActivity.f6b53f9c8a", { value1: String(uiText("lending.activity.refused")) })}</span>
         {entry.detail && <span dir="auto" className="min-w-0 break-all">{entry.detail}</span>}
       </li>)}
     </ul>}

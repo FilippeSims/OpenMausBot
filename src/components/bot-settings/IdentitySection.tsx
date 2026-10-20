@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
 
@@ -39,7 +40,7 @@ export function IdentitySection({
 
       <div>
         <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <label htmlFor={`bot-name-${bot.id}`} className="text-[13px] text-ink-secondary">Name</label>
+          <label htmlFor={`bot-name-${bot.id}`} className="text-[13px] text-ink-secondary">{uiText("teamShare.name")}</label>
           {draft && <div className="flex flex-wrap gap-1">
             {(["female", "male"] as const).map(kind => <button
               key={kind}
@@ -59,41 +60,38 @@ export function IdentitySection({
           onChange={(e) => patch({ name: e.target.value })}
         />
       </div>
-      <Field label="Title">
+      <Field label={uiText("ui.IdentitySection.7e8cd2056d")}>
         <ProposalStatus bot={bot} kind="chief" />
         <input
           className={inputCls}
           maxLength={BOT_PROFILE_LIMITS.title}
-          placeholder="Describe what your agent does"
+          placeholder={uiText("ui.IdentitySection.9a67f7bf40")}
           value={bot.title}
           onChange={(e) => patch({ title: e.target.value })}
         />
       </Field>
       <div className="block">
         <div className="mb-1.5 flex items-center justify-between gap-3">
-          <label htmlFor={`bot-instructions-${bot.id}`} className="text-[13px] text-ink-secondary">
-            Blurb
-          </label>
+          <label htmlFor={`bot-instructions-${bot.id}`} className="text-[13px] text-ink-secondary">{uiText("ui.IdentitySection.9a7196d27d")}</label>
           <button
             type="button"
             onClick={() => setInstructionsOpen(true)}
             className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11.5px] font-medium text-accent-text hover:bg-accent/10"
           >
-            <BookOpen size={12} /> View full
-          </button>
+            <BookOpen size={12} />{uiText("ui.IdentitySection.763b8be19a")}</button>
         </div>
         <ProposalStatus bot={bot} kind="chief" />
         <textarea
           id={`bot-instructions-${bot.id}`}
           className={cn(inputCls, "min-h-[72px] resize-y leading-relaxed")}
           maxLength={BOT_PROFILE_LIMITS.description}
-          placeholder="One line on what this bot is for"
-          aria-label="Blurb"
+          placeholder={uiText("ui.IdentitySection.f30ead2790")}
+          aria-label={uiText("ui.IdentitySection.9a7196d27d")}
           value={bot.description}
           onChange={(e) => patch({ description: e.target.value })}
         />
         <div className="mt-1.5 flex items-start justify-between gap-3 text-[11px] text-ink-secondary">
-          <span>Shown in rosters, on the phone, and to other bots. Standing instructions belong in Soul, which has room for a full document.</span>
+          <span>{uiText("ui.IdentitySection.7a168c1fc7")}</span>
           {bot.description.length > 3_000 && (
             <span className="shrink-0 tabular-nums">
               {bot.description.length.toLocaleString()} / {BOT_PROFILE_LIMITS.description.toLocaleString()}

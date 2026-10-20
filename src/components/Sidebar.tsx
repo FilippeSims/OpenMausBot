@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
 import { OrganizationIdentity } from "./OrganizationIdentity";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Dispatch } from "react";
@@ -1267,7 +1268,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
                 <title>{(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))}</title>
               </Crown>
             )}
-            {title && !renaming && <span className="sr-only">{`, ${title}`}</span>}
+            {title && !renaming && <span className="sr-only">{uiText("ui.Sidebar.c4ab2248b9", { value1: String(title) })}</span>}
             {onLiveCall && !iconOnly && !renaming && (
               <Phone className="size-3 shrink-0 text-success" role="img" aria-label={t("call.live.badge")} data-testid="live-call-badge">
                 <title>{t("call.live.badge")}</title>
@@ -1328,7 +1329,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           !renaming && iconOnly
             ? deleting
               ? t("sidebar.bot.deletingAria", { name: bot.name })
-              : `${bot.name}${bot.title?.trim() ? ` · ${bot.title.trim()}` : ""}${bot.chiefOfStaff ? ` · ${(bot.globalChief ? t("globalChief.title") : t("sidebar.bot.chiefOfStaff"))}` : ""}${onLiveCall ? ` · ${t("call.live.badge")}` : ""}${waiting ? ` · ${t("sidebar.preview.waiting")}` : working ? ` · ${t("chat.activity.working")}` : teammateWait ? ` · ${t("sidebar.preview.waitingOnTeammate")}` : queued ? ` · ${t("task.queued")}` : ""}${unread ? ` · ${t("task.unread")}` : ""}`
+              : uiText("ui.Sidebar.72597edc60", { value1: String(bot.name), value2: String(bot.title?.trim() ? ` · ${bot.title.trim()}` : ""), value3: String(bot.chiefOfStaff ? ` · ${(bot.globalChief ? uiText("globalChief.title") : uiText("sidebar.bot.chiefOfStaff"))}` : ""), value4: String(onLiveCall ? ` · ${uiText("call.live.badge")}` : ""), value5: String(waiting ? ` · ${uiText("sidebar.preview.waiting")}` : working ? ` · ${uiText("chat.activity.working")}` : teammateWait ? ` · ${uiText("sidebar.preview.waitingOnTeammate")}` : queued ? ` · ${uiText("task.queued")}` : ""), value6: String(unread ? ` · ${uiText("task.unread")}` : "") })
             : undefined
         }
         aria-busy={deleting || undefined}
@@ -2342,7 +2343,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                   />
                 )}
                 {collapsed && queued.length > 0 && <button type="button" onClick={() => toggleSection(id)}
-                  title={`${t("task.queued")} · ${queued.join(", ")}`} aria-label={`${t("sidebar.section.expand", { name: sectionLabel(id) })} · ${t("task.queued")} · ${queued.join(", ")}`}
+                  title={uiText("ui.Sidebar.7c639bc99b", { value1: String(uiText("task.queued")), value2: String(queued.join(", ")) })} aria-label={uiText("ui.Sidebar.c7897910bf", { value1: String(uiText("sidebar.section.expand", { name: sectionLabel(id) })), value2: String(uiText("task.queued")), value3: String(queued.join(", ")) })}
                   className="mx-3 mb-1 inline-flex h-7 items-center self-start rounded-full bg-raised/50 px-3 text-[13px] font-medium leading-4 text-ink-secondary hover:text-ink">{t("task.queued")} · {queued.length}</button>}
                 {!collapsed && (
                   <>

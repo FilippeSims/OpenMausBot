@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Check, TerminalSquare } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
@@ -72,9 +73,7 @@ export function AgentChat({ playing, onCue, onEnded, label }: SceneProps) {
           <div className="animate-rise max-w-[300px] rounded-2xl rounded-br-md bg-bubble-user px-3.5 py-2.5 text-[13px] leading-snug text-ink shadow-md shadow-black/15">
             {ASK}
           </div>
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-raised text-[11px] font-semibold text-ink">
-            You
-          </div>
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-raised text-[11px] font-semibold text-ink">{uiText("sidebar.profile.you")}</div>
         </div>
 
         <div className="flex items-start gap-2.5">
@@ -109,7 +108,7 @@ export function AgentChat({ playing, onCue, onEnded, label }: SceneProps) {
                 >
                   {done ? <Check size={11} strokeWidth={3} /> : <TerminalSquare size={11} />}
                   <code className="font-mono">pnpm test</code>
-                  <span>{done ? "passed" : "running…"}</span>
+                  <span>{done ? uiText("ui.AgentChat.284d1e8c49") : uiText("ui.AgentChat.14aae16025")}</span>
                 </div>
                 <p className="text-[13px] leading-relaxed text-ink">
                   {REPLY.slice(0, shown)}

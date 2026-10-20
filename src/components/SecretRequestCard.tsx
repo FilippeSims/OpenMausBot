@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useState, type FormEvent } from "react";
 import { ExternalLink, KeyRound, Loader2, LockKeyhole, RefreshCw, X } from "lucide-react";
 
@@ -34,25 +35,25 @@ export function SecretRequestCard({
   const superseded = secret.superseded === true;
   const stopped = secret.stopped === true;
   const description = superseded
-    ? "This request was replaced by a newer one for the same key. Use the newest card to provide it."
+    ? uiText("ui.SecretRequestCard.8982f2675c")
     : provided
     ? stopped
-      ? "Saved securely."
+      ? uiText("ui.SecretRequestCard.8bc5fecf4f")
       : secret.resumed
-      ? "Saved securely. Your bot is continuing the task."
-      : "Saved securely. Your bot will continue when its current turn settles."
+      ? uiText("ui.SecretRequestCard.72db226235")
+      : uiText("ui.SecretRequestCard.abbae01350")
     : declined
-      ? "You chose not to provide this credential. OpenMausBot could not resume the bot yet."
+      ? uiText("ui.SecretRequestCard.e7c08aaef1")
       : secret.description;
   const footerLabel = stopped
     ? "Stopped"
     : declined
-    ? "Continuing without this credential failed"
+    ? uiText("ui.SecretRequestCard.5562e3bf9e")
     : secret.resumed
-      ? "Bot resumed without seeing the key"
+      ? uiText("ui.SecretRequestCard.de0082cdde")
       : error
-        ? "The key is safe; resuming failed"
-        : "Waiting to resume safely";
+        ? uiText("ui.SecretRequestCard.ac5bb565ee")
+        : uiText("ui.SecretRequestCard.7e6667ee99");
 
   if (declined && (secret.resumed || !error)) return null;
 
@@ -122,7 +123,7 @@ export function SecretRequestCard({
     return (
       <AskSettledLine icon={<X size={13} />} ariaLabel={secret.label}>
         <span className="text-ink-secondary" title={description}>{secret.label}</span>
-        <span> · Superseded by a newer request</span>
+        <span> {uiText("ui.SecretRequestCard.00fb2748eb")}</span>
       </AskSettledLine>
     );
   }
@@ -131,7 +132,7 @@ export function SecretRequestCard({
     return (
       <AskSettledLine icon={<X size={13} />} ariaLabel={secret.label}>
         <span className="text-ink-secondary" title={secret.description}>{secret.label}</span>
-        <span> · Stopped</span>
+        <span> {uiText("ui.SecretRequestCard.b20e0db71b")}</span>
       </AskSettledLine>
     );
   }
@@ -139,9 +140,7 @@ export function SecretRequestCard({
   if (provided || declined) {
     const retry = !secret.resumed && !stopped && error ? (
       <button type="button" onClick={() => void retryResume()} disabled={saving} className={cn(ASK_QUIET_BUTTON, "text-accent-text")}>
-        {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-        Try again
-      </button>
+        {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} {uiText("cloudAdd.tryAgain")} </button>
     ) : undefined;
     return (
       <AskSettledLine
@@ -156,7 +155,7 @@ export function SecretRequestCard({
         action={retry}
         detail={error && <p role="alert" className="ms-[19px] mt-1 text-[12px] text-danger">{error}</p>}
       >
-        <span className="text-ink-secondary" title={description}>{provided ? `${secret.label} saved securely` : secret.label}</span>
+        <span className="text-ink-secondary" title={description}>{provided ? uiText("ui.SecretRequestCard.ad24c972e3", { value1: String(secret.label) }) : secret.label}</span>
         <span className={declined ? "text-danger" : undefined}> · {footerLabel}</span>
       </AskSettledLine>
     );
@@ -169,12 +168,10 @@ export function SecretRequestCard({
       title={secret.label}
       explanation={description}
       onDismiss={dismiss}
-      dismissLabel="Not now"
+      dismissLabel={uiText("notice.notNow")}
     >
       {remoteClient ? (
-        <div className="text-[12.5px] leading-relaxed text-ink-secondary">
-          This key must be saved on the host computer. Open this conversation on the host to continue securely.
-        </div>
+        <div className="text-[12.5px] leading-relaxed text-ink-secondary">{uiText("ui.SecretRequestCard.4131ed5ca9")}</div>
       ) : (
         <form onSubmit={(event) => void save(event)}>
           <div className="flex flex-wrap gap-2">
@@ -192,20 +189,18 @@ export function SecretRequestCard({
             />
             <button type="submit" disabled={saving || (!value.trim() && !savedLocally)} className={ASK_PRIMARY_BUTTON}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : <LockKeyhole size={14} />}
-              {savedLocally ? "Continue task" : "Save securely"}
+              {savedLocally ? uiText("connectors.card.continueTask") : uiText("ui.SecretRequestCard.ad3d969914")}
             </button>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-tertiary">
             <span className="flex items-center gap-1">
-              <LockKeyhole size={11} /> Stored securely by OpenMausBot and never added to chat.
-            </span>
+              <LockKeyhole size={11} />{uiText("ui.SecretRequestCard.d1d11c92bc")}</span>
             <a
               href={secret.helpUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-accent-text hover:underline"
-            >
-              Where to get this key <ExternalLink size={11} />
+            > {uiText("ui.SecretRequestCard.781804712b")} <ExternalLink size={11} />
             </a>
           </div>
         </form>

@@ -1,3 +1,5 @@
+import { desktopText } from "./desktop-i18n.mjs";
+
 // Retain the Windows notification-area identity across app restarts.
 export function createSystemTray({ Tray, Menu, nativeImage, iconPath, getWindow, onQuit }) {
   const tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: 20, height: 20 }),
@@ -14,15 +16,17 @@ export function createSystemTray({ Tray, Menu, nativeImage, iconPath, getWindow,
     return true;
   };
   tray.setToolTip("OpenMaus Bot");
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: "Open OpenMaus Bot", click: show },
+  const refreshLanguage = () => tray.setContextMenu(Menu.buildFromTemplate([
+    { label: desktopText("Open OpenMausBot"), click: show },
     { type: "separator" },
-    { label: "Quit OpenMaus Bot", click: onQuit },
+    { label: desktopText("Quit OpenMausBot"), click: onQuit },
   ]));
+  refreshLanguage();
   tray.on("click", show);
   tray.on("double-click", show);
   return {
     show,
+    refreshLanguage,
     hide(win) { hidden = true; win.setSkipTaskbar(true); win.hide(); },
     isHidden() { return hidden; },
     windowShown(win) { hidden = false; win.setSkipTaskbar(false); },

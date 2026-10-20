@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { t } from "./i18n";
 
 export const GLOBAL_CHIEF_MAP_KEY = "\u0000global";
@@ -109,10 +110,10 @@ export function buildTeamMapEdges(bots: TeamMapBot[], snapshot: TeamMapSnapshot)
 }
 
 export function teamMapStatus(bot: TeamMapBot): TeamMapStatus {
-  if (bot.activity === "waiting-on-you") return { label: "Waiting for you", tone: "warning" };
-  if (bot.activity === "dead" || bot.activity === "no-signal") return { label: "No signal", tone: "danger" };
-  if (bot.busy || bot.activity === "working") return { label: "Working", tone: "success" };
-  return { label: "Ready", tone: "idle" };
+  if (bot.activity === "waiting-on-you") return { label: uiText("ui.team-map.9f760ab207"), tone: "warning" };
+  if (bot.activity === "dead" || bot.activity === "no-signal") return { label: uiText("ui.team-map.5ea2abdbce"), tone: "danger" };
+  if (bot.busy || bot.activity === "working") return { label: uiText("chat.activity.working"), tone: "success" };
+  return { label: uiText("model.ready"), tone: "idle" };
 }
 
 export function teamMapBotCount(count: number): string {

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import {
   CheckCircle2,
   CircleAlert,
@@ -14,14 +15,14 @@ import type { GroupGoalRunCardData } from "../../shared/group-goal-run";
 const DETAIL_LIMIT = 280;
 
 const COPY = {
-  working: { label: "Working", tone: "text-accent", border: "border-accent/30" },
-  completed: { label: "Completed", tone: "text-success", border: "border-success/30" },
-  "needs-input": { label: "Needs your input", tone: "text-warning", border: "border-warning/35" },
-  blocked: { label: "Blocked", tone: "text-warning", border: "border-warning/35" },
-  "limit-reached": { label: "Turn limit reached", tone: "text-warning", border: "border-warning/35" },
-  paused: { label: "Paused", tone: "text-warning", border: "border-warning/35" },
-  stopped: { label: "Stopped", tone: "text-ink-secondary", border: "border-hairline/45" },
-  failed: { label: "Failed", tone: "text-danger", border: "border-danger/35" },
+  working: { get label() { return uiText("chat.activity.working"); }, tone: "text-accent", border: "border-accent/30" },
+  completed: { get label() { return uiText("toolDetail.completed"); }, tone: "text-success", border: "border-success/30" },
+  "needs-input": { get label() { return uiText("routines.goal.needs-input"); }, tone: "text-warning", border: "border-warning/35" },
+  blocked: { get label() { return uiText("routines.goal.blocked"); }, tone: "text-warning", border: "border-warning/35" },
+  "limit-reached": { get label() { return uiText("routines.goal.limit-reached"); }, tone: "text-warning", border: "border-warning/35" },
+  paused: { get label() { return uiText("vm.state.paused"); }, tone: "text-warning", border: "border-warning/35" },
+  stopped: { get label() { return uiText("chat.turnStopped"); }, tone: "text-ink-secondary", border: "border-hairline/45" },
+  failed: { get label() { return uiText("toolDetail.failed"); }, tone: "text-danger", border: "border-danger/35" },
 } satisfies Record<
   GroupGoalRunCardData["status"],
   { label: string; tone: string; border: string }
@@ -72,7 +73,7 @@ export function GoalRunCard({ message }: { message: Message }) {
 
   return (
     <section
-      aria-label={`Goal run: ${copy.label}`}
+      aria-label={uiText("ui.GoalRunCard.691f745a6b", { value1: String(copy.label) })}
       className={cn("w-full max-w-[680px] rounded-2xl border bg-card px-3.5 py-3 shadow-sm", copy.border)}
     >
       <div className="flex items-start gap-3">
@@ -81,14 +82,14 @@ export function GoalRunCard({ message }: { message: Message }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <h3 className="truncate text-[13.5px] font-semibold text-ink">{goal || "Group goal"}</h3>
+            <h3 className="truncate text-[13.5px] font-semibold text-ink">{goal || uiText("ui.GoalRunCard.184d22153e")}</h3>
             <span aria-live="polite" className={cn("text-[11.5px] font-medium", copy.tone)}>
               {copy.label}
             </span>
           </div>
           {detail && <p className="mt-1 line-clamp-2 text-[12.5px] leading-relaxed text-ink-secondary">{detail}</p>}
           <p className="mt-1 text-[11.5px] text-ink-tertiary">
-            {run.coordinatorName} coordinating · {turns}
+            {run.coordinatorName} {uiText("ui.GoalRunCard.4aecc0ffd1")} {turns}
           </p>
         </div>
       </div>

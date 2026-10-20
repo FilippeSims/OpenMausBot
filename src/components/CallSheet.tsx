@@ -1,3 +1,5 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import { useMemo, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AudioLines, Check, Minus, X } from "lucide-react";
@@ -59,7 +61,7 @@ export function CallLineItem({ line, busy }: { line: CallRecordLine; busy: boole
       </span>
       <span className="min-w-0 truncate">
         {lineText(line)}
-        {status && <span className="sr-only">{` (${status})`}</span>}
+        {status && <span className="sr-only">{uiText("ui.CallSheet.65de8fe226", { value1: String(status) })}</span>}
       </span>
     </li>
   );
@@ -99,7 +101,7 @@ export function CallSheet({ message, transcript, botName, threadId, busy, partia
   const blocks = useMemo(() => (callId === undefined ? [] : blocksOf(callConversation(transcript, callId))), [transcript, callId]);
   if (!call) return null;
   const title = call.title?.trim() || t("chat.callRecord.title", { name: botName });
-  const when = new Date(call.startedAt || call.endedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const when = new Date(call.startedAt || call.endedAt).toLocaleString(uiLocale(), { dateStyle: "medium", timeStyle: "short" });
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 sm:p-6"
@@ -122,7 +124,7 @@ export function CallSheet({ message, transcript, botName, threadId, busy, partia
               <span>{t("chat.callSheet.kicker")}</span>
             </div>
             <h2 id="call-sheet-title" className="mt-0.5 truncate text-[16px] font-semibold">{title}</h2>
-            <p className="mt-0.5 text-[12.5px] tabular-nums text-ink-secondary">{`${formatCallDuration(call.seconds)} · ${when}`}</p>
+            <p className="mt-0.5 text-[12.5px] tabular-nums text-ink-secondary">{uiText("ui.CallSheet.7c639bc99b", { value1: String(formatCallDuration(call.seconds)), value2: String(when) })}</p>
           </div>
           <button
             type="button"

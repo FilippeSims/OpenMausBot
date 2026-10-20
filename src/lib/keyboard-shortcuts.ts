@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { SendKey } from "./send-key";
 
 export interface ShortcutItem {
@@ -18,31 +19,31 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     items: [
       {
         id: "command-palette",
-        description: "Open command palette (switcher & transcript search)",
+        get description() { return uiText("ui.keyboard-shortcuts.f29c774ad3"); },
         macKeys: ["⌘", "K"],
         winKeys: ["Ctrl", "K"],
       },
       {
         id: "new-bot",
-        description: "Create a new bot",
+        get description() { return uiText("ui.keyboard-shortcuts.163441c227"); },
         macKeys: ["⌘", "N"],
         winKeys: ["Ctrl", "N"],
       },
       {
         id: "jump-bot",
-        description: "Jump to bot 1–9 in the roster",
+        get description() { return uiText("ui.keyboard-shortcuts.403908ee0b"); },
         macKeys: ["⌘", "1–9"],
         winKeys: ["Ctrl", "1–9"],
       },
       {
         id: "switch-bot",
-        description: "Switch to previous / next bot",
+        get description() { return uiText("ui.keyboard-shortcuts.7a255372e7"); },
         macKeys: ["⌘", "⇧", "[ / ]"],
         winKeys: ["Ctrl", "Shift", "[ / ]"],
       },
       {
         id: "find-conversation",
-        description: "Find in conversation",
+        get description() { return uiText("chat.find"); },
         macKeys: ["⌘", "F"],
         winKeys: ["Ctrl", "F"],
       },
@@ -53,31 +54,31 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     items: [
       {
         id: "send-message",
-        description: "Send message",
+        get description() { return uiText("composer.send.message"); },
         macKeys: ["Return"],
         winKeys: ["Enter"],
       },
       {
         id: "new-line",
-        description: "Insert new line without sending",
+        get description() { return uiText("ui.keyboard-shortcuts.3ac14e0db4"); },
         macKeys: ["⇧", "Return"],
         winKeys: ["Shift", "Enter"],
       },
       {
         id: "edit-last-message",
-        description: "Edit last message (when composer is empty)",
+        get description() { return uiText("ui.keyboard-shortcuts.74651c7ee5"); },
         macKeys: ["↑"],
         winKeys: ["↑"],
       },
       {
         id: "close-panel",
-        description: "Close active drawer, modal, or find bar",
+        get description() { return uiText("ui.keyboard-shortcuts.8b1df2f04c"); },
         macKeys: ["Esc"],
         winKeys: ["Esc"],
       },
       {
         id: "shortcuts-cheat-sheet",
-        description: "Show keyboard shortcuts cheat sheet",
+        get description() { return uiText("ui.keyboard-shortcuts.904ba9f337"); },
         macKeys: ["⌘", "/"],
         winKeys: ["Ctrl", "/"],
       },
@@ -88,13 +89,13 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     items: [
       {
         id: "live-call-mute",
-        description: "Mute or unmute a Live call",
+        get description() { return uiText("ui.keyboard-shortcuts.ecd34ed4f5"); },
         macKeys: ["⌘", "⇧", "M"],
         winKeys: ["Ctrl", "Shift", "M"],
       },
       {
         id: "live-call-hang-up",
-        description: "Hang up a Live call",
+        get description() { return uiText("ui.keyboard-shortcuts.1df22fbd09"); },
         macKeys: ["⌘", "⇧", "H"],
         winKeys: ["Ctrl", "Shift", "H"],
       },
@@ -105,13 +106,13 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     items: [
       {
         id: "save-bulletin",
-        description: "Save group instruction changes",
+        get description() { return uiText("ui.keyboard-shortcuts.4eeecdeb90"); },
         macKeys: ["⌘", "Return"],
         winKeys: ["Ctrl", "Enter"],
       },
       {
         id: "reorder-section",
-        description: "Reorder sidebar sections (focus a section heading)",
+        get description() { return uiText("ui.keyboard-shortcuts.19545e052b"); },
         macKeys: ["⌥", "↑ / ↓"],
         winKeys: ["Alt", "↑ / ↓"],
       },

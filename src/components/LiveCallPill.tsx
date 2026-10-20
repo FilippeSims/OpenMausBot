@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { Mic, MicOff, Phone, PhoneOff } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
@@ -40,7 +41,7 @@ export function LiveCallPill({ onOpen, currentBotId, iconOnly = false }: {
       aria-label={muteLabel}
       aria-pressed={media.muted}
       aria-keyshortcuts={muteChord.aria}
-      title={`${muteLabel} (${muteChord.text})`}
+      title={uiText("ui.LiveCallPill.48e56a2411", { value1: String(muteLabel), value2: String(muteChord.text) })}
       onClick={() => setLiveMuted(!media.muted)}
       className={cn(round, media.muted ? "bg-raised text-ink" : "text-ink-secondary hover:text-ink")}
     >
@@ -53,7 +54,7 @@ export function LiveCallPill({ onOpen, currentBotId, iconOnly = false }: {
       disabled={ending}
       aria-label={t("call.live.hangUp")}
       aria-keyshortcuts={hangUpChord.aria}
-      title={`${t("call.live.hangUp")} (${hangUpChord.text})`}
+      title={uiText("ui.LiveCallPill.48e56a2411", { value1: String(uiText("call.live.hangUp")), value2: String(hangUpChord.text) })}
       onClick={() => void hangUpLiveCall()}
       className={cn(round, "bg-danger text-white hover:brightness-110 disabled:opacity-60")}
     >

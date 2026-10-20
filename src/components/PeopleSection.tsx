@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 // Security: the invite link is convenience, not a second door; the one-time code still goes to the address itself.
 import { useCallback, useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, Link2, Loader2, Plus, RefreshCw, X } from "lucide-react";
@@ -120,7 +121,7 @@ export function PeopleTable({ people, busy, onRole, onRemove, onLink, readOnly =
           </span>
           <span className="text-right tabular-nums text-ink-secondary">{person.isDomain ? "—" : lastSeenLabel(person.lastSeenAt)}</span>
           <span className="text-right tabular-nums text-ink" title={t("people.turns", { turns: String(person.turns) })}>
-            {hasFiniteCost(person.costUsd) ? `${person.estimated ? "~" : ""}${formatUsd(person.costUsd)}` : "—"}
+            {hasFiniteCost(person.costUsd) ? uiText("ui.PeopleSection.9989fa2d2c", { value1: String(person.estimated ? "~" : ""), value2: String(formatUsd(person.costUsd)) }) : "—"}
           </span>
           {readOnly ? <span /> : <span className="flex items-center justify-end gap-2 text-[12px]">
             <button type="button" disabled={busy} onClick={() => onLink(person)} aria-label={t("people.link")} title={t("people.link")} className="rounded-md p-1 text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"><Link2 size={13} /></button>

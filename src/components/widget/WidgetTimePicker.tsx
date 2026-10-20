@@ -1,3 +1,4 @@
+import { activeLocale as uiLocale } from "@/lib/i18n";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Clock, X } from "lucide-react";
@@ -39,12 +40,16 @@ export function widgetTimeSlots(node: WidgetNode, held = ""): string[] {
   return slots;
 }
 
+let formatLocale = "";
 let format: Intl.DateTimeFormat | undefined;
 
 export function widgetTimeLabel(time: string): string {
   const minutes = minutesOf(time);
   if (minutes === undefined) return time;
-  format ??= new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+  if (!format || formatLocale !== uiLocale()) {
+    formatLocale = uiLocale();
+    format = new Intl.DateTimeFormat(formatLocale, { hour: "numeric", minute: "2-digit" });
+  }
   return format.format(new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60));
 }
 

@@ -1,16 +1,17 @@
+import { t as uiText } from "@/lib/i18n";
 export type CallCapabilityHelp = {
   label: string;
   reason: string;
 };
 
 const TURNS_NEED_MAC: CallCapabilityHelp = {
-  label: "Calls where you take turns need the Mac app",
-  reason: "They listen with on-device speech recognition, which only the Mac app has.",
+  get label() { return uiText("ui.call-capability.d4f9c9b487"); },
+  get reason() { return uiText("ui.call-capability.3eb8eda104"); },
 };
 
 const TURNS_ON_THIS_COMPUTER: CallCapabilityHelp = {
-  label: "Calls where you take turns work on This computer",
-  reason: "They listen with your Mac's own speech recognition, which only This computer can use.",
+  get label() { return uiText("ui.call-capability.fef2e15e27"); },
+  get reason() { return uiText("ui.call-capability.4d181ddc4a"); },
 };
 
 export function callCapabilityHelp(
@@ -26,15 +27,15 @@ export function callCapabilityHelp(
         return TURNS_NEED_MAC;
       default:
         return {
-          label: "Calls aren't available on this device",
-          reason: "This device doesn't currently provide the on-device speech recognition needed for calls.",
+          label: uiText("ui.call-capability.1ebe33ecf7"),
+          reason: uiText("ui.call-capability.50439a92f7"),
         };
     }
   }
   if (!speechServiceAvailable) {
     return {
-      label: "The call service is unavailable",
-      reason: "The speech service is unavailable in this app build. Restart or update OpenMausBot.",
+      label: uiText("ui.call-capability.61aef0b7da"),
+      reason: uiText("ui.call-capability.25f2a4d344"),
     };
   }
   return null;

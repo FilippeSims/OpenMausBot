@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { api, BotEditorStore, useStore, type Bot, type ModelSelection } from "@/state/store";
@@ -243,9 +244,8 @@ function DraftSection({ active, draft, defaultsMode }: { active: Section; draft:
     <StartingRole draft={draft} defaultsMode={defaultsMode} />
     <IdentitySection bot={bot} patch={derived.patch} activeState={derived.activeState} mascotMotion={null}
       namePlaceholder={defaultsMode ? t("newBot.randomName") : undefined} />
-    <label className="block text-[13px] text-ink-secondary">Team
-      <Select size="lg" className="mt-1.5 w-full" value={bot.section ?? ""} onChange={event => draft.patch({ section: event.target.value })}>
-        <option value="">General</option>{[...new Set([...(state.sections ?? []), ...state.bots.map(bot => bot.section ?? "")])].filter(Boolean).map(name => <option key={name}>{name}</option>)}
+    <label className="block text-[13px] text-ink-secondary">{uiText("ui.NewBotDialog.5985039f10")} <Select size="lg" className="mt-1.5 w-full" value={bot.section ?? ""} onChange={event => draft.patch({ section: event.target.value })}>
+        <option value="">{uiText("settings.section.general")}</option>{[...new Set([...(state.sections ?? []), ...state.bots.map(bot => bot.section ?? "")])].filter(Boolean).map(name => <option key={name}>{name}</option>)}
       </Select>
     </label>
   </div>;
@@ -332,13 +332,13 @@ function DraftMemory({ draft }: { draft: BotCreationDraft }) {
   const [path, setPath] = useState("MEMORY.md");
   const [name, setName] = useState("");
   return <div className="space-y-3">
-    <Select size="lg" className="w-full" aria-label="Memory file" value={path} onChange={event => setPath(event.target.value)}>
+    <Select size="lg" className="w-full" aria-label={uiText("ui.NewBotDialog.fef152fc66")} value={path} onChange={event => setPath(event.target.value)}>
       {[...new Set(["MEMORY.md", ...Object.keys(draft.template.memory)])].map(file => <option key={file}>{file}</option>)}
     </Select>
-    <textarea className={cn(inputCls, "min-h-72 font-mono")} aria-label="Memory contents" value={draft.template.memory[path] ?? ""} onChange={event => draft.setMemory(path, event.target.value)} />
-    <div className="flex gap-2"><input className={inputCls} aria-label="New memory topic" placeholder="Topic name" value={name} onChange={event => setName(event.target.value)} />
-      <button type="button" aria-label="Add memory topic" disabled={!/^[a-zA-Z0-9_-]+$/.test(name)} className="rounded-lg bg-control px-3 disabled:opacity-40" onClick={() => { const next = `memory/${name}.md`; if (!(next in draft.template.memory)) draft.setMemory(next, ""); setPath(next); setName(""); }}><Plus size={16} /></button>
-      {path !== "MEMORY.md" && <button type="button" aria-label="Remove memory topic" className="rounded-lg bg-control px-3" onClick={() => { draft.setMemory(path, null); setPath("MEMORY.md"); }}><Trash2 size={16} /></button>}
+    <textarea className={cn(inputCls, "min-h-72 font-mono")} aria-label={uiText("ui.NewBotDialog.77cffd018d")} value={draft.template.memory[path] ?? ""} onChange={event => draft.setMemory(path, event.target.value)} />
+    <div className="flex gap-2"><input className={inputCls} aria-label={uiText("ui.NewBotDialog.553e9569c7")} placeholder={uiText("ui.NewBotDialog.c05cbe5c78")} value={name} onChange={event => setName(event.target.value)} />
+      <button type="button" aria-label={uiText("ui.NewBotDialog.da1447a5e2")} disabled={!/^[a-zA-Z0-9_-]+$/.test(name)} className="rounded-lg bg-control px-3 disabled:opacity-40" onClick={() => { const next = `memory/${name}.md`; if (!(next in draft.template.memory)) draft.setMemory(next, ""); setPath(next); setName(""); }}><Plus size={16} /></button>
+      {path !== "MEMORY.md" && <button type="button" aria-label={uiText("ui.NewBotDialog.71a83809e5")} className="rounded-lg bg-control px-3" onClick={() => { draft.setMemory(path, null); setPath("MEMORY.md"); }}><Trash2 size={16} /></button>}
     </div>
   </div>;
 }
@@ -349,8 +349,8 @@ function DraftRoutines({ draft }: { draft: BotCreationDraft }) {
     <button type="button" className="rounded-lg bg-accent px-3 py-2 text-[13px] text-white" onClick={() => setEditing("new")}>{t("computer.routines.create")}</button>
     {draft.routines.map(routine => <div key={routine.id} className="flex items-center gap-2 rounded-lg bg-card p-3">
       <button type="button" className="min-w-0 flex-1 text-left text-[13px]" onClick={() => setEditing(routine)}>{routine.name}</button>
-      <label className="flex items-center gap-1.5 text-[12px] text-ink-secondary"><input type="checkbox" checked={routine.enabled} onChange={event => draft.setRoutineEnabled(routine.id, event.target.checked)} />Enabled</label>
-      <button type="button" aria-label={`Remove ${routine.name}`} onClick={() => draft.removeRoutine(routine.id)} className="rounded p-1.5 hover:bg-control"><Trash2 size={15} /></button>
+      <label className="flex items-center gap-1.5 text-[12px] text-ink-secondary"><input type="checkbox" checked={routine.enabled} onChange={event => draft.setRoutineEnabled(routine.id, event.target.checked)} />{uiText("hindsight.enabled")}</label>
+      <button type="button" aria-label={uiText("ui.NewBotDialog.0ab4d0cee3", { value1: String(routine.name) })} onClick={() => draft.removeRoutine(routine.id)} className="rounded p-1.5 hover:bg-control"><Trash2 size={15} /></button>
     </div>)}
     {editing && <RoutineEditor routine={editing === "new" ? undefined : editing} bots={[draft.bot]} lockedBotId={draft.id} onClose={() => setEditing(null)} />}
   </div>;

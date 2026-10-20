@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { AudioLines, ChevronRight } from "lucide-react";
 
@@ -43,7 +44,7 @@ export function CallRecordRow({ message, transcript, botName, threadId, busy, ha
         >
           <AudioLines size={14} aria-hidden="true" className="shrink-0 text-accent" />
           <span className="min-w-0 truncate font-medium text-ink">{title}</span>
-          <span className="shrink-0 tabular-nums">{`· ${duration}`}</span>
+          <span className="shrink-0 tabular-nums">{uiText("ui.CallRecordRow.d610afc356", { value1: String(duration) })}</span>
           <ChevronRight size={13} aria-hidden="true" className="-mr-1 shrink-0 text-ink-tertiary" />
         </button>
         {lines.length > 0 && (

@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { ArrowRight, BookOpen, Brain, Crown, MessageCircle, Minus, Monitor, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { api, openBot, useStore, type Bot } from "@/state/store";
@@ -60,7 +61,7 @@ function BotCard({ bot, selected, moving, connected, onComputer, onArrange }: {
       </span>}
       {selected && onComputer && <button className={cn(iconButton, "size-8")} aria-label={t("canvas.botComputer", { name: bot.name })} title={t("computer.tab.computer")}
         onClick={() => onComputer(bot)}><Monitor size={13} /></button>}
-      <button aria-label={t("canvas.changeModel", { name: bot.name })} title={`${t("canvas.defaultModel")}: ${model}`}
+      <button aria-label={t("canvas.changeModel", { name: bot.name })} title={uiText("ui.TeamCanvas.efae3eb968", { value1: String(uiText("canvas.defaultModel")), value2: String(model) })}
         onClick={() => dispatch({ type: "toggleSettings", botId: bot.id, section: "model", open: true })}
         className="ml-auto flex h-8 min-w-0 max-w-[130px] items-center gap-1.5 rounded-md px-2 text-[10px] text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
         <span className="flex size-3.5 shrink-0 items-center justify-center">{instance
@@ -378,7 +379,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
               }}>
               <h2 className="truncate text-[13px] font-semibold tracking-tight">{section.name}</h2>
             </button>
-            {computer && <button aria-label={t("canvas.teamComputer", { team: section.name, name: computer.name })} title={`${computer.name}${computer.state ? ` · ${computer.state}` : ""}`}
+            {computer && <button aria-label={t("canvas.teamComputer", { team: section.name, name: computer.name })} title={uiText("ui.TeamCanvas.9989fa2d2c", { value1: String(computer.name), value2: String(computer.state ? ` · ${computer.state}` : "") })}
               disabled={!onTeamComputer} onClick={() => onTeamComputer?.(section.key)}
               className="flex min-w-0 max-w-[120px] shrink items-center gap-1.5 rounded-md px-1.5 py-2 text-[10px] text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none">
               <Monitor size={12} className="shrink-0" /><span className="truncate">{computer.name}</span>
@@ -399,7 +400,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
               }}>
                 <button className={menuButton} onClick={() => onEditTeam(section.key)} aria-label={t("team.moveTo", { name: section.name })}><Users size={14} />{t("team.moveTo", { name: section.name })}</button>
                 <button className={menuButton} onClick={() => onInstructions(section.key, section.name)} aria-label={t("team.instructionsEdit", { name: section.name })}><BookOpen size={14} />{t("team.instructions")}</button>
-                {onMemory && <button className={menuButton} onClick={() => onMemory(section.key, section.name)} aria-label={`${section.name} team memory`}><Brain size={14} />Team memory</button>}
+                {onMemory && <button className={menuButton} onClick={() => onMemory(section.key, section.name)} aria-label={uiText("ui.TeamCanvas.68837b2397", { value1: String(section.name) })}><Brain size={14} />{uiText("ui.TeamCanvas.97daaf749c")}</button>}
                 {section.key && <button className={menuButton} onClick={() => onEditTeam(section.key, true)} aria-label={t("team.renameAria", { name: section.name })}><Pencil size={14} />{t("team.rename")}</button>}
                 {section.key && <button className={cn(menuButton, "hover:text-danger")} onClick={() => onDeleteTeam(section.key)} aria-label={t("team.deleteAria", { name: section.name })}><Trash2 size={14} />{t("team.delete")}</button>}
               </div>

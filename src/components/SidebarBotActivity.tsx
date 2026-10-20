@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { BellDot, CircleAlert, Clock3, Loader2, Pin, PinOff, type LucideIcon } from "lucide-react";
 import type { Dispatch } from "react";
 import type { Action, AppState, Bot, Group, Task } from "@/state/store";
@@ -190,7 +191,7 @@ export function SidebarBotActivity({ bot, rowThreadId, density, pendingQueued, d
       const teammateWait = !waiting && task.waitingForTeammates === true;
       const working = !waiting && !teammateWait && (task.busy || task.activity === "working");
       const status = waiting ? t("sidebar.preview.waiting") : working ? t("chat.activity.working") : teammateWait ? t("sidebar.preview.waitingOnTeammate") : task.queued ? t("task.queued") : t("task.unread");
-      const label = `${bot.name}: ${task.title} · ${status}${task.unread && (waiting || working || teammateWait || task.queued) ? ` · ${t("task.unread")}` : ""}`;
+      const label = uiText("ui.SidebarBotActivity.13c476dd0b", { value1: String(bot.name), value2: String(task.title), value3: String(status), value4: String(task.unread && (waiting || working || teammateWait || task.queued) ? ` · ${uiText("task.unread")}` : "") });
       const Icon = waiting ? CircleAlert : working ? Loader2 : teammateWait || task.queued ? Clock3 : BellDot;
       return <button key={task.threadId} type="button" data-sidebar-activity-row={task.threadId} aria-label={label} title={label}
         onClick={() => dispatch({ type: "switchTask", botId: bot.id, threadId: task.threadId })}

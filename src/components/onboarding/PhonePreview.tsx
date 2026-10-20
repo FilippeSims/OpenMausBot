@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { Check, X } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
 import { cn } from "@/lib/cn";
@@ -18,31 +19,24 @@ export function PhonePreview({ className }: { className?: string }) {
           </div>
           <div className="flex items-center gap-1.5 border-b border-hairline/40 px-3 py-1.5">
             <MausAvatar color="green" state="happy" size={16} animated={false} trackPointer={false} />
-            <span className="text-[9.5px] font-semibold text-ink">Maus</span>
+            <span className="text-[9.5px] font-semibold text-ink">{uiText("ui.PhonePreview.51c62d69a6")}</span>
             <span className="ml-auto size-1.5 rounded-full bg-success" />
           </div>
           <div className="flex flex-col gap-1.5 px-2.5 py-2.5">
-            <div className="max-w-[112px] self-end rounded-xl rounded-br-sm bg-bubble-user px-2 py-1.5 text-[8.5px] leading-snug text-ink">
-              Book the 3 pm slot
-            </div>
-            <div className="max-w-[124px] rounded-xl rounded-tl-sm bg-card px-2 py-1.5 text-[8.5px] leading-snug text-ink">
-              Found it. Confirm the booking?
-            </div>
+            <div className="max-w-[112px] self-end rounded-xl rounded-br-sm bg-bubble-user px-2 py-1.5 text-[8.5px] leading-snug text-ink">{uiText("ui.PhonePreview.26be5ecaa7")}</div>
+            <div className="max-w-[124px] rounded-xl rounded-tl-sm bg-card px-2 py-1.5 text-[8.5px] leading-snug text-ink">{uiText("ui.PhonePreview.2162704632")}</div>
             <div className="rounded-lg border border-hairline/50 bg-card p-2">
-              <div className="text-[8px] font-medium text-ink">Run: book-slot</div>
-              <div className="mt-0.5 text-[7.5px] text-ink-secondary">clinic.example · 3:00 pm</div>
+              <div className="text-[8px] font-medium text-ink">{uiText("ui.PhonePreview.161f8930be")}</div>
+              <div className="mt-0.5 text-[7.5px] text-ink-secondary">{uiText("ui.PhonePreview.1684da0a1d")}</div>
               <div className="mt-1.5 flex gap-1">
                 <span className="flex flex-1 items-center justify-center gap-0.5 rounded-md bg-accent py-1 text-[8px] font-semibold text-white">
-                  <Check size={8} strokeWidth={3} /> Allow
-                </span>
+                  <Check size={8} strokeWidth={3} />{uiText("ui.PhonePreview.e213c161d5")}</span>
                 <span className="flex flex-1 items-center justify-center gap-0.5 rounded-md bg-raised py-1 text-[8px] font-medium text-ink">
-                  <X size={8} strokeWidth={3} /> Deny
-                </span>
+                  <X size={8} strokeWidth={3} />{uiText("approval.action.deny")}</span>
               </div>
             </div>
           </div>
-          <div className="mx-2.5 mb-2.5 rounded-full border border-hairline/40 bg-inset px-2.5 py-1.5 text-[8px] text-ink-secondary">
-            Message {brand().name === "OpenMausBot" ? "Maus" : brand().name}
+          <div className="mx-2.5 mb-2.5 rounded-full border border-hairline/40 bg-inset px-2.5 py-1.5 text-[8px] text-ink-secondary"> {uiText("ui.PhonePreview.2f77668a9d")} {brand().name === "OpenMausBot" ? uiText("ui.PhonePreview.51c62d69a6") : brand().name}
           </div>
         </div>
       </div>

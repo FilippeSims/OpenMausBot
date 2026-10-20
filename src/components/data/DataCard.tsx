@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
 import { ChevronDown, Download, Loader2 } from "lucide-react";
 import { DATA_ROUTES, type DataCard as DataCardModel, type DataColumn, type DataExportFormat, type DataExportRequest, type DataReduction } from "../../../shared/data-surface";
@@ -119,7 +120,7 @@ export function DataCard({ bot, card, theme, controls, running, onCancel }: Data
     ? <div className="flex min-h-0 flex-1 items-center justify-center text-[12px] text-ink-secondary"><Loader2 size={18} className="animate-spin" aria-hidden="true" /></div>
     : card.status === "failed"
       ? <div role="alert" className="min-h-0 flex-1 overflow-auto px-3 py-2 text-[12px] text-danger" data-testid="card-error">
-          <div className="font-medium">{t("data.card.failed")}{card.error?.line ? ` · ${t("data.card.line", { line: card.error.line })}` : ""}</div>
+          <div className="font-medium">{t("data.card.failed")}{card.error?.line ? uiText("ui.DataCard.f6b53f9c8a", { value1: String(uiText("data.card.line", { line: card.error.line })) }) : ""}</div>
           <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11.5px]">{card.error?.message}</pre>
           {card.error?.hint && <p className="mt-1 text-ink-secondary">{card.error.hint}</p>}
         </div>

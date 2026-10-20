@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { z } from "zod";
 import type { JsonValue } from "../../shared/json";
 
@@ -88,7 +89,7 @@ export async function switchLocalVmWorkspaceControl(
 
   // Atomic on the server: a read followed by a take cannot prove ownership.
   const taken = await port.take(nextBotId);
-  if (!taken.held) throw new Error("The Local VM control hold was not acquired");
+  if (!taken.held) throw new Error(uiText("ui.local-vm-workspace.bc627d1e64"));
   if (taken.owned !== true) {
     return { status: "held-elsewhere", botId: nextBotId, snapshot: taken };
   }

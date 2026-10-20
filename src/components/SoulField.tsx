@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 
 import { BOT_PROFILE_LIMITS } from "../../shared/bot-profile";
@@ -67,7 +68,7 @@ export function SoulField({
     <div className="block">
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <label htmlFor={`bot-soul-${bot.id}`} className={simple ? "text-[12px] text-ink-secondary" : "text-[13px] text-ink-secondary"}>
-          {simple ? simple.label : "Standing instructions (SOUL.md)"}
+          {simple ? simple.label : uiText("ui.SoulField.fde4471e4f")}
         </label>
         {!simple && canMigrate && (
           <button
@@ -75,25 +76,18 @@ export function SoulField({
             disabled={resolving}
             onClick={() => onPatch({ soul: bot.description, description: firstSentence(bot.description) })}
             className="rounded-md px-1.5 py-1 text-[11.5px] font-medium text-accent-text hover:bg-accent/10"
-          >
-            Move instructions into SOUL.md
-          </button>
+          >{uiText("ui.SoulField.d7d1f659f7")}</button>
         )}
       </div>
       {info?.drift && (
         <div className="mb-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-[12px] text-ink">
-          <div className="font-medium">SOUL.md on disk was edited outside the app.</div>
-          <div className="mt-1 text-ink-secondary">
-            The bot keeps using the saved version until you choose. File: <span className="break-all">{info.file}</span>
+          <div className="font-medium">{uiText("ui.SoulField.27ba9a8461")}</div>
+          <div className="mt-1 text-ink-secondary"> {uiText("ui.SoulField.f57606e22a")} <span className="break-all">{info.file}</span>
           </div>
           <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-control p-2 text-[11.5px]">{info.fileText}</pre>
           <div className="mt-2 flex gap-2">
-            <button type="button" disabled={resolving} onClick={() => void resolve("apply-file")} className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50">
-              Use the file
-            </button>
-            <button type="button" disabled={resolving} onClick={() => void resolve("discard-file")} className="rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover disabled:opacity-50">
-              Keep the saved version
-            </button>
+            <button type="button" disabled={resolving} onClick={() => void resolve("apply-file")} className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50">{uiText("ui.SoulField.e954c333f5")}</button>
+            <button type="button" disabled={resolving} onClick={() => void resolve("discard-file")} className="rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover disabled:opacity-50">{uiText("ui.SoulField.a532c91cf1")}</button>
           </div>
         </div>
       )}
@@ -104,7 +98,7 @@ export function SoulField({
           simple ? "min-h-[140px] resize-y rounded-xl text-[14px] leading-relaxed" : "min-h-[220px] resize-y font-mono leading-relaxed",
           over && "ring-2 ring-red-500/60",
         )}
-        placeholder={simple ? simple.placeholder : "Who this bot is and the rules it never breaks. Keep it short; put step-by-step procedure into a skill."}
+        placeholder={simple ? simple.placeholder : uiText("ui.SoulField.62acd90d79")}
         aria-invalid={over || undefined}
         disabled={resolving}
         value={draft}
@@ -112,10 +106,10 @@ export function SoulField({
       />
       {(!simple || over) && <div className="mt-1.5 flex items-start justify-between gap-3 text-[11px] text-ink-secondary">
         <span>
-          {!simple && <>In this bot’s context on every turn.{info?.file ? <> Mirrored to <span className="break-all">{info.file}</span>.</> : null}</>}
+          {!simple && <>{uiText("ui.SoulField.ece27607a7")}{info?.file ? <> {uiText("ui.SoulField.792167b9d0")} <span className="break-all">{info.file}</span>.</> : null}</>}
         </span>
         <span className={cn("shrink-0 tabular-nums", over && "font-medium text-red-500")}>
-          {bytes.toLocaleString()} / {limit.toLocaleString()} bytes{over ? " — not saved" : ""}
+          {bytes.toLocaleString()} / {limit.toLocaleString()} {uiText("ui.SoulField.277089d91c")}{over ? uiText("ui.SoulField.69b1e0bd01") : ""}
         </span>
       </div>}
     </div>

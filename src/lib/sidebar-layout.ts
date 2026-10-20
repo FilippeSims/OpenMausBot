@@ -1,3 +1,5 @@
+import { tLiteral } from "@/lib/i18n";
+import { t as uiText } from "@/lib/i18n";
 import type { GroupGoalRunCardData } from "../../shared/group-goal-run";
 import type { ConnectorCardData } from "../../shared/wire";
 
@@ -18,9 +20,9 @@ export type SidebarDensityMode = "comfortable" | "compact" | "icons";
 const GOAL_RUN_PREVIEW_LABEL = {
   working: "Working",
   completed: "Completed",
-  "needs-input": "Needs your input",
+  get "needs-input"() { return uiText("routines.goal.needs-input"); },
   blocked: "Blocked",
-  "limit-reached": "Turn limit reached",
+  get "limit-reached"() { return uiText("routines.goal.limit-reached"); },
   paused: "Paused",
   stopped: "Stopped",
   failed: "Failed",
@@ -56,8 +58,8 @@ export function userSectionName(id: SidebarSectionId): string | null {
 
 export function sidebarSectionLabel(id: SidebarSectionId): string {
   if (id === PINNED_SECTION_ID) return "Pinned";
-  if (id === CHANNELS_SECTION_ID) return "Group chats";
-  if (id === BOT_CHATS_SECTION_ID) return "Bot threads";
+  if (id === CHANNELS_SECTION_ID) return uiText("teamShare.part.rooms");
+  if (id === BOT_CHATS_SECTION_ID) return uiText("sidebar.section.botChats");
   if (id === BOTS_SECTION_ID) return "Bots";
   return userSectionName(id) ?? id;
 }
@@ -66,7 +68,7 @@ export function sidebarGoalRunPreview(run: GroupGoalRunCardData): string {
   const detail = run.detail?.replace(/\s+/g, " ").trim();
   const goal = run.goal.replace(/\s+/g, " ").trim();
   const summary = detail || goal;
-  const label = GOAL_RUN_PREVIEW_LABEL[run.status];
+  const label = tLiteral(GOAL_RUN_PREVIEW_LABEL[run.status]);
   return summary ? `${label}: ${summary}` : label;
 }
 

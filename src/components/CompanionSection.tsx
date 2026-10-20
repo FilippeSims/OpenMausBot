@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef } from "react";
 import { t } from "@/lib/i18n";
 import {
@@ -112,7 +113,7 @@ export function deriveCompanionPanelStatus(
   const pairedCount = state.devices.length;
   if (!pairedCount) return null;
   return {
-    label: `${pairedCount} ${pairedCount === 1 ? "device" : "devices"} paired`,
+    label: uiText("ui.CompanionSection.ab103bc12b", { value1: String(pairedCount), value2: String(pairedCount === 1 ? "device" : "devices") }),
     good: true,
   };
 }
@@ -173,7 +174,7 @@ export function CompanionSection({ profileEmail = "", focusRequest = 0 }: { prof
   const tailscaleStatus = deriveTailscalePairingStatus(state, c.tailscaleAvailable);
   const hosted = state.endpoints?.find((endpoint) => endpoint.kind === "hosted");
   const localRoutes = [
-    state.tailnetName ? { label: "Tailscale", value: `${state.tailnetName}:${state.port}` } : null,
+    state.tailnetName ? { label: uiText("ui.CompanionSection.88d90e2eef"), value: `${state.tailnetName}:${state.port}` } : null,
     state.lan ? { label: t("remote.connection.wifi"), value: `${state.lan}:${state.port}` } : null,
     state.discovery?.name
       ? { label: t("remote.connection.discovery"), value: `${state.discovery.name}:${state.port}` }

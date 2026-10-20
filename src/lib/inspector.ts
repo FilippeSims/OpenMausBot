@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { RuntimeEvent } from "../../shared/runtime-events";
 import type { InspectorEntry, NativeRecord } from "../../shared/inspector";
 export type { InspectorEntry, InspectorPage, NativeRecord } from "../../shared/inspector";
@@ -54,13 +55,13 @@ const previewText = (preview: FoldPreview) => `${preview.text}${preview.overflow
 export function summarizeRuntime(e: RuntimeEvent): { summary: string; tone: InspectorRow["tone"] } {
   switch (e.type) {
     case "session.started":
-      return { summary: `session ${e.sessionId ?? "(none)"}${e.model ? ` · ${e.model}` : ""}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.56754b538f", { value1: String(e.sessionId ?? "(none)"), value2: String(e.model ? ` · ${e.model}` : "") }), tone: "plain" };
     case "session.exited":
-      return { summary: `session exited${e.reason ? ` · ${e.reason}` : ""}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.86c174a85b", { value1: String(e.reason ? ` · ${e.reason}` : "") }), tone: "plain" };
     case "turn.started":
-      return { summary: `turn started${e.turnId ? ` · ${e.turnId.slice(0, 8)}` : ""}`, tone: "boundary" };
+      return { summary: uiText("ui.inspector.5f854fa598", { value1: String(e.turnId ? ` · ${e.turnId.slice(0, 8)}` : "") }), tone: "boundary" };
     case "turn.retrying":
-      return { summary: `retrying (${e.reason}) · attempt ${e.attempt} · ${Math.round(e.delayMs / 1000)}s`, tone: "plain" };
+      return { summary: uiText("ui.inspector.f60c52c7ba", { value1: String(e.reason), value2: String(e.attempt), value3: String(Math.round(e.delayMs / 1000)) }), tone: "plain" };
     case "turn.completed": {
       const parts = [e.ok ? "turn ok" : "turn failed"];
       if (e.stopReason) parts.push(e.stopReason);
@@ -70,40 +71,40 @@ export function summarizeRuntime(e: RuntimeEvent): { summary: string; tone: Insp
     }
     case "turn.wait_started":
       return {
-        summary: `waiting for computer — ${e.holder ? `${e.holder.name}${e.holder.task ? ` (${e.holder.task})` : ""}` : "holder unknown"}`,
+        summary: uiText("ui.inspector.6ba4946eb4", { value1: String(e.holder ? `${e.holder.name}${e.holder.task ? ` (${e.holder.task})` : ""}` : "holder unknown") }),
         tone: "plain",
       };
     case "turn.wait_ended": {
       const seconds = Math.round(e.waitedMs / 1000);
       const waited = e.waitedMs < 1_000 ? "under a second" : `${seconds}s`;
-      if (e.outcome === "acquired") return { summary: `computer acquired after ${waited}`, tone: "boundary" };
-      if (e.outcome === "parked") return { summary: `computer wait parked after ${waited}`, tone: "plain" };
-      if (e.outcome === "gave_up") return { summary: `computer wait gave up after ${waited}`, tone: "error" };
-      return { summary: `computer wait stopped after ${waited}`, tone: "plain" };
+      if (e.outcome === "acquired") return { summary: uiText("ui.inspector.b6ca03b5d6", { value1: String(waited) }), tone: "boundary" };
+      if (e.outcome === "parked") return { summary: uiText("ui.inspector.c1141de82d", { value1: String(waited) }), tone: "plain" };
+      if (e.outcome === "gave_up") return { summary: uiText("ui.inspector.726b3cf138", { value1: String(waited) }), tone: "error" };
+      return { summary: uiText("ui.inspector.f3ee3964d1", { value1: String(waited) }), tone: "plain" };
     }
     case "item.started":
-      return { summary: `${e.itemType}${e.title ? `: ${clip(oneLine(e.title))}` : " started"}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.9989fa2d2c", { value1: String(e.itemType), value2: String(e.title ? `: ${clip(oneLine(e.title))}` : " started") }), tone: "plain" };
     case "item.updated":
-      return { summary: `${e.itemType} updated${typeof e.tokens === "number" ? ` · ${e.tokens} tok` : ""}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.ed4968c9f6", { value1: String(e.itemType), value2: String(typeof e.tokens === "number" ? ` · ${e.tokens} tok` : "") }), tone: "plain" };
     case "item.completed":
-      if (e.itemType === "assistant_text") return { summary: `assistant: ${clip(oneLine(e.text))}`, tone: "plain" };
-      if (e.itemType === "assistant_image") return { summary: "assistant image generated", tone: "plain" };
-      return { summary: `tool ${e.ok ? "ok" : "failed"}`, tone: e.ok ? "plain" : "error" };
+      if (e.itemType === "assistant_text") return { summary: uiText("ui.inspector.69e9cee5fe", { value1: String(clip(oneLine(e.text))) }), tone: "plain" };
+      if (e.itemType === "assistant_image") return { summary: uiText("ui.inspector.9e5235081e"), tone: "plain" };
+      return { summary: uiText("ui.inspector.c519a06fdc", { value1: String(e.ok ? "ok" : "failed") }), tone: e.ok ? "plain" : "error" };
     case "content.delta":
-      return { summary: `${e.streamKind}: ${clip(oneLine(e.delta))}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.efae3eb968", { value1: String(e.streamKind), value2: String(clip(oneLine(e.delta))) }), tone: "plain" };
     case "request.opened":
       return {
-        summary: `${e.requestType}${e.origin === "output" ? " (agent-composed)" : ""}: ${e.tool} — ${clip(oneLine(e.summary))}`,
+        summary: uiText("ui.inspector.5628a20aca", { value1: String(e.requestType), value2: String(e.origin === "output" ? " (agent-composed)" : ""), value3: String(e.tool), value4: String(clip(oneLine(e.summary))) }),
         tone: "plain",
       };
     case "request.resolved":
-      return { summary: `resolved ${e.behavior} · ${e.source}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.b05989ce92", { value1: String(e.behavior), value2: String(e.source) }), tone: "plain" };
     case "thread.token-usage.updated":
-      return { summary: `tokens in ${e.input} · out ${e.output}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.507ee0fc96", { value1: String(e.input), value2: String(e.output) }), tone: "plain" };
     case "runtime.error":
-      return { summary: `${e.setup ? "setup: " : ""}${clip(oneLine(e.message))}`, tone: "error" };
+      return { summary: uiText("ui.inspector.9989fa2d2c", { value1: String(e.setup ? "setup: " : ""), value2: String(clip(oneLine(e.message))) }), tone: "error" };
     case "runtime.notice":
-      return { summary: `notice: ${clip(oneLine(e.message))}`, tone: "plain" };
+      return { summary: uiText("ui.inspector.c2043a12ba", { value1: String(clip(oneLine(e.message))) }), tone: "plain" };
     default:
       return { summary: (e as { type: string }).type, tone: "plain" };
   }
@@ -142,7 +143,7 @@ export function toRows(entries: InspectorEntry[]): InspectorRow[] {
         kind: "native",
         at: entry.at,
         tag: entry.data.dir === "out" ? "→ out" : "← in",
-        summary: `${entry.data.source} · ${summarizeNative(entry.data)}`,
+        summary: uiText("ui.inspector.7c639bc99b", { value1: String(entry.data.source), value2: String(summarizeNative(entry.data)) }),
         tone: "plain",
         data: entry.data,
         count: 1,

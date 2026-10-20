@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { FileText, Loader2, Repeat2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
@@ -30,7 +31,7 @@ export function RoutineList({ routines, runs, bots, loading, error, onOpen, onLo
         <div className="flex items-start gap-2">
           <button type="button" onClick={() => onOpen(routine)} className="min-w-0 flex-1 text-left hover:text-accent">
             <span className="block truncate text-[13px] font-semibold text-ink">{routine.name}</span>
-            <span className="mt-1 block text-[11.5px] leading-relaxed text-ink-secondary">{bot && `${bot.name} · `}{scheduleLabel(routine.schedule)}</span>
+            <span className="mt-1 block text-[11.5px] leading-relaxed text-ink-secondary">{bot && uiText("ui.RoutineList.210eac6879", { value1: String(bot.name) })}{scheduleLabel(routine.schedule)}</span>
           </button>
           {switched
             ? <Switch checked={routine.enabled} aria-label={t("routines.toggle", { name: routine.name })} onClick={() => onToggle(routine)} />

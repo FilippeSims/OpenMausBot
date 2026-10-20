@@ -528,6 +528,34 @@ describe("optional Company cloud backup settings", () => {
     expect(bridge.restore).not.toHaveBeenCalled(); expect(bridge.create).not.toHaveBeenCalled();
   });
 
+  it("requires the localized replacement word while preserving the native confirmation contract", async () => {
+    await ready();
+    await validateRestore();
+    setLocale("pt-br");
+    const replace = () => render().nodes.find(node => node.type === "button" && content(node.props.children) === "Substituir instalação")!;
+    expect(render().html).toContain("Digite SUBSTITUIR para confirmar");
+    change(confirmation(), "REPLACE");
+    expect(replace().props.disabled).toBe(true);
+    change(confirmation(), "SUBSTITUIR");
+    expect(replace().props.disabled).toBe(false);
+    replace().props.onClick!(); await flush();
+    expect(bridge.restore).toHaveBeenCalledExactlyOnceWith({ id: STAGE_ID, confirmation: "REPLACE" });
+  });
+
+  it("requires EXCLUIR in Portuguese and targets only the chosen native archive", async () => {
+    await ready();
+    buttons("Delete cloud backup")[0].props.onClick!();
+    setLocale("pt-br");
+    const remove = () => render().nodes.filter(node => node.type === "button" && content(node.props.children) === "Excluir backup na nuvem").at(-1)!;
+    expect(render().html).toContain("Digite EXCLUIR para confirmar");
+    change(confirmation(), "DELETE");
+    expect(remove().props.disabled).toBe(true);
+    change(confirmation(), "EXCLUIR");
+    expect(remove().props.disabled).toBe(false);
+    remove().props.onClick!(); await flush();
+    expect(bridge.delete).toHaveBeenCalledExactlyOnceWith({ id: READY_ID, confirmation: "DELETE" });
+  });
+
   it("offers explicit cancellation while a transfer is busy and disables conflicting mutations", async () => {
     await ready();
     pushBackup({ busy: true, kind: "backup", progress: { phase: "uploading", bytesTransferred: 1024, totalBytes: 4096 } });

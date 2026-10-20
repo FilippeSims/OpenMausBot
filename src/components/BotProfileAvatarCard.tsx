@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 
@@ -26,7 +27,7 @@ import { MASCOT_BODIES, MASCOT_BODY_IDS } from "../../shared/mascot-bodies";
 import { BotAvatar, MausAvatar } from "./Avatar";
 import { AvatarImageGenerator } from "./AvatarImageGenerator";
 import { useOrganizationBranding } from "@/lib/use-organization-branding";
-import { t } from "@/lib/i18n";
+import { t, tLiteral } from "@/lib/i18n";
 import { botMascotAppearance, defaultMascotAppearance } from "../../shared/mascot-kit";
 import { BotKitEditor } from "./BotKitEditor";
 
@@ -83,10 +84,10 @@ function AvatarFraming({
         onPointerCancel={endDrag}
         onWheel={onWheel}
       >
-        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={`${bot.name} avatar preview`} />
+        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={uiText("ui.BotProfileAvatarCard.831618bc22", { value1: String(bot.name) })} />
       </div>
       <div className="mb-1.5 mt-4 flex items-baseline justify-between">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">Zoom</span>
+        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("ui.BotProfileAvatarCard.509c517ede")}</span>
         <span className="tabular-nums text-[12px] text-ink-secondary">{Math.round(zoom * 100)}%</span>
       </div>
       <input
@@ -96,7 +97,7 @@ function AvatarFraming({
         step={0.01}
         value={zoom}
         disabled={disabled}
-        aria-label="Zoom avatar"
+        aria-label={uiText("ui.BotProfileAvatarCard.8b371aaca3")}
         aria-valuemin={AVATAR_ZOOM_MIN}
         aria-valuemax={AVATAR_ZOOM_MAX}
         aria-valuenow={zoom}
@@ -105,16 +106,14 @@ function AvatarFraming({
         className="w-full accent-accent"
       />
       <div className="mt-1.5 flex items-center justify-between gap-3 text-[11.5px] text-ink-secondary">
-        <span>Drag the picture to reposition it. Scroll to zoom.</span>
+        <span>{uiText("ui.BotProfileAvatarCard.b4f06096db")}</span>
         {framed && (
           <button
             type="button"
             disabled={disabled}
             onClick={() => onPatch({ avatarZoom: AVATAR_ZOOM_MIN, avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER })}
             className="shrink-0 rounded-md px-2 py-1 text-ink hover:bg-control disabled:opacity-50"
-          >
-            Reset framing
-          </button>
+          >{uiText("ui.BotProfileAvatarCard.dafe8a36bd")}</button>
         )}
       </div>
     </div>
@@ -160,7 +159,7 @@ export function BotProfileAvatarCard({
     try {
       const saved = uploadAvatar ? null : await imageAttachmentFromFile(file);
       const avatarUrl = uploadAvatar ? await uploadAvatar(file) : saved ? botAvatarUrlFromStoredPath(saved.path) : null;
-      if (!avatarUrl) throw new Error("The uploaded image could not be used as an avatar");
+      if (!avatarUrl) throw new Error(uiText("ui.BotProfileAvatarCard.39882c35d7"));
       const latestCrop = cropRef.current;
       onPatch({
         avatarUrl,
@@ -219,20 +218,18 @@ export function BotProfileAvatarCard({
   return (
     <div className="overflow-hidden rounded-xl border border-hairline/40 bg-card">
       <div className="flex items-center justify-between border-b border-hairline/40 px-3 py-2.5">
-        <span className="rounded-lg bg-control px-3 py-1.5 text-[14px] font-medium text-ink">Avatar</span>
+        <span className="rounded-lg bg-control px-3 py-1.5 text-[14px] font-medium text-ink">{uiText("ui.BotProfileAvatarCard.ca8e826d9c")}</span>
         <button
           disabled={busy}
           onClick={() => onPatch({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotAppearance: null })}
           className="rounded-md px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"
-        >
-          Reset mascot
-        </button>
+        >{uiText("ui.BotProfileAvatarCard.4d8c44a37c")}</button>
       </div>
 
       <div className="p-3">
         {Boolean(organization?.icons.length) && <div className="mb-3 border-b border-hairline/40 pb-3">
-          <div className="mb-2 text-[13px] font-medium text-ink-secondary">{organization!.name} icons</div>
-          <div className="flex flex-wrap gap-2">{organization!.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={`Use ${icon.name} icon`} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
+          <div className="mb-2 text-[13px] font-medium text-ink-secondary">{organization!.name} {uiText("ui.BotProfileAvatarCard.04ce686a85")}</div>
+          <div className="flex flex-wrap gap-2">{organization!.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={uiText("ui.BotProfileAvatarCard.12bf5ea408", { value1: String(icon.name) })} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
             const bytes = Uint8Array.from(atob(icon.image.slice(22)), byte => byte.charCodeAt(0));
             void upload(new File([bytes], `${icon.id}.png`, { type: "image/png" }));
           }}><img src={icon.image} alt="" className="size-10 rounded-md object-contain" /></button>)}</div>
@@ -265,27 +262,23 @@ export function BotProfileAvatarCard({
             disabled={busy}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
           >
-            {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
-            Upload image
-          </button>
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {uiText("ui.BotProfileAvatarCard.ffe4df6c7c")} </button>
           {bot.avatarUrl && (
             <button
               type="button"
               onClick={removeImage}
               disabled={busy}
-              aria-label="Remove custom avatar image"
-              title="Remove custom image"
+              aria-label={uiText("ui.BotProfileAvatarCard.af61727482")}
+              title={uiText("ui.BotProfileAvatarCard.be3d835480")}
               className="flex size-10 items-center justify-center rounded-lg text-ink-secondary hover:bg-control hover:text-danger disabled:opacity-50"
             >
               <Trash2 size={14} />
             </button>
           )}
         </div>
-        <div className="mt-1.5 text-[11.5px] text-ink-secondary">PNG, JPEG, GIF, or WebP · up to 10 MB</div>
+        <div className="mt-1.5 text-[11.5px] text-ink-secondary">{uiText("ui.BotProfileAvatarCard.8bd242087b")}</div>
 
-        <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-          Shape
-        </div>
+        <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("ui.BotProfileAvatarCard.e0e492707f")}</div>
         <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-hairline/40">
           {BOT_AVATAR_CROPS.map((candidate, index) => (
             <button
@@ -300,7 +293,7 @@ export function BotProfileAvatarCard({
                 crop === candidate ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/60 hover:text-ink",
               )}
             >
-              {CROP_LABEL[candidate]}
+              {tLiteral(CROP_LABEL[candidate])}
             </button>
           ))}
         </div>
@@ -317,9 +310,7 @@ export function BotProfileAvatarCard({
               </button>)}
             </div>
             {!appearance && <>
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Expression
-            </div>
+            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("ui.BotProfileAvatarCard.c67415bcff")}</div>
             <div className="grid grid-cols-5 gap-2">
               {PICKABLE_STATES.map((expression) => (
                 <button
@@ -332,8 +323,8 @@ export function BotProfileAvatarCard({
                     "flex h-[58px] items-center justify-center rounded-xl bg-inset transition-colors hover:bg-control disabled:opacity-50",
                     activeState === expression && "ring-2 ring-accent-border",
                   )}
-                  title={expression}
-                  aria-label={`Use ${expression} expression`}
+                  title={tLiteral(expression)}
+                  aria-label={uiText("ui.BotProfileAvatarCard.58fa1beb73", { value1: String(tLiteral(expression)) })}
                 >
                   <MausAvatar color={bot.color} bodyId={bot.mascotBody ?? undefined} state={expression} size={42} animated={false} />
                 </button>
@@ -341,9 +332,7 @@ export function BotProfileAvatarCard({
             </div>
             </>}
 
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Color
-            </div>
+            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("onboarding.bot.color")}</div>
             <div className="flex flex-wrap gap-2.5">
               {MAUS_COLOR_NAMES.map((color) => (
                 <button
@@ -357,15 +346,13 @@ export function BotProfileAvatarCard({
                     bot.color === color && "ring-2 ring-accent-border ring-offset-2 ring-offset-card",
                   )}
                   style={{ backgroundColor: MAUS_COLORS[color] }}
-                  title={color}
-                  aria-label={`Use ${color} mascot color`}
+                  title={tLiteral(color)}
+                  aria-label={uiText("ui.BotProfileAvatarCard.9f8dd9f796", { value1: String(tLiteral(color)) })}
                 />
               ))}
             </div>
 
-            {!appearance && <><div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Body
-            </div>
+            {!appearance && <><div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("ui.BotProfileAvatarCard.6ccaa6415b")}</div>
             <div className="grid grid-cols-5 gap-1.5">
               {MASCOT_BODY_IDS.map((id) => (
                 <button
@@ -373,7 +360,7 @@ export function BotProfileAvatarCard({
                   type="button"
                   disabled={busy}
                   aria-pressed={(bot.mascotBody ?? "cursor") === id}
-                  aria-label={`Use the ${MASCOT_BODIES[id].name} body`}
+                  aria-label={uiText("ui.BotProfileAvatarCard.1cf5c44d73", { value1: String(tLiteral(MASCOT_BODIES[id].name)) })}
                   onClick={() => onPatch({ mascotBody: id })}
                   className={cn(
                     "flex items-center justify-center rounded-lg py-1.5 disabled:opacity-50",

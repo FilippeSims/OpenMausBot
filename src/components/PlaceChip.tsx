@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -82,7 +83,7 @@ export function PlaceChip({ bot, task, live, disabled = false, onPin }: {
         aria-expanded={open}
         aria-label={t("place.chipAria", { place: label })}
         disabled={disabled || off}
-        title={off || disabled ? title : `${label} — ${title}`}
+        title={off || disabled ? title : uiText("ui.PlaceChip.ad1869981e", { value1: String(label), value2: String(title) })}
         data-testid="place-chip"
         onClick={() => setOpen((value) => !value)}
         className={cn(

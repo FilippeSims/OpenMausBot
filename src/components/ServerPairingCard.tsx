@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -209,7 +210,7 @@ export function ServerPairingCard({ initialSession = null, initialPairingCodes =
                   {device.scopes.includes("admin") ? t("remote.serverPairing.scope.admin") : t("remote.serverPairing.scope.client")}
                   {" · "}
                   {t("remote.serverPairing.seen", { when: lastSeen(device.lastSeenAt, now) })}
-                  {device.id === current ? ` · ${t("remote.serverPairing.thisBrowser")}` : ""}
+                  {device.id === current ? uiText("ui.ServerPairingCard.f6b53f9c8a", { value1: String(uiText("remote.serverPairing.thisBrowser")) }) : ""}
                 </span>
               </span>
               {device.id === current ? null : (

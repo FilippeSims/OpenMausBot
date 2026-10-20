@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { NewBotDefaults, BotDefaultsProfile, BotRoutineTemplate } from "../../shared/new-bot-defaults";
 import { api, type Bot, type ModelSelection } from "@/state/store";
 import type { BotUpdatePatch } from "@/state/bot-patch-queue";
@@ -80,8 +81,8 @@ export class BotCreationDraft {
   export(): NewBotDefaults { return structuredClone({ ...this.template, routines: this.routines.map(routineTemplate) }); }
 
   uploadAvatar = async (file: File): Promise<string> => {
-    if (!["image/png", "image/jpeg", "image/gif", "image/webp"].includes(file.type)) throw new Error("Choose a PNG, JPEG, GIF, or WebP image");
-    if (file.size > 10 * 1024 * 1024) throw new Error("Choose an image smaller than 10 MiB");
+    if (!["image/png", "image/jpeg", "image/gif", "image/webp"].includes(file.type)) throw new Error(uiText("ui.bot-creation-draft.5a07cbe518"));
+    if (file.size > 10 * 1024 * 1024) throw new Error(uiText("ui.bot-creation-draft.f578a1b5f8"));
     if (this.avatarObjectUrl) URL.revokeObjectURL(this.avatarObjectUrl);
     this.avatarFile = file;
     this.avatarObjectUrl = URL.createObjectURL(file);
@@ -120,18 +121,18 @@ export class BotCreationDraft {
     } else if (path === `${base}/skills` && method === "POST") {
       const preview = await this.network<{ skills: NewBotDefaults["skills"] }>("/api/bot-defaults/skills/preview", { method: "POST", body: JSON.stringify(body) });
       const names = new Set(this.template.skills.map(skill => skill.name));
-      if (preview.skills.some(skill => names.has(skill.name))) throw new Error("A skill with this name is already in the draft");
+      if (preview.skills.some(skill => names.has(skill.name))) throw new Error(uiText("ui.bot-creation-draft.994a82cb47"));
       this.template.skills.push(...preview.skills); this.changed(); result = { installed: preview.skills };
     } else if (path.startsWith(`${base}/skills/`)) {
       const name = decodeURIComponent(path.slice(`${base}/skills/`.length));
       const skill = this.template.skills.find(skill => skill.name === name);
-      if (!skill) throw new Error("No such draft skill");
+      if (!skill) throw new Error(uiText("ui.bot-creation-draft.1cbd68b2b4"));
       if (method === "GET") result = { text: skill.text };
       else if (method === "PATCH" && typeof body.enabled === "boolean") {
         skill.enabled = body.enabled; this.changed(); result = { ok: true };
       } else if (method === "DELETE") {
         this.template.skills = this.template.skills.filter(item => item !== skill); this.changed(); result = { ok: true };
-      } else throw new Error("Unsupported draft skill operation");
+      } else throw new Error(uiText("ui.bot-creation-draft.7835c338a3"));
     } else if (path === `${base}/avatar/generate` && method === "POST") {
       const { name, title, description } = this.bot;
       const { dataUrl } = await this.network<{ dataUrl: string }>("/api/bot-defaults/avatar", {
@@ -141,14 +142,14 @@ export class BotCreationDraft {
       const avatarUrl = await this.uploadAvatar(new File([blob], "avatar.png", { type: blob.type }));
       result = { avatarUrl, bot: { ...this.bot, avatarUrl, avatarCrop: "circle" } };
     } else if ((path === "/api/routines" && method === "POST") || (path.startsWith("/api/routines/draft-") && method === "PATCH")) {
-      if (body.target && body.target !== "bot") throw new Error("A new bot's routine must target that bot");
-      if (body.botId !== this.id) throw new Error("Routine belongs to another bot");
+      if (body.target && body.target !== "bot") throw new Error(uiText("ui.bot-creation-draft.61be09074f"));
+      if (body.botId !== this.id) throw new Error(uiText("ui.bot-creation-draft.a21b174661"));
       const previous = this.routines.find(routine => path === `/api/routines/${routine.id}`);
-      if (method === "PATCH" && !previous) throw new Error("No such draft routine");
+      if (method === "PATCH" && !previous) throw new Error(uiText("ui.bot-creation-draft.1f94638306"));
       const routine = this.routine(body, previous);
       this.routines = [...this.routines.filter(item => item.id !== routine.id), routine];
       this.changed(); result = { routine };
-    } else throw new Error("This operation requires a created bot");
+    } else throw new Error(uiText("ui.bot-creation-draft.058bf1b754"));
     return result as T;
   };
 }

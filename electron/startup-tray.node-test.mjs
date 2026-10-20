@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { createStartupScreen } from "./startup-screen.mjs";
+import { createStartupScreen, startupScreenHtml } from "./startup-screen.mjs";
+import { setDesktopLanguage } from "./desktop-i18n.mjs";
 import { createSystemTray } from "./system-tray.mjs";
 
 const iconPath = fileURLToPath(new URL("./resources/app-icon.png", import.meta.url));
@@ -177,4 +178,24 @@ test("without a Windows tray or on another platform splash close quits", async (
     splash.window.emit("close", { preventDefault() {} });
     assert.deepEqual(calls, ["quit"]); splash.dispose();
   }
+});
+
+
+test("startup and tray follow Portuguese without changing window or quit actions", () => {
+  try {
+    setDesktopLanguage("pt-br");
+    const html = startupScreenHtml(iconPath);
+    assert.match(html, /lang="pt-BR"/);
+    assert.match(html, /Abrindo sua instalação/);
+    assert.match(html, /aria-label="Fechar"/);
+    const { trayInstance, tray, calls, splash } = fixture();
+    assert.equal(trayInstance.menu[0].label, "Abrir OpenMausBot");
+    assert.equal(trayInstance.menu[2].label, "Sair do OpenMausBot");
+    trayInstance.menu[2].click();
+    assert.deepEqual(calls, ["quit"]);
+    setDesktopLanguage("en");
+    tray.refreshLanguage();
+    assert.equal(trayInstance.menu[0].label, "Open OpenMausBot");
+    splash.dispose(); tray.destroy();
+  } finally { setDesktopLanguage("en"); }
 });

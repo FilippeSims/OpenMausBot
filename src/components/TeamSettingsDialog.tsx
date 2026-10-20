@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -148,7 +149,7 @@ export function TeamSettingsDialog({ team, onClose }: { team: string; onClose: (
                 <label className="text-[13px] text-ink-secondary">{t("teamSettings.model")}
                   <Select className="mt-1 w-full" aria-label={t("teamSettings.model")} value={model} onChange={(event) => setModel(event.target.value)}>
                     <option value={KEEP}>{t("teamSettings.keepModel")}</option>
-                    {models.map((choice) => <option key={choice.id} value={choice.id}>{`${choice.label} · ${choice.engines.join(", ")}`}</option>)}
+                    {models.map((choice) => <option key={choice.id} value={choice.id}>{uiText("ui.TeamSettingsDialog.7c639bc99b", { value1: String(choice.label), value2: String(choice.engines.join(", ")) })}</option>)}
                   </Select>
                 </label>
                 <label className="text-[13px] text-ink-secondary">{t("teamSettings.effort")}

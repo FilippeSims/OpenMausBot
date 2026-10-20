@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Bot as BotIcon, MessageSquare, Search, Users } from "lucide-react";
 import { api, openBot, useStore, type Bot, type Group } from "@/state/store";
@@ -154,7 +155,7 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Command palette"
+        aria-label={uiText("ui.CommandPalette.0347f794d6")}
         className="flex max-h-[min(480px,70vh)] w-full max-w-[560px] flex-col overflow-hidden rounded-xl border border-hairline/50 bg-card shadow-2xl shadow-black/60"
       >
         <div className="flex items-center gap-3 border-b border-hairline/40 px-4 py-3">
@@ -163,23 +164,19 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search bots, channels, messages…"
+            placeholder={uiText("ui.CommandPalette.2918182e48")}
             className="w-full bg-transparent text-[14px] text-ink placeholder:text-ink-secondary focus:outline-none"
           />
-          <kbd className="shrink-0 rounded-md border border-hairline/40 px-1.5 py-0.5 text-[11px] text-ink-secondary">
-            esc
-          </kbd>
+          <kbd className="shrink-0 rounded-md border border-hairline/40 px-1.5 py-0.5 text-[11px] text-ink-secondary">{uiText("ui.CommandPalette.177b7cb068")}</kbd>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {entries.length === 0 && (
             <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">
-              {q ? `Nothing matches “${query}”` : "Nothing to switch to yet"}
+              {q ? uiText("ui.CommandPalette.451803f40e", { value1: String(query) }) : uiText("ui.CommandPalette.a5580c53ed")}
             </div>
           )}
           {bots.length > 0 && (
-            <div className="px-3 pb-1 pt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Bots
-            </div>
+            <div className="px-3 pb-1 pt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("teamShare.part.bots")}</div>
           )}
           {bots.map((bot, i) =>
             row(
@@ -196,9 +193,7 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
             ),
           )}
           {rooms.length > 0 && (
-            <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Groups
-            </div>
+            <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("backup.groups")}</div>
           )}
           {rooms.map((group, i) =>
             row(
@@ -212,9 +207,7 @@ export function CommandPalette({ onOpenChange }: { onOpenChange?: (open: boolean
             ),
           )}
           {q && messageHits.length > 0 && (
-            <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
-              Messages
-            </div>
+            <div className="px-3 pb-1 pt-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{uiText("backup.messages")}</div>
           )}
           {q &&
             messageHits.map((hit, i) => {

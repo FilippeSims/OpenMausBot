@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ArrowUp, CalendarCheck, Eye, Newspaper, Search, type LucideIcon } from "lucide-react";
 import { MausAvatar } from "@/components/Avatar";
@@ -180,7 +181,7 @@ export function CloudIntent() {
               onClick={submit}
               disabled={!filled}
               aria-label={t("cloudIntent.send")}
-              title={`${t("cloudIntent.send")} (${sendKeyLabel(sendKey)})`}
+              title={uiText("ui.CloudIntent.48e56a2411", { value1: String(uiText("cloudIntent.send")), value2: String(sendKeyLabel(sendKey)) })}
               className={cn(
                 "absolute bottom-3 right-3 flex size-8 items-center justify-center rounded-full transition-[background-color,color,transform] duration-150 ease-out active:scale-95",
                 filled ? "bg-accent text-white" : "bg-raised text-ink-secondary",
@@ -225,7 +226,7 @@ export function CloudIntent() {
           <button type="button" onClick={skip} className="rounded font-medium text-ink underline decoration-ink-secondary/40 underline-offset-[3px] transition-colors hover:decoration-ink">
             {t("cloudIntent.skip")}
           </button>
-          <kbd className="ml-1.5 rounded border border-hairline/60 px-1 py-px font-sans text-[10.5px] text-ink-secondary">Esc</kbd>
+          <kbd className="ml-1.5 rounded border border-hairline/60 px-1 py-px font-sans text-[10.5px] text-ink-secondary">{uiText("desktopViewer.keyEscape")}</kbd>
           <br />
           {t("cloudIntent.later")}
         </p>

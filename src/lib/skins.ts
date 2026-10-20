@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 export const SKIN_IDS = [
   "midnight",
   "atelier",
@@ -18,15 +19,15 @@ export type Skin = {
 };
 
 export const SKINS: readonly Skin[] = [
-  { id: "midnight", name: "Midnight", tagline: "The original. Cool and dark." },
-  { id: "atelier", name: "Atelier", tagline: "Daylight on paper, warm and quiet." },
-  { id: "foundry", name: "Foundry", tagline: "Night shift. Dark, warm, lit in brass." },
-  { id: "lagoon", name: "Lagoon", tagline: "Cool daylight. Porcelain and deep teal." },
-  { id: "graphite", name: "Graphite", tagline: "Quiet charcoal and softened steel blue." },
-  { id: "linen", name: "Linen", tagline: "Clean daylight with a restrained navy accent." },
-  { id: "dusk", name: "Dusk", tagline: "Muted plum after dark, calm and low-key." },
-  { id: "daylight", name: "Daylight", tagline: "Midnight in reverse. Near-white, ink-black bubbles." },
-  { id: "meadow", name: "Meadow", tagline: "Fresh white with a calm green. The MausBot look." },
+  { id: "midnight", name: "Midnight", get tagline() { return uiText("ui.skins.aec68dd852"); } },
+  { id: "atelier", name: "Atelier", get tagline() { return uiText("ui.skins.1a5aafebac"); } },
+  { id: "foundry", name: "Foundry", get tagline() { return uiText("ui.skins.278d978568"); } },
+  { id: "lagoon", name: "Lagoon", get tagline() { return uiText("ui.skins.0df79e1400"); } },
+  { id: "graphite", name: "Graphite", get tagline() { return uiText("ui.skins.6b42dd1749"); } },
+  { id: "linen", name: "Linen", get tagline() { return uiText("ui.skins.1fa25a3929"); } },
+  { id: "dusk", name: "Dusk", get tagline() { return uiText("ui.skins.b440656689"); } },
+  { id: "daylight", name: "Daylight", get tagline() { return uiText("ui.skins.5600d23afd"); } },
+  { id: "meadow", name: "Meadow", get tagline() { return uiText("ui.skins.a30f62bfd6"); } },
 ];
 
 export const DEFAULT_SKIN: SkinId = "midnight";

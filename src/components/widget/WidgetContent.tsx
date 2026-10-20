@@ -1,3 +1,4 @@
+import { t as uiText } from "@/lib/i18n";
 import type { CSSProperties } from "react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -31,7 +32,7 @@ export function WidgetImage({ node, where }: { node: WidgetNode; where: WidgetWh
       <button
         type="button"
         title={t("attach.externalHidden")}
-        aria-label={alt ? `${t("attach.loadImage")}: ${alt}` : t("attach.loadImage")}
+        aria-label={alt ? uiText("ui.WidgetContent.efae3eb968", { value1: String(uiText("attach.loadImage")), value2: String(alt) }) : t("attach.loadImage")}
         onClick={(event) => {
           event.stopPropagation();
           form.allowImages();
