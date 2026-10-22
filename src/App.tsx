@@ -1,3 +1,4 @@
+import { TeamFilesHost } from "@/components/TeamFilesDialog";
 import { t as uiText } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Menu } from "lucide-react";
@@ -360,6 +361,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       {notificationFeed && !calendarFocus && state.notificationsOpen && <NotificationsPanel />}
       {notificationFeed && !calendarFocus && <NotificationRail />}
       {state.appSettingsOpen && <SettingsModal />}
+      <TeamFilesHost />
       <CloudAddDialog />
       <CloudHowTo />
       <CloudSetup viewer={viewer} welcomeShown={welcomeOnScreen} />

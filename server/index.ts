@@ -1,5 +1,9 @@
 // Import first: it reads a Cloud home's secrets off the launcher's pipe before any module can start a process.
 import { BOOT_CLOUD_SECRETS } from "./cloud-secrets-boot.ts";
+import { TeamFilesHost } from "./team-files-host.ts";
+import { createTeamFilesRoutes, runTeamFileTool } from "./routes/team-files.ts";
+import { teamFilesSystemPrompt } from "./team-files-prompt.ts";
+import { threadMessageFileRoots } from "./message-file-roots.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, rmSync } from "node:fs";
@@ -78,7 +82,6 @@ import {
 } from "./attachments.ts";
 import {
   messageAttachmentName,
-  messageFileRoots,
 } from "./message-file.ts";
 import {
   avatarGenerationRequestSchema,
@@ -3295,6 +3298,7 @@ function previewSystemPrompt(bot: BotRecord) {
     { id: "routine", label: "Triggers", text: agentsMounted ? TRIGGER_PROMPT : "" },
     { id: "profile", label: "Profile changes", text: agentsMounted ? PROFILE_PROMPT : "" },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+    { id: "team-files", label: "Team files", text: agentsMounted ? teamFilesSystemPrompt(bot) : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
     teamAvailabilityPart(agentsMounted && coordination ? peers : []),
     { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
@@ -9080,6 +9084,7 @@ async function startTurn(
         { id: "profile", label: "Profile changes", text: profilePrompt },
         { id: "learn", label: "Skill authoring", text: learnPrompt },
         { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+        { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
         { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
         // Volatile, so a teammate starting or finishing never changes the stable half.
         teamAvailabilityPart(coordinationPrompt ? sectionPeers : []),
@@ -10961,6 +10966,7 @@ async function runClaimedGroupMemberTurn(
     teamAvailabilityPart(outsideRoom),
     { id: "recent", label: "Recent work", text: recentWorkPrompt(recentLines) },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
+    { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
     { id: "memory", label: "Memory", text: roomMemory ? `\n${roomMemory.trim()}` : "" },
     { id: "skills", label: "Skills index", text: workspace ? skillsHost.skillsIndex(bot, threadId, instance) : "" },
@@ -12094,26 +12100,7 @@ function attachmentNameInThread(threadId: string, path: string): string | null {
   return null;
 }
 
-function messageFileRootsForThread(senderId: string, threadId: string): string[] {
-  const directBot = store.botByThread(threadId);
-  const group = directBot ? undefined : store.groupByThread(threadId);
-  let pinnedCwd: string | null | undefined;
-  let configuredCwd: string | undefined;
-  if (directBot) {
-    pinnedCwd = store.taskByThread(directBot.id, threadId)?.cwd;
-    configuredCwd = directBot.cwd;
-  } else if (group) {
-    const task = store.groupTaskByThread(group.id, threadId);
-    pinnedCwd = task ? task.pinnedCwd : group.threadId === threadId ? group.pinnedCwd : undefined;
-    configuredCwd = group.cwd;
-  }
-  return messageFileRoots({
-    senderWorkspace: workspaceDir(senderId),
-    attachments: ATTACHMENTS_DIR,
-    pinnedCwd,
-    configuredCwd,
-  });
-}
+const messageFileRootsForThread = (senderId: string, threadId: string) => threadMessageFileRoots(store, senderId, threadId);
 
 async function attachmentVmForTurn(capability: InternalCapability): Promise<LocalVmTarget | undefined> {
   const slot = autoVmClaims.get(capability.threadId);
@@ -13358,7 +13345,7 @@ const workspaceBackupAccess = {
     flush: async () => {
       await Promise.all([flushAllProfileHistory(), flushAllMemoryJournals(), flushUsageLedger(DATA_DIR), flushDecisionLog(DATA_DIR), flushAdminActivity(DATA_DIR)]);
       // Writers gated and work idle: release the WAL connection for a consistent snapshot; Store reopens it lazily.
-      await hindsightMemory.settled();
+      await hindsightMemory.settled(); await teamFilesHost.settled();
       await closeMessageSearch();
       closeMessageDb();
     },
@@ -13435,7 +13422,8 @@ ROUTES.push(createBotSkillsRoutes({ store, cfg, listBotSkills, readBotSkillFile,
 ROUTES.push(createHighLevelRoutes({ service: highlevel }));
 ROUTES.push(createSkillShareRoutes({ enabled: () => skillsHost.mode() !== "off", botExists: (id) => Boolean(store.bot(id)),
   cardRefusal: (auth, threadId, requestId) => cardAnswerRefusal(auth, threadId, requestId, "allow"), shareFromReceipt: skillsHost.shareFromReceipt, shareFromBot: skillsHost.shareFromBot }));
-ROUTES.push(createTeamContextRoutes({ store, teamMemory }));
+const teamFilesHost = new TeamFilesHost(store, () => workspaceMaintenance.request());
+ROUTES.push(createTeamFilesRoutes(teamFilesHost), createTeamContextRoutes({ store, teamMemory }));
 ROUTES.push(createBotMemoryRoutes({
   bot: (id) => store.bot(id),
   taskByThread: (botId, threadId) => store.taskByThread(botId, threadId),
@@ -14278,6 +14266,15 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           throw Object.assign(new Error("the internal turn capability has expired"), { status: 401 });
         }
       };
+      if (path === "/api/internal/team-files" && method === "POST") {
+        const body = await readInternalBody();
+        const active = () => {
+          requireActiveInternalCapability();
+          const room = store.groupByThread(internalCapability.threadId);
+          if (["mkdir", "write"].includes(body.action) && room && !roomFeedsBot(room, internalSender)) throw Object.assign(new Error("Restricted room files cannot be shared with the team."), { status: 403 });
+        };
+        return json(res, 200, { result: await runTeamFileTool(teamFilesHost, internalSender, body, active) });
+      }
       if (await xResearchRoutes({ method, path, res, json, botId: internalSender.id, readBody: readInternalBody }) !== PASS) return;
       const delegatedThisTurn = (taskId: string) => {
         (internalCapability.delegatedThisTurn ??= new Set()).add(taskId);
@@ -17267,7 +17264,7 @@ const gracefulShutdown = createGracefulShutdown({
       tunnelListener?.close(); stopCloudHomeConnectedApps();
     },
     async () => { await managedDesktop.close(); await registry.disposeAll(); },
-    () => hindsightRuntime.close(),
+    () => hindsightRuntime.close(), () => teamFilesHost.close(),
     async () => { await dataEngine.closeAll().catch((error) => console.warn("data: close failed", error)); },
     async () => {
       const temporaries = [...temporaryBrowserSessions.keys()].map((botId) => forgetTemporaryBrowser(botId));

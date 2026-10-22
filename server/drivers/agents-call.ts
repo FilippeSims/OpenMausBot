@@ -153,6 +153,11 @@ function recallWhen(at: unknown, dateOnly: boolean): string {
 export async function callTool(name: string, args: Json, context: ToolCallContext): Promise<ToolCallResult> {
   const { botId: BOT_ID, threadId: THREAD_ID, depth: DEPTH } = context;
   const { api, apiResponse } = context.client;
+  if (name === "team_files") {
+    const response = await api("/api/internal/team-files", { method: "POST", body: JSON.stringify(args) });
+    const result = response.result as Json;
+    return Array.isArray(result?.content) ? { text: "", passthrough: result } : { text: JSON.stringify(result) };
+  }
   if (name === "vm_exec") {
     const { ok, body } = await apiResponse("/api/internal/vm-exec", {
       method: "POST",

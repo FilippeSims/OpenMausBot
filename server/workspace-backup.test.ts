@@ -45,6 +45,8 @@ function fixture(root: string): DatabaseSync {
   mkdirSync(join(root, "attachments"));
   writeFileSync(join(root, "attachments", "image.png"), Buffer.from([0, 1, 2, 255, 0, 128]));
   writeFileSync(join(root, "attachments", "avatar.png"), AVATAR_BYTES);
+  mkdirSync(join(root, "team-files", "stable-team-id", "Referências", "Identidade Visual"), { recursive: true });
+  writeFileSync(join(root, "team-files", "stable-team-id", "Referências", "Identidade Visual", "logo.png"), AVATAR_BYTES);
   mkdirSync(join(root, "task-workspaces", "bot", "thread"), { recursive: true });
   writeFileSync(join(root, "task-workspaces", "bot", "thread", "binary.bin"), Buffer.alloc(2 * 1024 * 1024, 0xa5));
   json(join(root, "config.json"), { language: "ja", instances: { custom: { driver: "claudeAgent", config: { configDir: join(root, "providers", "account") } } }, apiKey: "private-key-in-config" });
@@ -180,6 +182,7 @@ describe("encrypted full workspace backups", () => {
       expect(readFileSync(join(target, restoredBot.avatarUrl.slice("/api/".length)))).toEqual(AVATAR_BYTES);
       expect(readJson(join(target, "groups.json"))[0].cwd).toBe("/external/project");
       expect(readJson(join(target, "config.json"))).toEqual({ ...connections, language: "ja" });
+      expect(readFileSync(join(target, "team-files", "stable-team-id", "Referências", "Identidade Visual", "logo.png"))).toEqual(AVATAR_BYTES);
       expect(readFileSync(join(target, "task-workspaces", "bot", "thread", "binary.bin"))).toEqual(Buffer.alloc(2 * 1024 * 1024, 0xa5));
       expect(readJson(join(target, "sessions.json"))).toEqual({ identity: "target-session" });
       expect(readJson(join(target, "cloud-owner.json"))).toEqual({ identity: "target-owner-record" });

@@ -1,5 +1,6 @@
+import { openTeamFiles } from "@/lib/team-files";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronRight, MoreHorizontal, Search, Star, Users, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, FolderOpen, MoreHorizontal, Search, Star, Users, X } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { activeLocale, t } from "@/lib/i18n";
@@ -150,6 +151,7 @@ export function SidebarNavigator({ state, chrome, footer, panels, resize, render
         <h2 className="min-w-0 flex-1 truncate text-[16px] font-semibold text-ink">{teamLabel(activeTeam.key)}</h2>{star(activeTeam)}{menu(activeTeam)}
       </div>
       <p className="px-3 pb-3 text-[11.5px] text-ink-secondary">{t(activeTeam.bots.length === 1 ? "navigation.botCountOne" : "navigation.botCount", { count: activeTeam.bots.length })}</p>
+      <button type="button" className="mx-3 mb-3 flex items-center gap-2 rounded-xl border border-hairline/60 bg-inset/40 px-3 py-3 text-left text-[12px] text-ink hover:bg-raised" onClick={() => openTeamFiles(activeTeam.key)} aria-label={t("teamFiles.openTeam", { name: teamLabel(activeTeam.key) })}><FolderOpen size={17} className="shrink-0 text-accent" /><span><span className="block font-medium">{t("teamFiles.menu")}</span><span className="mt-0.5 block text-[11px] text-ink-secondary">{t("teamFiles.shortDescription")}</span></span></button>
       {botRows(orderedBots(activeTeam.bots).slice(0, shown), false)}
       {activeTeam.groups.length > 0 && <>{heading(t("sidebar.section.channels"))}{activeTeam.groups.slice(0, shown).map(group => <div key={group.id}>{renderGroup(group, "")}</div>)}</>}
       {total === 0 && <p className="px-3 py-4 text-[13px] text-ink-secondary">{t("navigation.emptyTeam")}</p>}
