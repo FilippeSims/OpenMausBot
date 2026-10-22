@@ -52,8 +52,8 @@ jobs:
       - name: Stage the pinned native memory engine
         run: node scripts/prepare-hindsight.mjs ${{ matrix.target }}
       - run: pnpm build:server
-      - name: Verify actual local recall, replacement, sharing and restart
+      - name: Verify capture, scoped recall, sharing and native lifecycle
         env:
           OMB_HINDSIGHT_VERIFY_BUNDLE: ${{ github.workspace }}/dist-native/hindsight/${{ matrix.target }}
           OMB_HINDSIGHT_VERIFY_SERVER_ENTRY: ${{ github.workspace }}/dist-server/index.js
-        run: pnpm exec vitest run server/hindsight-memory.local.e2e.test.ts server/hindsight-runtime.test.ts
+        run: pnpm exec vitest run server/hindsight-memory.local.e2e.test.ts server/memory-acceptance.local.e2e.test.ts server/hindsight-runtime.test.ts --maxWorkers=1

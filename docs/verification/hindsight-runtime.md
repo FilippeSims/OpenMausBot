@@ -4,7 +4,7 @@ Prepare the native bundle (uv 0.9.9 on the build machine):
 
 ```sh
 pnpm build:hindsight
-OMB_HINDSIGHT_VERIFY_BUNDLE="$PWD/dist-native/hindsight/darwin-arm64" pnpm exec vitest run server/hindsight-memory.local.e2e.test.ts server/hindsight-runtime.test.ts
+OMB_HINDSIGHT_VERIFY_BUNDLE="$PWD/dist-native/hindsight/darwin-arm64" pnpm exec vitest run server/hindsight-memory.local.e2e.test.ts server/memory-acceptance.local.e2e.test.ts server/hindsight-runtime.test.ts --maxWorkers=1
 ```
 
 Select `darwin-x64`, `win32-x64` or `linux-x64` on their native runners. The
@@ -74,3 +74,54 @@ to the bundled service in an isolated fixture (12 ms); its retained log is:
 This validates the merged source and compiled server on Mac Apple Silicon. It
 does not install the merged version into the user's live desktop application or
 qualify new Windows/Linux installers.
+
+## Conversation-to-team acceptance, 2026-10-22
+
+The installed macOS arm64 0.1.120 server and native bundle passed the existing
+local-recall recipe and `server/memory-acceptance.local.e2e.test.ts` in separate
+disposable homes. The latter sends a Portuguese project fact through a chat,
+waits for automatic capture into a topic file, and opens a new conversation
+whose transcript does not contain the fact. Both automatic Hindsight context
+and the bot's actual `memory_search` tool recover the captured file, with its
+source and bot provenance. The test uses the installed two-second recall and
+thirty-second indexing timeouts; capture's quiet period is shortened to one
+second in the fixture only.
+
+A second bot in the same team cannot retrieve the first bot's private fact.
+After a `propose_team_memory` call registers an accepted team decision, that
+second bot recalls the shared decision, while a bot in another team cannot.
+The Global Chief recalls both scopes and loses those cross-bot reads on
+demotion. Stopping Hindsight falls back to the accepted local team entry;
+starting it again retrieves the same team entry without rebuilding the index.
+The private topic remains in its original bot's workspace throughout.
+
+The scripted capture model is disabled after the initial capture, and upkeep
+is explicitly off on every other fixture bot. This prevents a scripted model
+reply from manufacturing the private fact in another bot's notebook. The
+fallback and post-restart assertions also require that no private copy exists.
+
+The native acceptance evidence is retained beside the fixture log as:
+
+`server-1792674509517-46914.log.memory-acceptance.json`
+
+under `openmausbot-verification-evidence/` in the OS temporary directory. It
+contains only synthetic notes and records the scope, source, backend and result
+of every check. Eight related suites passed 127 capture, restart, store,
+sharing, team-memory and access checks. Together with both native workflows,
+129 tests passed. The live desktop was only read: its included service was
+ready, enabled and had 22 documents indexed, without an error or pending work.
+All fourteen live bots reported upkeep enabled and a currently available
+background text model; existing upkeep metadata also included a successful
+capture with saved notes. No private note text was needed for this check.
+No test bots, notes, grants or conversations were added to the live workspace.
+
+The Hindsight engine, embedding model, storage, scope checks and MCP tools are
+real. The conversational and capture-model replies are scripted, so this does
+not prove that a particular real model will choose or phrase every fact well.
+To check that model in the app, give one bot a harmless, fictional project
+fact, stop chatting for two minutes, confirm it appears in Profile → Memory,
+and ask about it in a new conversation without repeating the answer. Inspect
+the saved note and cited source as well as the reply: history search alone
+could otherwise make a missing long-term note look successful. Test sharing
+with a separate team fact explicitly registered for the team; ordinary private
+bot notes are not automatically shared with teammates.
