@@ -1,4 +1,5 @@
 import { TeamMenuItems } from "./SidebarTeamMenu";
+import { NavigationBotDetails } from "./NavigationBotDetails";
 import { openTeamFiles } from "@/lib/team-files";
 import { t as uiText } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
@@ -126,7 +127,7 @@ import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { PinnedBotRoster } from "./PinnedCircleThreads";
 import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
-import { SIDEBAR_TEAM_RENAMED_EVENT } from "@/lib/sidebar-navigation";
+import { SIDEBAR_TEAM_RENAMED_EVENT, type NavigationBotStatus } from "@/lib/sidebar-navigation";
 import { SidebarNavigator } from "./SidebarNavigator";
 import { ArchivedBotsPanel, botConfirmCopy, type BotConfirmKind } from "./ArchivedBotsPanel";
 
@@ -1094,6 +1095,7 @@ export interface BotRowProps {
   dispatch: Dispatch<Action>;
   onMenu: (menu: MenuState) => void;
   navigationSubtitle?: string;
+  navigationStatus?: NavigationBotStatus;
 }
 
 export function botRowProps(
@@ -1127,7 +1129,7 @@ function useVisibleMessages(bot: Bot): Message[] {
 
 export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   const advanced = useAdvancedMode();
-  const { bot, selected, deleting, mascotMotion, reveal, pendingQueued, instances, liveCall, density, quiet, query, dispatch, onMenu, navigationSubtitle } = props;
+  const { bot, selected, deleting, mascotMotion, reveal, pendingQueued, instances, liveCall, density, quiet, query, dispatch, onMenu, navigationSubtitle, navigationStatus } = props;
   const showThreads = useShowThreads();
   const liveMedia = useLiveMedia();
   const remoteClient = typeof window !== "undefined" && window.ogb?.remoteClient?.active === true;
@@ -1157,8 +1159,8 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
     selected ? navigationSubtitle ? "bg-accent/10 ring-1 ring-inset ring-accent/20" : "bg-raised shadow-[0_1px_2px_rgb(0_0_0/0.10)]" : "hover:bg-raised/50",
   );
   const activityTasks = sidebarBotActivityTasks(bot, pendingQueued);
-  const waiting = bot.activity === "waiting-on-you" || activityTasks.some((task) => task.activity === "waiting-on-you");
-  const working = !waiting && (Boolean(bot.busy) || activityTasks.some((task) => task.busy || task.activity === "working"));
+  const waiting = navigationStatus === "waiting" || navigationStatus === "working-waiting" || bot.activity === "waiting-on-you" || activityTasks.some((task) => task.activity === "waiting-on-you");
+  const working = !waiting && (navigationStatus === "working" || Boolean(bot.busy) || activityTasks.some((task) => task.busy || task.activity === "working"));
   const teammateWait = !waiting && !working && (Boolean(bot.waitingForTeammates) || activityTasks.some((task) => Boolean(task.waitingForTeammates)));
   const queued = activityTasks.some((task) => task.queued);
   const unread = botShowsUnread(bot);
@@ -1176,15 +1178,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           animated={working || unread || (mascotMotion?.kind ?? "none") !== "none"}
         />
         {advanced && iconOnly && <BotModelBadge bot={bot} instances={instances} avatarSize={avatarSize} />}
-        {working && (
-          <span
-            data-testid="working-dot"
-            className={cn(
-              "absolute -right-0.5 -bottom-0.5 rounded-full border-2 border-panel bg-success",
-              iconOnly ? "size-3" : "size-2.5",
-            )}
-          />
-        )}
+        {working && <span data-testid="working-dot" className={cn("absolute -right-0.5 -bottom-0.5 rounded-full border-2 border-panel bg-success", iconOnly ? "size-3" : "size-2.5")} />}
         {waiting && <span data-testid="waiting-dot" role="status" aria-label={t("sidebar.preview.waiting")} title={t("sidebar.preview.waiting")}
           className={cn("absolute -right-0.5 -bottom-0.5 flex items-center justify-center overflow-hidden rounded-full border-2 border-panel bg-warning font-black text-panel", iconOnly ? "size-5 text-[14px]" : "size-4 text-[12px]")}><span aria-hidden="true">!</span></span>}
         {teammateWait && <span data-testid="teammate-wait-dot" role="status" aria-label={t("sidebar.preview.waitingOnTeammate")} title={t("sidebar.preview.waitingOnTeammate")}
@@ -1246,7 +1240,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           {advanced && density === "compact" && <BotModelMark bot={bot} instances={instances} />}
           {(expanded || (quiet && !statusLine)) && unread && <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-label={t("task.unreadMany")} />}
         </div>
-        {navigationSubtitle && !deleting && <div className="mt-0.5 truncate text-[11.5px] text-ink-secondary" data-navigation-subtitle>{navigationSubtitle}{statusLine && <span className="sr-only" role="status"> · {t(waiting ? "sidebar.preview.waiting" : working ? "sidebar.preview.working" : teammateWait ? "sidebar.preview.waitingOnTeammate" : "task.queued")}</span>}</div>}
+        {navigationSubtitle && !deleting && <div className="mt-0.5 text-[11.5px] text-ink-secondary" data-navigation-subtitle><NavigationBotDetails bot={bot} subtitle={navigationSubtitle} status={navigationStatus} /></div>}
         {(!navigationSubtitle || deleting) && (!expanded || deleting) && (!quiet || statusLine) && <div className="flex items-center justify-between gap-2">
           {deleting ? (
             <span role="status" className="flex min-w-0 items-center gap-1.5 truncate text-[13px] leading-[18px] text-ink-secondary">
@@ -1841,7 +1835,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           {attentionPinned && <SidebarAttentionPanel entries={attention} density={density} onUnpin={() => setAttentionPinned(false)} onJump={entry => dispatch(attentionJumpAction(entry))} collapsed={sectionCollapsed(ATTENTION_SECTION_ID)} onToggle={() => toggleSection(ATTENTION_SECTION_ID)} />}
           <SidebarPinnedThreadsPanel entries={pinnedThreads} density={density} now={now} onJump={entry => dispatch(attentionJumpAction(entry))} onUnpin={entry => dispatch(attentionUnpinAction(entry))} collapsed={sectionCollapsed(PINNED_THREADS_SECTION_ID)} onToggle={() => toggleSection(PINNED_THREADS_SECTION_ID)} />
         </>}
-        renderBot={(bot, options) => <BotListItem {...botRowProps(state, dispatch, bot, { density, quiet: true, query: options.query, onMenu: setMenu })} navigationSubtitle={options.subtitle} />}
+        renderBot={(bot, options) => <BotListItem {...botRowProps(state, dispatch, bot, { density, quiet: true, query: options.query, onMenu: setMenu })} navigationSubtitle={options.subtitle} navigationStatus={options.status} />}
         renderGroup={(group, query) => <GroupListItem group={group} density={density} quiet={quietRows} query={query} onMenu={setRoomMenu} />}
         onTeamMenu={!remoteClient ? (name, button) => { const rect = button.getBoundingClientRect(); openTeamMenu(name, rect.right - 256, rect.bottom + 4, button); } : undefined}
         onManageTeam={!remoteClient ? setMoveToTeam : undefined}

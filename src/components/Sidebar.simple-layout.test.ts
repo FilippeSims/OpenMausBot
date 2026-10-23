@@ -46,6 +46,8 @@ import { initialState } from "@/state/store";
 import { BOTS_SECTION_ID, CHANNELS_SECTION_ID, userSectionId } from "@/lib/sidebar-layout";
 import { SIDEBAR_DENSITY_KEY, SIDEBAR_WIDTH_KEY, SIMPLE_SIDEBAR_WIDTH_KEY, setSidebarDensity } from "@/lib/sidebar-preferences";
 import { SidebarNavigator } from "./SidebarNavigator";
+import { NavigationTeamCard } from "./NavigationTeamCard";
+import { NavigationActivitySummary } from "./NavigationActivitySummary";
 import { Sidebar, TeamMenuItems } from "./Sidebar";
 import { SidebarResizeHandle } from "./SidebarResizeHandle";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
@@ -65,8 +67,8 @@ type Props = { children?: ReactNode; className?: string; style?: Record<string, 
 function nodes(value: ReactNode): ReactElement<Props>[] {
   return Children.toArray(value).flatMap((child) => {
     if (!isValidElement<Props>(child)) return [];
-    if (child.type === SidebarNavigator) {
-      const result = SidebarNavigator(child.props as Parameters<typeof SidebarNavigator>[0]);
+    if ([SidebarNavigator, NavigationTeamCard, NavigationActivitySummary].some(component => child.type === component)) {
+      const result = (child.type as (props: any) => ReactElement<Props>)(child.props);
       return [child, result, ...nodes(result.props.children)];
     }
     return [child, ...nodes(child.props.children)];

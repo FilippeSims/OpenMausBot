@@ -1,5 +1,7 @@
 import type { Bot, Group } from "@/state/store";
 import { isGlobalChief } from "../../shared/global-chief";
+import { navigationBotActivity, navigationRoomActive } from "./navigation-activity";
+export type { NavigationBotStatus } from "./navigation-activity";
 
 export type NavigationTab = "recent" | "teams" | "bots";
 export interface SidebarNavigationPreferences {
@@ -48,9 +50,12 @@ export interface NavigationTeam {
   waiting: number;
   working: number;
   unread: number;
+  active: boolean;
+  activeBots: Bot[];
+  activeRooms: number;
 }
 
-export function navigationTeams(bots: Bot[], groups: Group[], sections: string[] = []): NavigationTeam[] {
+export function navigationTeams(bots: Bot[], groups: Group[], sections: string[] = [], queued: Record<string, unknown[]> = {}): NavigationTeam[] {
   const index = new Map<string, { bots: Bot[]; groups: Group[] }>();
   const team = (key: string) => {
     let value = index.get(key);
@@ -61,11 +66,14 @@ export function navigationTeams(bots: Bot[], groups: Group[], sections: string[]
   for (const bot of bots) if (!bot.hidden && !isGlobalChief(bot)) team(bot.section?.trim() ?? "").bots.push(bot);
   for (const group of groups) if (!group.dm) team(group.section?.trim() ?? "").groups.push(group);
   return [...index].map(([key, { bots: members, groups: rooms }]) => {
-    const waiting = (bot: Bot) => bot.activity === "waiting-on-you" || bot.tasks?.some(task => task.activity === "waiting-on-you");
+    const activity = members.map(bot => ({ bot, ...navigationBotActivity(bot, groups, queued) }));
+    const activeBots = activity.filter(item => item.active).map(item => item.bot);
+    const activeRooms = rooms.filter(navigationRoomActive).length;
     return {
       key, bots: members, groups: rooms,
-      waiting: members.filter(waiting).length,
-      working: members.filter(bot => !waiting(bot) && (bot.busy || bot.tasks?.some(task => task.busy))).length,
+      waiting: activity.filter(item => item.waiting).length,
+      working: activity.filter(item => item.working).length,
+      active: activeBots.length > 0 || activeRooms > 0, activeBots, activeRooms,
       unread: members.filter(bot => bot.unread || bot.tasks?.some(task => task.unread)).length + rooms.filter(group => group.unread).length,
     };
   });

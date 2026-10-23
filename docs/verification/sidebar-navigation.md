@@ -12,6 +12,23 @@ team and role; focused rows show the role. The chat header identifies the
 selected bot's team, or its independent Global Chief role. The footer keeps
 Today and the other workspace tools in a compact toolbar.
 
+The live team-activity summary offers shortcuts for active teams, working bots
+and bots waiting for the person. Clicking a shortcut filters the corresponding
+view; clicking it again or **Show all again** clears that filter. Filters are
+temporary and reset when changing tabs or searching. A disconnected renderer
+labels the summary as reconnecting.
+
+Active teams appear first, followed by inactive favorites and the remaining
+teams. Cards show working and waiting counts, active bots' names and a colored
+indicator. Bot rosters put active agents ahead of available Chiefs and idle
+pinned bots. Recent visits still order the inactive part of Recent. Visible
+status labels respect reduced-motion preferences. An agent working in one
+conversation while another needs approval shows both states and contributes
+once to each count. Other bot threads, active room speakers and queued work
+also feed this presentation; unread messages alone do not count as work. The
+independent Global Chief keeps its status in Direct access and stays outside
+the team summary.
+
 Navigation preferences live in `openmausbot.sidebarNavigation.v1` in local
 storage. They contain the current view, focused team, bounded recent bot IDs
 and favorite team names. Renaming a team through its menu migrates the focus
@@ -28,6 +45,7 @@ pnpm typecheck
 pnpm i18n:check
 pnpm exec vitest run src/components/Sidebar src/components/ChatView.controls.test.ts src/lib/sidebar-navigation.test.ts --maxWorkers=2
 OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/sidebar-navigation-ui.e2e.test.ts --maxWorkers=1
+OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-activity-ui.e2e.test.ts --maxWorkers=1
 OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/portuguese-ui.e2e.test.ts scripts/testing/bot-kit-ui.e2e.test.ts scripts/testing/global-chief-ui.e2e.test.ts scripts/testing/control-omb-ui.e2e.test.ts --maxWorkers=1
 pnpm build
 pnpm build:server
@@ -44,6 +62,15 @@ pagination, recent ordering and both interface modes. It measures the search
 and scrolling area at 1280×900, 1024×600 and 390×844, and opens the mobile drawer
 through its accessible button. Console errors fail the fixture. SIGINT stops
 only its owned launcher and children.
+
+The team-activity fixture holds two real fake-engine turns open, requests a
+synthetic tool approval from a third agent and keeps an inactive favorite team.
+It checks active ordering, names, working/waiting filters, active agents above
+an idle Chief, and desktop/phone geometry. Releasing the fixture turns and
+stopping the approval changes the order and counters without reloading the
+renderer. The synthetic command is only an approval request and is never
+executed. Evidence is saved as `<server log>.team-activity.json` and
+`.activity-*.png`.
 
 ## Verified 2026-10-20
 

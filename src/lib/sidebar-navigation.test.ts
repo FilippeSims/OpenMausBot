@@ -30,12 +30,13 @@ describe("global sidebar navigation", () => {
     expect(teams.find(team => team.key === "Empty")!.bots).toEqual([]);
   });
 
-  it("counts a bot waiting on any thread once, ahead of its simultaneous work", () => {
-    const teams = navigationTeams([bot("multi", { section: "Work", busy: true, tasks: [
+  it("counts concurrent work and approvals independently without counting a bot twice", () => {
+    const teams = navigationTeams([bot("multi", { section: "Work", threadId: "one", busy: true, tasks: [
       { threadId: "one", title: "Approval", createdAt: 1, activity: "waiting-on-you" },
-      { threadId: "two", title: "Approval too", createdAt: 2, activity: "waiting-on-you" },
+      { threadId: "two", title: "Another task working", createdAt: 2, activity: "working", busy: true },
+      { threadId: "three", title: "Approval too", createdAt: 2, activity: "waiting-on-you" },
     ] }), bot("worker", { section: "Work", busy: true }), bot("unread", { section: "Work", unread: true })], []);
-    expect(teams[0]).toMatchObject({ waiting: 1, working: 1, unread: 1 });
+    expect(teams[0]).toMatchObject({ waiting: 1, working: 2, unread: 1, active: true });
   });
 
   it("prioritizes actual visits then the latest thread activity and omits archived/global bots", () => {
