@@ -8,6 +8,8 @@ import type { ResolvedSender } from "../shared/wire.ts";
 import type { UsageTrigger } from "./usage-ledger.ts";
 
 export interface ChannelQueueItem {
+  replyPriority?: true;
+  targetBotId?: string;
   id: string;
   text: string;
   replyToId?: string;
@@ -43,6 +45,7 @@ export function restoreChannelMessages(): void {
     });
     queues.set(row.threadId, entry);
   }
+  for (const entry of queues.values()) entry.items.sort((a, b) => Number(Boolean(b.replyPriority)) - Number(Boolean(a.replyPriority)));
 }
 
 export interface QueuedChannelMessage {
@@ -60,12 +63,16 @@ export function queueChannelMessage(
     via?: "api";
     sender?: ResolvedSender;
     trigger?: UsageTrigger;
+    replyPriority?: true;
+    targetBotId?: string;
   } = {},
 ): QueuedChannelMessage {
   const entry = queues.get(threadId) ?? { groupId, items: [] };
   if (entry.groupId !== groupId) throw new Error("queued task belongs to another channel");
   const item: ChannelQueueItem = {
     id: newId(),
+    replyPriority: options.replyPriority,
+    targetBotId: options.targetBotId,
     text,
     replyToId: options.replyToId,
     sendId: options.sendId,
@@ -77,6 +84,7 @@ export function queueChannelMessage(
   };
   saveChatFollowup({ id: item.id, kind: "channel", ownerId: groupId, threadId, payload: item });
   entry.items.push(item);
+  entry.items.sort((a, b) => Number(Boolean(b.replyPriority)) - Number(Boolean(a.replyPriority)));
   queues.set(threadId, entry);
   return { id: item.id };
 }
@@ -160,11 +168,11 @@ export function settleHeldChannelQueueHead(held: HeldChannelQueue): void {
 
 /** Removing first makes repeated settle notifications harmless. */
 export function drainChannelMessages(
-  isWorking: (groupId: string, threadId: string) => boolean,
+  isWorking: (groupId: string, threadId: string, head?: ChannelQueueItem) => boolean,
   run: (input: { groupId: string; threadId: string; items: ChannelQueueItem[] }) => void | Promise<void>,
 ): void {
   for (const [threadId, entry] of queues) {
-    if (isWorking(entry.groupId, threadId)) continue;
+    if (isWorking(entry.groupId, threadId, entry.items[0])) continue;
     if (entry.items.length === 0) {
       queues.delete(threadId);
       continue;
@@ -188,6 +196,7 @@ export function headChannelGroup(items: readonly ChannelQueueItem[]): ChannelQue
 
 /** An API send has no person behind it and never merges, nor does a goal; unattributed local sends are one identity. */
 function coalesceIdentity(item: ChannelQueueItem): string {
+  if (item.targetBotId) return `target:${item.targetBotId}:${item.id}`;
   if (item.via === "api") return `api:${item.id}`;
   if (item.mode !== "chat") return `mode:${item.mode}:${item.id}`;
   if (item.sender) return `person:${item.sender.id ?? item.sender.name}`;

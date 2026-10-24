@@ -33,6 +33,7 @@ interface QueueEntry {
     sender?: ResolvedSender;
     trigger?: UsageTrigger;
     queuedAt: number;
+    replyPriority?: true;
     via?: "call";
     callId?: string;
   }>;
@@ -66,6 +67,7 @@ export function restoreSteeredMessages(): void {
     });
     queues.set(row.threadId, entry);
   }
+  for (const entry of queues.values()) entry.items.sort((a, b) => Number(Boolean(b.replyPriority)) - Number(Boolean(a.replyPriority)));
 }
 const listeners = new Set<() => void>();
 const changed = () => {
@@ -98,13 +100,14 @@ export function queueSteeredMessage(
   botId: string,
   threadId: string,
   text: string,
-  options: { prompt?: string; replyToId?: string; sendId?: string; dataContext?: Message["dataContext"]; reason?: SteerQueueReason; unattended?: boolean; peerAsk?: Message["peerAsk"]; origin?: WorkOrigin; sender?: ResolvedSender; trigger?: UsageTrigger; callId?: string; via?: "call" } = {},
+  options: { prompt?: string; replyToId?: string; sendId?: string; dataContext?: Message["dataContext"]; reason?: SteerQueueReason; unattended?: boolean; peerAsk?: Message["peerAsk"]; origin?: WorkOrigin; sender?: ResolvedSender; trigger?: UsageTrigger; callId?: string; via?: "call"; replyPriority?: true } = {},
 ): QueuedSteer {
   const id = newId();
   const entry = queues.get(threadId) ?? { botId, items: [] };
   if (entry.botId !== botId) throw new Error("queued task belongs to another bot");
   const item = {
     messageId: id,
+    replyPriority: options.replyPriority,
     text,
     prompt: options.prompt ?? text,
     replyToId: options.replyToId,
@@ -121,6 +124,7 @@ export function queueSteeredMessage(
   };
   saveChatFollowup({ id, kind: "bot", ownerId: botId, threadId, payload: item });
   entry.items.push(item);
+  entry.items.sort((a, b) => Number(Boolean(b.replyPriority)) - Number(Boolean(a.replyPriority)));
   queues.set(threadId, entry);
   changed();
   return { id };
@@ -278,4 +282,10 @@ export function settleHeldSteeredQueue(held: HeldSteerQueue): void {
 
 export function _queuedCount(threadId: string): number {
   return queues.get(threadId)?.items.length ?? 0;
+}
+
+export function queuedTurnTrigger(item: { trigger?: UsageTrigger; sender?: ResolvedSender; peerAsk?: unknown }): UsageTrigger | undefined {
+  if (item.trigger) return item.trigger;
+  if (item.peerAsk) return undefined;
+  return item.sender ? { kind: "user", label: item.sender.name } : { kind: "owner" };
 }

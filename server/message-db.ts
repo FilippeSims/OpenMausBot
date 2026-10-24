@@ -206,6 +206,8 @@ function transaction<T>(fn: (database: DatabaseSync) => T): T {
 }
 
 export interface FollowupPayload {
+  replyPriority?: true;
+  targetBotId?: string;
   text: string;
   prompt?: string;
   replyToId?: string;

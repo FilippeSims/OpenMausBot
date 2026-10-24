@@ -65,7 +65,8 @@ type FixtureInfo = { ui: string; url: string; botId: string; logPath: string };
         found = Object.entries(refs).find(([, item]) => item.role === role && item.name === name);
         return Boolean(found);
       }, { timeout: 10_000 }).toBe(true);
-      await ui("click", "--ref", "@" + found![0]);
+      try { await ui("click", "--ref", "@" + found![0]); }
+      catch (error) { throw new Error(`Click ${name}: ${String(error)}`); }
     };
     await evaluate("localStorage.setItem('omb-advanced-mode','1'); localStorage.removeItem('openmausbot.sidebarNavigation.v1'); location.reload(); true");
     await expect.poll(snapshot, { timeout: 15_000 }).toContain('tab "Times"');
@@ -82,7 +83,11 @@ type FixtureInfo = { ui: string; url: string; botId: string; logPath: string };
     const geometry = [];
     for (const [width, height] of [[1280, 900], [1024, 600], [390, 844]]) {
       await agentBrowser(browser.binary, sessionEnv(browser), ["set", "viewport", String(width), String(height)]);
-      if (width < 768) await click("Abrir lista de bots");
+      if (width < 768) {
+        await expect.poll(() => evaluate("document.querySelector('[data-sidebar-navigation]').getBoundingClientRect().right <= 1")).toBe(true);
+        await click("Abrir lista de bots");
+        await expect.poll(() => evaluate("document.querySelector('[data-sidebar-navigation]').getBoundingClientRect().left >= 0")).toBe(true);
+      }
       const bounds = await evaluate("(() => { const nav = document.querySelector('[data-sidebar-navigation]'); const summary = nav.querySelector('[data-navigation-activity]').getBoundingClientRect(); const top = nav.querySelector('[data-glass-bar=top]').getBoundingClientRect(); const bottom = nav.querySelector('[data-glass-bar=bottom]').getBoundingClientRect(); return {left:summary.left,right:summary.right,available:bottom.top-top.bottom,scroll:document.documentElement.scrollWidth}; })()");
       expect(bounds.scroll).toBeLessThanOrEqual(width); expect(bounds.left).toBeGreaterThanOrEqual(0); expect(bounds.right).toBeLessThanOrEqual(width); expect(bounds.available).toBeGreaterThan(150);
       geometry.push({ width, height, ...bounds });
@@ -114,7 +119,10 @@ type FixtureInfo = { ui: string; url: string; botId: string; logPath: string };
     writeFileSync(fixture.logPath + ".team-activity.json", JSON.stringify({ geometry, logPath: fixture.logPath, final: await snapshot() }, null, 2));
     console.log("Team activity evidence:", fixture.logPath);
   } catch (error) {
-    if (info) writeFileSync(info.logPath + ".activity-failure.json", JSON.stringify(await runControlOmb(["ui", "snapshot", "--ui", info.ui]), null, 2));
+    if (info) {
+      await runControlOmb(["ui", "screenshot", "--ui", info.ui, "--out", info.logPath + ".activity-failure.png"]);
+      writeFileSync(info.logPath + ".activity-failure.json", JSON.stringify(await runControlOmb(["ui", "snapshot", "--ui", info.ui]), null, 2));
+    }
     throw error;
   } finally { await waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }); rmSync(scratch, { recursive: true, force: true }); }
 }, 240_000);

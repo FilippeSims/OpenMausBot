@@ -97,6 +97,7 @@ Use only mapped, tested commands:
 - [Bounded built-in tool results](tool-results.md)
 - [Memory: recall, upkeep and the tidy-up](memory-layer.md)
 - [Hindsight settings and connection checks](hindsight-settings.md)
+- [Notifica questions and durable continuation](notifica.md)
 - [Bundled Hindsight and native process lifecycle](hindsight-runtime.md)
 - [Spend cap and sell prices](spend-cap.md)
 - [Enterprise layer loading and license expiry](enterprise-license.md)

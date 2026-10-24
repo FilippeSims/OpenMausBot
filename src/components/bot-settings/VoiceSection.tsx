@@ -5,6 +5,7 @@ import { Switch } from "../SettingsPrimitives";
 import { VoiceSettings } from "../VoiceSettings";
 import type { useBotSettingsDerived } from "./useBotSettingsDerived";
 import { useBotEditor } from "./BotEditorContext";
+import { NotificaSettings } from "./NotificaSettings";
 
 export function VoiceSection({
   bot,
@@ -19,6 +20,7 @@ export function VoiceSection({
   return (
     <div className="flex flex-col gap-4">
       <VoiceSettings bot={bot} onPatch={patch} />
+      <NotificaSettings botId={bot.id} />
 
       <div className="flex items-center justify-between gap-4 rounded-xl bg-card p-4">
         <div>

@@ -1,5 +1,12 @@
 // Import first: it reads a Cloud home's secrets off the launcher's pipe before any module can start a process.
 import { BOOT_CLOUD_SECRETS } from "./cloud-secrets-boot.ts";
+import { roomRoutingInput } from "./host/room-routing-input.ts";
+import { editionForSettings } from "./host/edition-settings.ts";
+import { queuedTurnTrigger } from "./steer-queue.ts";
+import { NotificaService } from "./notifica.ts";
+import { NotificaClient, NOTIFICA_API } from "./notifica-client.ts";
+import { enqueueNotificaReply, notificaOriginExists } from "./notifica-host.ts";
+import { createNotificaRoutes } from "./routes/notifica.ts";
 import { TeamFilesHost } from "./team-files-host.ts";
 import { createTeamFilesRoutes, runTeamFileTool } from "./routes/team-files.ts";
 import { teamFilesSystemPrompt } from "./team-files-prompt.ts";
@@ -328,7 +335,7 @@ import {
 } from "./store.ts";
 import * as tts from "./tts/index.ts";
 import { createDecider, deciderReady, describeDecider } from "./decider/index.ts";
-import { decideRoomResponder, type RoomRoutingInput } from "./decider/room-routing.ts";
+import { decideRoomResponder } from "./decider/room-routing.ts";
 import { createLiveSession, liveAttachUrl, liveHistoryFrom, LiveSessionError, type LiveBot, type LiveHistoryMessage } from "./live-call.ts";
 import { LiveCallController, LiveCallSignedOutError, type LiveSocket } from "./live-call-controller.ts";
 import { liveCallKey, liveSettingsFor } from "./live-settings.ts";
@@ -529,7 +536,7 @@ import {
 } from "./turn-dispatch-guard.ts";
 import { createGracefulShutdown } from "./graceful-shutdown.ts";
 import { acquireDataDirLeaseForProcess } from "./data-dir-lease.ts";
-import { createWorkspaceAccess, describeEdition, editionStatus, entitled, hostedWorkspaceConfiguration, hostedWorkspaceConfigured, LICENSE_WARN_DAYS, licenseWarning, sharedWorkspaceFullAccessConfigured, loadEnterpriseLayer, workspaceMembership, type EditionStatus, type WorkspaceAccess } from "./enterprise.ts";
+import { createWorkspaceAccess, describeEdition, editionStatus, entitled, hostedWorkspaceConfiguration, hostedWorkspaceConfigured, licenseWarning, sharedWorkspaceFullAccessConfigured, loadEnterpriseLayer, workspaceMembership, type WorkspaceAccess } from "./enterprise.ts";
 import { environmentDescriptor, loadEnvironmentId, serverVersion } from "./environment.ts";
 import { WorkspaceBackupMaintenance } from "./workspace-backup-maintenance.ts";
 import { createWorkspaceBackupRoutes, isWorkspaceBackupSessionControl } from "./workspace-backup-http.ts";
@@ -1605,11 +1612,6 @@ function bookTurnUsage(row: Omit<UsageRow, "at" | "costSource">, tokensReported 
   }
 }
 
-function queuedTurnTrigger(item: { trigger?: UsageTrigger; sender?: ResolvedSender; peerAsk?: unknown }): UsageTrigger | undefined {
-  if (item.trigger) return item.trigger;
-  if (item.peerAsk) return undefined;
-  return item.sender ? { kind: "user", label: item.sender.name } : { kind: "owner" };
-}
 const providerAuthSessions = new ProviderAuthSessions();
 const mcpOAuth = new McpOAuthManager({
   file: join(DATA_DIR, "mcp-oauth.json"),
@@ -2517,6 +2519,7 @@ function hasDirectDispatch(botId: string): boolean {
 
 /** Must match what startTurn admits for a direct thread. */
 function canAdmitDirectTurn(botId: string, threadId: string): boolean {
+  if (notificaService?.waiting(botId, threadId)) return false;
   return admit("peer", {}, {
     threadBusy: threadBusy(botId, threadId),
     atCapacity: botAtThreadCapacity(botId),
@@ -3209,12 +3212,13 @@ try {
 if (browserCleanupReferencesReconciled) browserCleanup.startPending();
 
 let threadsAwaitingTeammates = (): ReadonlySet<string> => new Set<string>();
+let notificaService: NotificaService | undefined;
 let cacheKeepWarmStatus = (_threadId: string): KeepWarmStatus | undefined => undefined;
 const wireTask = (task: TaskRecord, botModel: ModelSelection, awaiting = threadsAwaitingTeammates()): WireTask => {
   // Snoozes heal on read against the server clock; the 0 sentinel ("until new activity") survives reads.
   const { snoozedUntil, ...base } = toWireTask(task, botModel);
   const keepWarm = cacheKeepWarmStatus(task.threadId);
-  const coordinated = { ...base, waitingForTeammates: awaiting.has(task.threadId) && !task.busy, ...(keepWarm ? { cacheKeepWarm: keepWarm } : {}) };
+  const coordinated = { ...base, ...(!task.busy && notificaService?.waitingThread(task.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(task.threadId) && !task.busy, ...(keepWarm ? { cacheKeepWarm: keepWarm } : {}) };
   const asleep = snoozedUntil === 0 || (snoozedUntil !== undefined && snoozedUntil > Date.now());
   return asleep ? { ...coordinated, snoozedUntil } : coordinated;
 };
@@ -3227,7 +3231,7 @@ const wireBot = (bot: BotRecord): WireBot => {
     ? { ...rest, approvalMode: "ask" as const, autoApprove: false }
     : { ...rest, approvalMode: approvalModeFor(rest) };
   const awaiting = threadsAwaitingTeammates();
-  return { ...visible, waitingForTeammates: awaiting.has(bot.threadId) && !threadBusy(bot.id, bot.threadId),
+  return { ...visible, ...(!bot.busy && notificaService?.waiting(bot.id, bot.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(bot.threadId) && !threadBusy(bot.id, bot.threadId),
     mainThreadId: botMainThread(bot.id),
     avatarUrl: visible.avatarUrl ?? null, ...(tasks ? { tasks: tasks.map((task) => wireTask(task, bot.modelSelection, awaiting)) } : {}) };
 };
@@ -3299,6 +3303,7 @@ function previewSystemPrompt(bot: BotRecord) {
     { id: "profile", label: "Profile changes", text: agentsMounted ? PROFILE_PROMPT : "" },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
     { id: "team-files", label: "Team files", text: agentsMounted ? teamFilesSystemPrompt(bot) : "" },
+    { id: "notifica", label: "Notifica", text: agentsMounted ? notificaService?.prompt(bot.id) ?? "" : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
     teamAvailabilityPart(agentsMounted && coordination ? peers : []),
     { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
@@ -7750,7 +7755,7 @@ bus.subscribe((event: RuntimeEvent) => {
 // One drain at a time: the coordinator's changed hook can re-enter it, which would append the same held line twice.
 let drainingQueuedSends = false, queuedSendsDrainOwed = false;
 function drainQueuedSends() {
-  if (!followupsReady) return;
+  if (!followupsReady || workspaceMaintenance.active) return;
   if (drainingQueuedSends) { queuedSendsDrainOwed = true; return; }
   drainingQueuedSends = true;
   try { drainQueuedSendsNow(); } finally {
@@ -7778,7 +7783,7 @@ function drainQueuedSendsNow() {
       }).catch(reject);
     }),
     // Provider completion can precede its dispatch promise: keep the queue until that exact handshake releases its claim.
-    (botId, threadId, head) => threadBusy(botId, threadId) || botAtThreadCapacity(botId) || Boolean(activeGroupTurnForBot(botId))
+    (botId, threadId, head) => Boolean(notificaService?.waiting(botId, threadId)) || threadBusy(botId, threadId) || botAtThreadCapacity(botId) || Boolean(activeGroupTurnForBot(botId))
       || directRootQueued(threadId) || (!head.peerAsk?.incident && parksBehindCoordination(botId, threadId)),
   );
 }
@@ -7786,7 +7791,7 @@ function drainQueuedSendsNow() {
 async function startOrQueueDirectMessage(botId: string, threadId: string, text: string, replyTo?: Message, sendId?: string, sender?: ResolvedSender, trigger?: UsageTrigger, via?: "call", callId?: string, dataContext?: DataContext) {
   const decision = admit("direct", {}, {
     atCapacity: botAtThreadCapacity(botId),
-    threadBusy: threadBusy(botId, threadId),
+    threadBusy: threadBusy(botId, threadId) || Boolean(notificaService?.waiting(botId, threadId)),
     groupTurn: Boolean(activeGroupTurnForBot(botId)),
     parksBehindCoordination: parksBehindCoordination(botId, threadId),
   });
@@ -7898,6 +7903,7 @@ async function acceptDirectSend(
       }
 
       if (guardedStart) return guardedStart(currentAtStart);
+      if (notificaService?.waiting(botId, threadId)) return startOrQueueDirectMessage(botId, threadId, text, replyTo, sendId, sender, trigger, via, callId, dataContext);
 
       if (currentAtStart.busy) {
         const instance = runningTurnInstance(currentAtStart, threadId);
@@ -9085,6 +9091,7 @@ async function startTurn(
         { id: "learn", label: "Skill authoring", text: learnPrompt },
         { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
         { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
+        { id: "notifica", label: "Notifica", text: integrations.agents ? notificaService?.prompt(bot.id) ?? "" : "" },
         { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
         // Volatile, so a teammate starting or finishing never changes the stable half.
         teamAvailabilityPart(coordinationPrompt ? sectionPeers : []),
@@ -10333,37 +10340,6 @@ function teammateReportContext(requestId: string, readerBotId?: string): string 
 
 const roomTranscript = createRoomTranscript({ store, teammateReportContext });
 
-/** Scrubbed of secrets and attachment markup before it leaves this machine. */
-function roomRoutingInput(
-  roomName: string,
-  text: string,
-  members: readonly BotRecord[],
-  history: readonly Message[],
-  sender?: ResolvedSender,
-): RoomRoutingInput {
-  const userName = cfg.profile?.name?.trim() || "User";
-  const clean = (value: string) => redactSecretsInText(extractTurnImages(value).text);
-  const humans = new Set<string>([userName]);
-  const recent = history.flatMap((m) => {
-    if (m.kind !== "text" || !m.text) return [];
-    if (m.role === "user") {
-      const person = m.sender?.name ?? userName;
-      humans.add(person);
-      return [{ from: person, text: clean(m.text) }];
-    }
-    return [{ from: `${m.from?.name ?? "A bot"} (bot)`, text: clean(m.text) }];
-  });
-  const from = sender?.name ?? userName;
-  humans.add(from);
-  return {
-    room: roomName,
-    humans: [...humans],
-    members: members.map((member) => ({ id: member.id, name: member.name, title: member.title, description: member.description })),
-    recent,
-    message: { from, text: clean(text) },
-  };
-}
-
 const roomPostBudgets = new Map<string, RoomPostBudget>();
 const ROOM_POST_MAX_CHARS = 4_000;
 
@@ -10967,6 +10943,7 @@ async function runClaimedGroupMemberTurn(
     { id: "recent", label: "Recent work", text: recentWorkPrompt(recentLines) },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
     { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
+    { id: "notifica", label: "Notifica", text: integrations.agents ? notificaService?.prompt(bot.id) ?? "" : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
     { id: "memory", label: "Memory", text: roomMemory ? `\n${roomMemory.trim()}` : "" },
     { id: "skills", label: "Skills index", text: workspace ? skillsHost.skillsIndex(bot, threadId, instance) : "" },
@@ -11701,6 +11678,7 @@ async function runGroupGoalOperation(args: {
 }
 
 type StartGroupTurnOptions = {
+  targetBotId?: string;
   threadId?: string;
   goalCoordinatorBotId?: string;
   goalRunId?: string;
@@ -11735,6 +11713,8 @@ function startGroupTurn(
     .map((id) => store.bot(id))
     .filter((bot): bot is NonNullable<typeof bot> => Boolean(bot));
   const availableMembers = members.filter((member) => !member.hidden);
+  const targetBot = options.targetBotId ? availableMembers.find(member => member.id === options.targetBotId) : undefined;
+  if (options.targetBotId && !targetBot) throw Object.assign(new Error("The original Notifica bot is not an active room member."), { status: 409 });
   const isHeld = (member: { id: string }) => roomHeld(group, member.id);
   const routableMembers = availableMembers.filter((member) => !isHeld(member));
   const requestedGoalCoordinator = options.goalCoordinatorBotId
@@ -11809,7 +11789,7 @@ function startGroupTurn(
       },
     });
   }
-  let responders = roomResponders(text, members, group.defaultResponder);
+  let responders = targetBot ? [targetBot] : roomResponders(text, members, group.defaultResponder);
   if (!group.dm) {
     const addressed = stopWordPlacement(text) === "adjacent" ? undefined : message.id;
     for (const held of responders.filter(isHeld)) noteHeldSkip(group.id, threadId, held, addressed);
@@ -11827,7 +11807,7 @@ function startGroupTurn(
     responders = last ? [last] : [];
   }
   // Auto's responders are a fallback until the decision model answers; the append and the return stay synchronous.
-  const autoRoute = autoCandidate && !goalCoordinator && routableMembers.length > 1 &&
+  const autoRoute = !targetBot && autoCandidate && !goalCoordinator && routableMembers.length > 1 &&
     roomResponders(text, availableMembers, { kind: "mentions" }).length === 0;
 
   if (!responders.length && !goalCoordinator && !autoRoute) {
@@ -11869,7 +11849,7 @@ function startGroupTurn(
     goalCoordinator || autoRoute ? [] : responders.map((responder) => responder.id),
   );
   const routing = autoRoute
-    ? decideRoomResponder(decider, roomRoutingInput(group.name, text, routableMembers, historyBeforeSend, options.sender), {
+    ? decideRoomResponder(decider, roomRoutingInput(group.name, text, routableMembers, historyBeforeSend, cfg.profile?.name?.trim() || "User", options.sender), {
         signal: operation.cancellation.signal,
       })
     : null;
@@ -11988,7 +11968,7 @@ function startGroupTurn(
 
 let drainingQueuedChannelSends = false, queuedChannelSendsDrainOwed = false;
 function drainQueuedChannelSends(): void {
-  if (!followupsReady) return;
+  if (!followupsReady || workspaceMaintenance.active) return;
   if (drainingQueuedChannelSends) { queuedChannelSendsDrainOwed = true; return; }
   drainingQueuedChannelSends = true;
   try { drainQueuedChannelSendsNow(); } finally {
@@ -11998,7 +11978,8 @@ function drainQueuedChannelSends(): void {
 }
 function drainQueuedChannelSendsNow(): void {
   drainChannelMessages(
-    (groupId, threadId) => groupThreadIsWorking(groupId, threadId),
+    (groupId, threadId, head) => Boolean(notificaService?.waitingThread(threadId)) || groupThreadIsWorking(groupId, threadId)
+      || Boolean(head?.targetBotId && (!store.group(groupId)?.memberIds.includes(head.targetBotId) || store.bot(head.targetBotId)?.hidden || roomHeld(store.group(groupId), head.targetBotId))),
     ({ groupId, threadId, items }) => {
       const group = store.group(groupId);
       const ownsThread = group?.dm
@@ -12014,6 +11995,7 @@ function drainQueuedChannelSendsNow(): void {
           sender: head.sender,
           trigger: queuedTurnTrigger({ trigger: head.trigger, sender: head.sender }),
           queuedGroup: items,
+          targetBotId: head.targetBotId,
         });
       } catch (error) {
         for (const item of items) {
@@ -12948,16 +12930,6 @@ async function perBotLocalVmCountForModeChange(): Promise<number | null> {
   return existingPerBotLocalVmCount(runtime.runtime);
 }
 
-function editionForSettings(status: EditionStatus) {
-  const expiring = status.edition === "enterprise" && status.expiresAt && status.expiresInDays !== undefined &&
-    (status.graceEndsAt !== undefined || status.expiresInDays <= LICENSE_WARN_DAYS);
-  return {
-    edition: status.edition,
-    features: status.features,
-    ...(expiring ? { license: { expiresAt: status.expiresAt!, expiresInDays: status.expiresInDays!, ...(status.graceEndsAt ? { graceEndsAt: status.graceEndsAt } : {}) } } : {}),
-  };
-}
-
 function configStatus() {
   // Keys stay write-only: only settings and configured-or-not flags go out.
   const eventLogMaxBytes = threadEventLogMaxBytes(cfg);
@@ -13340,12 +13312,12 @@ const workspaceBackupAccess = {
       teamComputers.list().every(computer => !teamComputerInUse(computer)) &&
       store.bots.every((bot) => !botHasActiveTurn(bot.id) && !routines?.activeRunForBot(bot.id) && !botComputerControlSnapshot(bot.id).held) &&
       store.groups.every((group) => !groupIsWorking(group)),
-    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); hindsightMemory.stop(); },
-    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); hindsightMemory.start(); },
+    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); hindsightMemory.stop(); notificaService?.stop(); },
+    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); hindsightMemory.start(); notificaService?.start(); drainQueuedSends(); drainQueuedChannelSends(); },
     flush: async () => {
       await Promise.all([flushAllProfileHistory(), flushAllMemoryJournals(), flushUsageLedger(DATA_DIR), flushDecisionLog(DATA_DIR), flushAdminActivity(DATA_DIR)]);
       // Writers gated and work idle: release the WAL connection for a consistent snapshot; Store reopens it lazily.
-      await hindsightMemory.settled(); await teamFilesHost.settled();
+      await hindsightMemory.settled(); await teamFilesHost.settled(); await notificaService?.settled();
       await closeMessageSearch();
       closeMessageDb();
     },
@@ -13423,6 +13395,13 @@ ROUTES.push(createHighLevelRoutes({ service: highlevel }));
 ROUTES.push(createSkillShareRoutes({ enabled: () => skillsHost.mode() !== "off", botExists: (id) => Boolean(store.bot(id)),
   cardRefusal: (auth, threadId, requestId) => cardAnswerRefusal(auth, threadId, requestId, "allow"), shareFromReceipt: skillsHost.shareFromReceipt, shareFromBot: skillsHost.shareFromBot }));
 const teamFilesHost = new TeamFilesHost(store, () => workspaceMaintenance.request());
+const notificaFixtureUrl = process.env.OMB_TEST_SEALED_PATH === "1" && /^http:\/\/127\.0\.0\.1:[1-9]\d{0,4}$/.test(process.env.FAKE_CLAUDE_NOTIFICA_URL ?? "") ? process.env.FAKE_CLAUDE_NOTIFICA_URL : undefined;
+notificaService = new NotificaService(DATA_DIR, {
+  exists: origin => notificaOriginExists(store, origin), ready: () => followupsReady && !workspaceMaintenance.active && !companyShutdown,
+  deliver: async (event, sendId) => { assertWithinBudget(cfg, DATA_DIR); enqueueNotificaReply(store, event, sendId); },
+  changed: botId => { const bot = store.bot(botId); if (bot) broadcast({ kind: "bot", bot: wireBot(bot) }); queueMicrotask(() => { drainQueuedSends(); drainQueuedChannelSends(); }); },
+}, new NotificaClient(notificaFixtureUrl ?? NOTIFICA_API));
+ROUTES.push(createNotificaRoutes(notificaService, id => Boolean(store.bot(id)), () => workspaceMaintenance.assertAvailable()));
 ROUTES.push(createTeamFilesRoutes(teamFilesHost), createTeamContextRoutes({ store, teamMemory }));
 ROUTES.push(createBotMemoryRoutes({
   bot: (id) => store.bot(id),
@@ -13490,7 +13469,7 @@ ROUTES.push(createChannelRoutes({
   groupWithThread,
   updateChannel,
   groupIsWorking,
-  groupThreadIsWorking,
+  groupThreadIsWorking: (groupId, threadId) => Boolean(notificaService?.waitingThread(threadId)) || groupThreadIsWorking(groupId, threadId),
   readCursor,
   pageSize,
   messagePage,
@@ -14266,6 +14245,11 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           throw Object.assign(new Error("the internal turn capability has expired"), { status: 401 });
         }
       };
+      if (path === "/api/internal/notifica" && method === "POST") {
+        const body = await readInternalBody(); requireActiveInternalCapability(); workspaceMaintenance.assertAvailable();
+        const group = store.groupByThread(internalCapability.threadId);
+        return json(res, 200, notificaService!.enqueue({ botId: internalSender.id, threadId: internalCapability.threadId, ...(group ? { groupId: group.id } : {}) }, body));
+      }
       if (path === "/api/internal/team-files" && method === "POST") {
         const body = await readInternalBody();
         const active = () => {
@@ -17118,7 +17102,7 @@ function sweepThreadEventLogsNow(): void {
       closedAt: task.closedBy?.at ?? null,
       archivedAt: task.archivedAt ?? null,
       unread: task.unread === true,
-      busy: threadBusy(bot.id, task.threadId),
+      busy: threadBusy(bot.id, task.threadId) || Boolean(notificaService?.waiting(bot.id, task.threadId)),
       openDirectHandoff: coordinator.activeDirect(task.threadId),
     })));
   const swept = sweepThreadEventLogs(candidates, retentionDays);
@@ -17184,6 +17168,7 @@ server.listen(PORT, "127.0.0.1", async () => {
   browserSweep.start(); appTriggers.start(); startCloudHomeConnectedApps({ cloudHome: CLOUD_HOME !== null, dataDir: DATA_DIR, cloudGrant: CLOUD_ENV.OMB_CLOUD_CONNECTED_APPS_GRANT, apply: (access) => { composio.setManagedBrokerAccess(access); broadcast({ kind: "config", ...configStatus() }); } });
   if (builtInBrowserEnabled(cfg)) chromeLauncher.start();
   followupsReady = true;
+  notificaService?.start();
   drainQueuedSends();
   drainQueuedChannelSends();
   void cloudComputerPower.armRunning();
@@ -17258,13 +17243,14 @@ const gracefulShutdown = createGracefulShutdown({
       calendarCalls?.stop();
       memoryUpkeep.stop();
       hindsightMemory.stop();
+      notificaService?.stop();
       cacheKeepWarm.dispose();
       skillReview.stop();
       webhookIngress?.server.close();
       tunnelListener?.close(); stopCloudHomeConnectedApps();
     },
     async () => { await managedDesktop.close(); await registry.disposeAll(); },
-    () => hindsightRuntime.close(), () => teamFilesHost.close(),
+    () => hindsightRuntime.close(), () => teamFilesHost.close(), () => notificaService?.close(),
     async () => { await dataEngine.closeAll().catch((error) => console.warn("data: close failed", error)); },
     async () => {
       const temporaries = [...temporaryBrowserSessions.keys()].map((botId) => forgetTemporaryBrowser(botId));

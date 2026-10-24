@@ -1,4 +1,5 @@
 import { TEAM_FILES_TOOL } from "./team-files-tool.ts";
+import { NOTIFICA_TOOL } from "./notifica-tool.ts";
 import { TRIGGER_FIELDS_SCHEMA } from "./agents-schedule-schema.ts";
 export { WEEKDAYS } from "./agents-schedule-schema.ts";
 // The agents tool catalog and which tools a turn sees: definitions only, no environment, no calls.
@@ -49,6 +50,7 @@ const START_THREAD_SELF_ID = "Leave out, or use your own bot ID. For teammates u
 
 const TOOL_DEFINITIONS = [
   TEAM_FILES_TOOL,
+  NOTIFICA_TOOL,
   {
     name: "create_options_card",
     description:
