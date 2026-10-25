@@ -347,7 +347,9 @@ export function mimeFor(path: string): string {
 }
 
 /** Canonicalised before and after opening, and the handle compared with the post-open path, to reject symlink escapes and directory swaps. */
-export async function openMessageFile(href: string, roots: readonly string[]): Promise<OpenedMessageFile> {
+export async function openMessageFile(href: string, roots: readonly string[], options: { maxBytes?: number } = {}): Promise<OpenedMessageFile> {
+  const maximumBytes = options.maxBytes ?? MESSAGE_FILE_MAX_BYTES;
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1) throw new Error("Invalid message file limit");
   const requested = referencedPath(href);
   const canonicalRoots = (await Promise.all(roots.map(async (root) => {
     try {
@@ -384,8 +386,8 @@ export async function openMessageFile(href: string, roots: readonly string[]): P
       const opened = await handle.stat();
       if (opened.isDirectory()) throw statusError(400, "the link points to a folder, not a file", "directory");
       if (!opened.isFile()) throw statusError(400, "the link does not point to a regular file");
-      if (opened.size > MESSAGE_FILE_MAX_BYTES) {
-        throw statusError(413, `file exceeds ${MESSAGE_FILE_MAX_BYTES} bytes`);
+      if (opened.size > maximumBytes) {
+        throw statusError(413, `file exceeds ${maximumBytes} bytes`);
       }
 
       const canonicalAfter = await realpath(candidate);

@@ -16,9 +16,10 @@ closes both fixture servers and removes only their temporary data.
 
 Check the following in the browser:
 
-1. `report #1.md` and `metrics.csv` have **Save a copy** buttons. Opening
-   the Files tab must not download either file.
-2. Save `report #1.md`. The button reports **Downloaded**, and the saved
+1. Clicking `report #1.md` opens formatted Markdown in the right-side panel.
+   Its neighboring download button is separate. Opening Files must not fetch or
+   download files. Close the preview to return to the same Files panel.
+2. Use **Save a copy of report #1.md**. The button reports **Downloaded**, and the saved
    text contains the synthetic review. Its encoded file URL is sent with the
    stored reply's message ID through the existing file endpoint.
 3. **Preview table: metrics.csv** opens the existing table preview, with
@@ -47,5 +48,6 @@ Authorization and containment remain the server's responsibility on every
 click. Only existing Markdown file links and stored file attachments are
 used; there is no new path-reading API or expanded root. Unmatched spelling
 variants remain unavailable rather than guessing by basename. CSV/TSV use the
-existing preview; other formats retain their existing save behavior. This is
+existing table in the right panel. The [file preview fixture](file-preview.md)
+covers Markdown, PDF, images and video, plus independent downloads. This is
 not a full directory browser, a checkpoint test, or a packaged desktop/phone verification.

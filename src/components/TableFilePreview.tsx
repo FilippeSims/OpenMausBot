@@ -38,8 +38,8 @@ export function TableFileButton({ path, name, message }: { path: string; name: s
   </>;
 }
 
-function TableFileContent({ path, name, message, delimiter }: {
-  path: string; name: string; message: MessageAttachmentContext; delimiter: "," | "\t";
+export function TableFileContent({ path, name, message, delimiter, entry }: {
+  path: string; name: string; message: MessageAttachmentContext; delimiter: "," | "\t"; entry?: string;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [table, setTable] = useState<TextTable | null>(null);
@@ -55,7 +55,7 @@ function TableFileContent({ path, name, message, delimiter }: {
     };
     void (async () => {
       try {
-        const response = await requestMessageFile(path, message, controller.signal);
+        const response = await requestMessageFile(path, message, controller.signal, entry === undefined ? undefined : { entry });
         const text = await readTableResponse(response, controller.signal);
         controller.signal.throwIfAborted();
         worker = new Worker(new URL("../lib/table-file.worker.ts", import.meta.url), { type: "module" });
@@ -69,7 +69,7 @@ function TableFileContent({ path, name, message, delimiter }: {
       } catch (reason) { fail(reason instanceof Error && reason.message === "size" ? "size" : "load"); }
     })();
     return () => { controller.abort(); worker?.terminate(); };
-  }, [path, message.threadId, message.messageId, delimiter, attempt]);
+  }, [path, message.threadId, message.messageId, delimiter, entry, attempt]);
   const data = useMemo(() => table && ({ columns: table.headers.map((text) => ({ text })), rows: table.rows.map((row) => row.map((text) => ({ text }))) }), [table]);
   if (error) return <div className="p-8 text-center text-sm"><p role="alert" className="mb-3 text-ink-secondary">{t(error === "size" ? "table.tooLarge" : error === "columns" || error === "format" ? "table.invalid" : "table.loadFailed")}</p><button type="button" className="rounded-lg border border-hairline px-3 py-2 hover:bg-raised" onClick={() => setAttempt(attempt + 1)}>{t("chat.retry")}</button></div>;
   if (!data) return <div role="status" className="flex items-center justify-center gap-2 p-12 text-sm text-ink-secondary"><LoaderCircle size={16} className="animate-spin" />{t("table.loading")}</div>;

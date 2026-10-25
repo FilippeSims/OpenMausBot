@@ -8077,5 +8077,19 @@
   "notifica.received": "Answer received · waiting to resume the original session",
   "notifica.deliveryError": "Communication needs attention · the task is still waiting",
   "notifica.queued": "Queued for delivery in conversation order",
-  "notifica.originMissing": "The original bot or task is unavailable. This answer will not be sent to another conversation."
+  "notifica.originMissing": "The original bot or task is unavailable. This answer will not be sent to another conversation.",
+  "filePreview.title": "File preview",
+  "filePreview.open": "Preview file: {name}",
+  "filePreview.close": "Close file preview",
+  "filePreview.loading": "Opening file…",
+  "filePreview.failed": "Could not open this file. It may no longer be available, or your connection was interrupted. Try again or download a copy.",
+  "filePreview.tooLarge": "Preview supports text up to 2 MB and media up to 25 MB. Download a copy to open this file.",
+  "filePreview.unsupported": "Preview is not available for this format. Download a copy to open it in another app.",
+  "filePreview.pdfFailed": "This PDF could not be displayed. Password-protected files need to be downloaded and opened in a PDF reader.",
+  "filePreview.previousPage": "Previous page",
+  "filePreview.nextPage": "Next page",
+  "filePreview.page": "Page {page} of {count}",
+  "filePreview.fit": "Fit width",
+  "filePreview.zoomIn": "Zoom in",
+  "filePreview.zoomOut": "Zoom out"
 }

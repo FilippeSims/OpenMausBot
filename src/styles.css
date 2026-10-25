@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+.file-preview-markdown :is(h1, h2, h3, h4) { font-weight: 650; line-height: 1.35; margin: 1.2em 0 0.6em; }
+.file-preview-markdown h1 { font-size: 1.65em; }
+.file-preview-markdown h2 { font-size: 1.35em; }
+.file-preview-markdown :is(p, ul, ol, pre, blockquote, table) { margin-bottom: 1em; }
+.file-preview-markdown :is(ul, ol) { padding-inline-start: 1.5em; }
+.file-preview-markdown ul { list-style: disc; }
+.file-preview-markdown ol { list-style: decimal; }
+.file-preview-markdown pre { overflow: auto; padding: 1em; background: var(--color-inset); border-radius: 0.5rem; }
+.file-preview-markdown code { font-size: 0.85em; }
+.file-preview-markdown blockquote { border-inline-start: 3px solid var(--color-hairline); padding-inline-start: 1em; }
+.file-preview-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.file-preview-markdown :is(th, td) { border: 1px solid var(--color-hairline); padding: 0.4em 0.7em; text-align: start; }
+
 /* Phones and tablets have no hover, and Tailwind only applies `hover:` and
    `group-hover:` under `@media (hover: hover)`. A control revealed on hover
    (`opacity-0 group-hover:opacity-100`) is therefore invisible there. Pair

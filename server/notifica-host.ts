@@ -14,9 +14,12 @@ export function notificaOriginExists(store: Store, origin: NotificaOrigin): bool
 
 /** The reply is user text in the ordinary durable agent queue, never a shell command or a privileged instruction. */
 export function enqueueNotificaReply(store: Store, event: NotificaEvent, sendId: string): void {
-  const { botId, threadId, groupId } = event.origin;
-  if (!notificaOriginExists(store, event.origin) || store.bot(botId)?.hidden) throw new Error("Original bot or task is unavailable");
-  const text = event.reply!.text;
+  enqueueNotificaText(store, event.origin, event.reply!.text, sendId);
+}
+
+export function enqueueNotificaText(store: Store, origin: NotificaOrigin, text: string, sendId: string): void {
+  const { botId, threadId, groupId } = origin;
+  if (!notificaOriginExists(store, origin) || store.bot(botId)?.hidden) throw new Error("Original bot or task is unavailable");
   const kind = groupId ? "channel" : "bot";
   if (cancelledChatFollowup(kind, groupId ?? botId, threadId, sendId)) throw new Error("This reply was cancelled in the chat queue");
   const accepted = acceptedSendMatch(store.messagesFor(threadId), sendId, text, undefined, groupId ? "chat" : undefined);

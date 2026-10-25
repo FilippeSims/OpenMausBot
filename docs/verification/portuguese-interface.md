@@ -28,7 +28,7 @@ until the localized word is entered exactly.
 pnpm lint
 pnpm typecheck
 pnpm i18n:check
-pnpm exec vitest run src scripts/generate-locale.test.mjs electron/menu.test.mjs shared/cron-label.test.ts server/composer-attachments.test.ts server/task-timeline.test.ts --maxWorkers=2
+pnpm exec vitest run src scripts/generate-locale.test.mjs electron/menu.test.mjs src/lib/schedule-label.test.ts server/composer-attachments.test.ts server/task-timeline.test.ts --maxWorkers=2
 OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/portuguese-ui.e2e.test.ts scripts/testing/bot-kit-ui.e2e.test.ts --maxWorkers=1
 node --test electron/preload.node-test.mjs electron/company-backup-preload.node-test.mjs electron/cloud-sync-preload.node-test.mjs electron/local-origin.node-test.mjs electron/capabilities.node-test.mjs electron/startup-tray.node-test.mjs
 OMB_VERIFY_LOCALE=pt-br node scripts/verify-startup-tray.mjs

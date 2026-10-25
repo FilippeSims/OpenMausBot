@@ -15,3 +15,18 @@ export interface NotificaStatus {
     error?: string;
   }>;
 }
+
+/** Installation-owned catalog; a bot belongs to exactly one company and team. */
+export interface NotificaWorkspaceStatus {
+  configured: boolean;
+  enabled: boolean;
+  authFailed: boolean;
+  error?: string;
+  retryAt?: number;
+  lastSyncAt?: number;
+  companies: Array<{ id: string; name: string }>;
+  teamCompanies: Record<string, string>;
+  teams: Array<{ id: string; name: string; companyId: string; section: string }>;
+  bots: number;
+  pending: number;
+}

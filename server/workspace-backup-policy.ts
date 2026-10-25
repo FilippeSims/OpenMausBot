@@ -34,7 +34,8 @@ export function restoredWorkspaceConfig(portable: unknown, destination: unknown)
 }
 
 export function excludedWorkspaceAuthPath(path: string): boolean {
-  if (/^(?:notifica\.json\.enc|notifica-key)(?:$|\.\d+\.[0-9a-f-]+\.tmp$)/.test(path)) return true;
+  if (/^notifica-workspace-files(?:\/|$)/.test(path)) return true;
+  if (/^(?:notifica(?:-workspace)?\.json\.enc|notifica(?:-workspace)?-key)(?:$|\.\d+\.[0-9a-f-]+\.tmp$)/.test(path)) return true;
   if (/^command-allowlist\.json(?:$|\.\d+\.[0-9a-f-]+\.tmp$)/.test(path)) return true;
   if (/^mcp-oauth\.json(?:$|\.\d+\.[0-9a-f-]+\.tmp$)/.test(path)) return true;
   // Saved website logins and their key never leave the computer they were saved on, nor does the key sealing webhook secrets.

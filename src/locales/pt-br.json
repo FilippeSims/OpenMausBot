@@ -8077,5 +8077,19 @@
   "notifica.received": "Resposta recebida · aguardando retomar a sessão original",
   "notifica.deliveryError": "A comunicação precisa de atenção · a tarefa continua em espera",
   "notifica.queued": "Na fila para envio na ordem da conversa",
-  "notifica.originMissing": "O bot ou a tarefa de origem não está disponível. Esta resposta não será enviada para outra conversa."
+  "notifica.originMissing": "O bot ou a tarefa de origem não está disponível. Esta resposta não será enviada para outra conversa.",
+  "filePreview.title": "Prévia do arquivo",
+  "filePreview.open": "Visualizar arquivo: {name}",
+  "filePreview.close": "Fechar prévia do arquivo",
+  "filePreview.loading": "Abrindo arquivo…",
+  "filePreview.failed": "Não foi possível abrir o arquivo. Ele pode não estar mais disponível ou a conexão foi interrompida. Tente novamente ou baixe uma cópia.",
+  "filePreview.tooLarge": "A prévia aceita texto de até 2 MB e mídia de até 25 MB. Baixe uma cópia para abrir este arquivo.",
+  "filePreview.unsupported": "Este formato não tem prévia. Baixe uma cópia para abrir em outro aplicativo.",
+  "filePreview.pdfFailed": "Não foi possível exibir este PDF. Arquivos protegidos por senha precisam ser baixados e abertos em um leitor de PDF.",
+  "filePreview.previousPage": "Página anterior",
+  "filePreview.nextPage": "Próxima página",
+  "filePreview.page": "Página {page} de {count}",
+  "filePreview.fit": "Ajustar largura",
+  "filePreview.zoomIn": "Ampliar",
+  "filePreview.zoomOut": "Reduzir"
 }

@@ -1,6 +1,9 @@
 import { notificaMessageReceipt, notificaReplyReceipt, type NotificaEvent } from "./notifica-state.ts";
+import { z } from "zod";
 
 export const NOTIFICA_API = "https://api-notifica.adapton.com.br";
+export const NOTIFICA_ATTACHMENT_MAX_BYTES = 50 * 1024 * 1024;
+export const notificaAttachment = z.object({ id: z.string().regex(/^[a-f0-9]{64}$/), name: z.string().min(1).max(240), mime: z.string().min(1).max(200), bytes: z.number().int().min(0).max(NOTIFICA_ATTACHMENT_MAX_BYTES) });
 
 export class NotificaHttpError extends Error {
   readonly status: number;
@@ -36,11 +39,22 @@ export class NotificaClient {
       conversationId: event.remote.conversationId, questionId: event.remote.messageId,
     }, signal));
   }
-  private async post(path: string, key: string, body: unknown, signal?: AbortSignal): Promise<unknown> {
+  async post(path: string, key: string, body: unknown, signal?: AbortSignal): Promise<unknown> {
     const response = await this.request(`${this.baseUrl}/${path}`, {
       method: "POST", redirect: "error", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(body), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000),
     });
+    return this.readResponse(response);
+  }
+  async uploadAttachment(key: string, metadata: { eventId: string; name: string; targetBotId: string }, bytes: Uint8Array, signal?: AbortSignal) {
+    if (bytes.byteLength > NOTIFICA_ATTACHMENT_MAX_BYTES) throw new NotificaHttpError(413);
+    const response = await this.request(`${this.baseUrl}/agentAttachment?${new URLSearchParams(metadata)}`, {
+      method: "POST", redirect: "error", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/octet-stream" },
+      body: new Uint8Array(bytes), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(90_000)]) : AbortSignal.timeout(90_000),
+    });
+    return z.object({ attachment: notificaAttachment }).parse(await this.readResponse(response)).attachment;
+  }
+  private async readResponse(response: Response): Promise<unknown> {
     if (!response.ok) {
       await response.body?.cancel();
       throw new NotificaHttpError(response.status, notificaRetryAt(response.headers.get("retry-after"), Date.now()));

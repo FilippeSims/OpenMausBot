@@ -9,6 +9,8 @@ import { json, readBody } from "../harness/http.ts";
 import { NotificaService } from "../notifica.ts";
 import { dispatchRoutes } from "./table.ts";
 import { createNotificaRoutes } from "./notifica.ts";
+import { createNotificaWorkspaceRoutes } from "./notifica-workspace.ts";
+import { NotificaWorkspaceService } from "../notifica-workspace.ts";
 
 let server: Server | undefined;
 let dir: string | undefined;
@@ -42,4 +44,29 @@ it("keeps bot connections private, validates input and requires admin authority"
   auth = { kind: "loopback", trust: "service", scopes: ["client"] };
   expect((await call("a")).status).toBe(403); expect((await call("a", { enabled: false })).status).toBe(403);
   for (const method of ["GET", "PUT", "POST"]) expect(requiredScope(method, "/api/bots/a/notifica")).toBe("admin");
+});
+
+
+it("protects workspace credentials and rejects invalid company assignments before saving", async () => {
+  dir = mkdtempSync(join(tmpdir(), "omb-notifica-workspace-route-"));
+  const service = new NotificaWorkspaceService(dir, { ready: () => false, bots: () => [], sections: () => [], exists: () => false,
+    createThread: () => { throw new Error("Unexpected dispatch"); }, deliver: async () => {}, outputs: () => [], approvals: () => [],
+    approvalState: () => "cancelled", decide: async () => false, changed: () => {} });
+  let auth: RequestAuth = { kind: "loopback", scopes: ["admin"] };
+  server = createServer(async (req, res) => {
+    const url = new URL(req.url!, "http://localhost");
+    await dispatchRoutes([createNotificaWorkspaceRoutes(service, () => {})], { req, res, path: url.pathname, url, method: req.method!, auth, json, readBody });
+  });
+  await new Promise<void>(resolve => server!.listen(0, "127.0.0.1", resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/notifica/workspace`;
+  const settings = { enabled: true, key: "private-workspace-key", companies: [{ id: "company", name: "Company" }], teamCompanies: { Marketing: "company" } };
+  const put = (body: unknown) => fetch(url, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  expect((await put({ ...settings, teamCompanies: { Marketing: "missing" } })).status).toBe(400);
+  expect((await put({ ...settings, companies: [settings.companies[0], settings.companies[0]] })).status).toBe(400);
+  expect((await put(settings)).status).toBe(200);
+  const response = await fetch(url), body = await response.text();
+  expect(response.headers.get("cache-control")).toBe("no-store"); expect(body).not.toContain("private-workspace-key"); expect(JSON.parse(body).configured).toBe(true);
+  auth = { kind: "loopback", trust: "service", scopes: ["client"] };
+  expect((await fetch(url)).status).toBe(403); expect((await put(settings)).status).toBe(403);
+  expect(requiredScope("GET", "/api/notifica/workspace")).toBe("admin");
 });

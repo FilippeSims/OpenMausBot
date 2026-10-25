@@ -69,8 +69,11 @@ describe("workspace backup data boundary", () => {
   });
 
   it("keeps Notifica credentials, pending communication and deduplication receipts on their originating installation", () => {
-    for (const path of ["notifica.json.enc", "notifica-key", "notifica.json.enc.4242.05a7b3e0-1234-4abc-8def-0123456789ab.tmp", "notifica-key.12.05a7b3e0-1234.tmp"]) expect(excludedWorkspaceAuthPath(path)).toBe(true);
+    for (const path of ["notifica.json.enc", "notifica-key", "notifica-workspace.json.enc", "notifica-workspace-key", "notifica.json.enc.4242.05a7b3e0-1234-4abc-8def-0123456789ab.tmp", "notifica-key.12.05a7b3e0-1234.tmp"]) expect(excludedWorkspaceAuthPath(path)).toBe(true);
     for (const path of ["workspaces/bot/notifica-key", "attachments/notifica.json.enc"]) expect(excludedWorkspaceAuthPath(path)).toBe(false);
+    expect(excludedWorkspaceAuthPath("notifica-workspace-files")).toBe(true);
+    expect(excludedWorkspaceAuthPath("notifica-workspace-files/private.enc")).toBe(true);
+    expect(excludedWorkspaceAuthPath("workspaces/bot/notifica-workspace-files/report.md")).toBe(false);
   });
 
   it("never exports or restores a Cloud home's connected-apps installation", () => {

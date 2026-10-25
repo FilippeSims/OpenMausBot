@@ -2,15 +2,15 @@
 // authorization.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import { ChevronDown, ChevronUp, Download, Film, LoaderCircle, Music, Play, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Film, LoaderCircle, Music, Play } from "lucide-react";
 import { attachmentBasename, FILE_MAX_BYTES, type TranscriptFileAttachment, type TranscriptImageAttachment } from "@/lib/composer-attachments";
+import { openFilePreview } from "@/lib/file-preview";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { windowsPathDestinations } from "../../shared/markdown-windows-paths";
 import { localFilePath } from "./ChatMarkdown";
 import {
   AttachedFileChip,
-  AttachmentPreviewDialog,
   AttachmentThumbnail,
   previewImage,
   requestMessageFile,
@@ -163,84 +163,16 @@ export async function loadMessageVideo(
 }
 
 function VideoAttachment({ file, message }: { file: GalleryFile; message: MessageAttachmentContext }) {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const request = useRef<AbortController | null>(null);
-  const playButton = useRef<HTMLButtonElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  useEffect(() => () => request.current?.abort(), []);
-  useEffect(() => {
-    if (preview) videoRef.current?.focus();
-    return () => { if (preview) URL.revokeObjectURL(preview); };
-  }, [preview]);
-
-  const load = async () => {
-    if (request.current) return;
-    const controller = new AbortController();
-    request.current = controller;
-    setLoading(true);
-    setError("");
-    setPreview(null);
-    try {
-      const blob = await loadMessageVideo(file, message, controller.signal);
-      if (!controller.signal.aborted) setPreview(URL.createObjectURL(blob));
-    } catch (reason) {
-      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : t("attach.videoUnavailable"));
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-      if (request.current === controller) request.current = null;
-    }
-  };
-  const close = () => {
-    request.current?.abort();
-    request.current = null;
-    setLoading(false);
-    setPreview(null);
-    setError("");
-    requestAnimationFrame(() => playButton.current?.focus());
-  };
-
-  return (
-    <div className="min-w-0 overflow-hidden rounded-xl border border-hairline/40 bg-inset/40">
-      <div className="relative flex aspect-[4/3] items-center justify-center bg-inset">
-        {preview && !error ? (
-          <video
-            ref={videoRef}
-            src={preview}
-            tabIndex={0}
-            controls
-            playsInline
-            preload="metadata"
-            aria-label={t("attach.previewVideo", { name: file.name })}
-            className="max-h-full max-w-full"
-            onError={() => setError(t("attach.videoUnavailable"))}
-          />
-        ) : (
-          <button
-            ref={playButton}
-            type="button"
-            disabled={loading}
-            onClick={() => void load()}
-            aria-label={t("attach.previewVideo", { name: file.name })}
-            className="flex size-full flex-col items-center justify-center gap-2 p-3 text-center text-ink-secondary transition-colors hover:bg-raised/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60 disabled:cursor-wait disabled:hover:bg-transparent"
-          >
-            {loading ? <LoaderCircle size={24} className="animate-spin" /> : <Play size={24} />}
-            <span className="text-[12px]">{loading ? t("attach.videoLoading") : error ? t("chat.retry") : t("attach.loadVideo")}</span>
-            {!error && !loading && <span className="text-[10.5px]">{t("attach.videoHint")}</span>}
-          </button>
-        )}
-        {(preview || loading || error) && (
-          <button type="button" aria-label={t("attach.closeVideo")} onClick={close} className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-panel/90 text-ink-secondary hover:bg-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
-            <X size={14} />
-          </button>
-        )}
-        {!preview && !loading && <Film size={13} className="pointer-events-none absolute left-2 top-2 text-ink-secondary/50" />}
-      </div>
-      {error && <p role="alert" className="px-3 py-2 text-[11px] text-danger">{error}</p>}
-      <AttachedFileChip file={file} linked={file.linked} message={message} className="max-w-none rounded-none border-0 border-t border-hairline/30 bg-transparent" />
-    </div>
-  );
+  return <div className="min-w-0 overflow-hidden rounded-xl border border-hairline/40 bg-inset/40">
+    <button type="button" aria-label={t("attach.previewVideo", { name: file.name })}
+      onClick={() => openFilePreview({ path: file.path, name: file.name, message })}
+      className="relative flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-inset p-3 text-center text-ink-secondary hover:bg-raised/60 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
+      <Play size={24} /><span className="text-xs">{t("attach.loadVideo")}</span>
+      <span className="text-[10.5px]">{t("attach.videoHint")}</span>
+      <Film size={13} className="absolute left-2 top-2 text-ink-secondary/50" />
+    </button>
+    <AttachedFileChip file={file} linked={file.linked} message={message} className="max-w-none rounded-none border-0 border-t border-hairline/30 bg-transparent" />
+  </div>;
 }
 
 const AUDIO_MIMES = ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/wav", "audio/x-wav", "audio/wave", "audio/ogg", "audio/opus", "audio/flac", "audio/x-flac"];
@@ -342,7 +274,6 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
   className?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [selected, setSelected] = useState<PreviewImage | null>(null);
   const items = useMemo(() => {
     const seen = new Set<string>();
     const result: GalleryItem[] = [];
@@ -373,9 +304,6 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
   const documents = shown.filter((item) => item.kind === "file" || item.kind === "audio");
   const previews = items.flatMap((item) => item.kind === "image" ? [item.image] : []);
   const label = items.length === 1 ? t("attach.gallerySingle") : t("attach.galleryCount", { count: items.length });
-  const dialog = selected && previews.some((image) => image.src === selected.src) && (
-    <AttachmentPreviewDialog image={selected} images={previews} initialIndex={previews.findIndex((image) => image.src === selected.src)} onClose={() => setSelected(null)} />
-  );
 
   if (beneath) {
     const thumbs = shown.filter((item) => item.kind === "image");
@@ -387,7 +315,7 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
           <div className="flex max-w-full flex-wrap gap-2">
             {thumbs.map((item) => item.kind === "image" && (
               <div key={item.key} className="min-w-0" title={item.image.name}>
-                <AttachmentThumbnail key={item.image.src} image={item.image} eager={eager} onPreview={() => setSelected(item.image)} className="h-24 w-auto max-w-48 rounded-2xl border-0" />
+                <AttachmentThumbnail key={item.image.src} image={item.image} eager={eager} onPreview={() => openFilePreview({ image: item.image, images: previews })} className="h-24 w-auto max-w-48 rounded-2xl border-0" />
               </div>
             ))}
           </div>
@@ -411,7 +339,6 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
             )}
           </div>
         )}
-        {dialog}
       </section>
     );
   }
@@ -422,7 +349,7 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
         <div className={cn("grid gap-2", media.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
           {media.map((item) => item.kind === "image" ? (
             <div key={item.key} className="min-w-0" title={item.image.name}>
-              <AttachmentThumbnail key={item.image.src} image={item.image} eager={eager} onPreview={() => setSelected(item.image)} className="max-h-72 rounded-2xl border-0 bg-transparent" />
+              <AttachmentThumbnail key={item.image.src} image={item.image} eager={eager} onPreview={() => openFilePreview({ image: item.image, images: previews })} className="max-h-72 rounded-2xl border-0 bg-transparent" />
             </div>
           ) : item.kind === "video" && message ? (
             <VideoAttachment key={`${message.threadId}:${message.messageId}:${item.key}`} file={item.file} message={message} />
@@ -442,7 +369,6 @@ export function AttachmentGallery({ images = [], files = [], message, eager = fa
           {expanded ? t("attach.showLess") : t("attach.showMore", { count: items.length - limit })}
         </button>
       )}
-      {dialog}
     </section>
   );
 }

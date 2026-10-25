@@ -65,6 +65,11 @@ function settleCard(pending: Pending, behavior: string, source: "user" | "system
 
 const pendingComms = new Map<string, Pending>();
 
+export function peerApprovalOrigin(requestId: string): { botId: string; threadId: string; messageId: string } | undefined {
+  const pending = pendingComms.get(requestId);
+  return pending ? { botId: pending.fromBotId, threadId: pending.threadId, messageId: pending.messageId } : undefined;
+}
+
 const APPROVAL_TIMEOUT_MS = 15 * 60_000;
 
 function allowKeyAllowed(from: BotRecord, allowKey: string): boolean {

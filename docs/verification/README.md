@@ -196,6 +196,10 @@ The [rich tables fixture](rich-tables.md) checks Markdown tables and message-sco
 CSV/TSV previews, large-file virtualization, sorting, search, export and keyboard
 interaction in a disposable workspace.
 
+The [file preview fixture](file-preview.md) checks Markdown, PDF pages, images,
+video and explicit downloads in the right panel, including narrow layouts and
+message-scoped authorization.
+
 The [recent files fixture](computer-files.md) mounts the Files panel with synthetic
 digest rows and real message-scoped downloads from a disposable workspace.
 
@@ -284,6 +288,9 @@ The [Group and Goal Local VM recipe](group-local-vm.md) checks per-speaker
 desktop routing, cancellation, and computer authority cleanup.
 
 ## Evidence
+
+The [upstream integration record](upstream-2026-10-20.md) records the isolated
+checks for the October 2026 merge.
 
 The [persistence responsiveness benchmark](persistence-performance.md) measures
 synthetic message/log bursts and history scans, with isolated chat, visibility

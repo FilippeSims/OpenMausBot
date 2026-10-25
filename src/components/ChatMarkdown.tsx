@@ -6,7 +6,7 @@ import Markdown, { defaultUrlTransform, type Components, type ExtraProps } from 
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { fromMarkdown, type Options as MarkdownParseOptions } from "mdast-util-from-markdown";
-import { Check, Copy, Download, LoaderCircle, RotateCcw, WrapText, X } from "lucide-react";
+import { Check, Copy, Download, WrapText, X } from "lucide-react";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
 import { remarkMentions, sameMentionPerson, type MentionPeer, type MentionPerson } from "@/lib/mentions";
@@ -27,10 +27,11 @@ import { githubRefFromProps, remarkGithubRefs } from "@/lib/github-refs";
 import { GITHUB_REF_ICONS, LinkHoverCard } from "@/components/LinkHoverCard";
 import { useThreadLinkMenu } from "@/components/ThreadLinkMenu";
 import { looksLikeThreadRefUrl, parseThreadRefUrl, resolveThreadRefAddress, remarkThreadRefs } from "../lib/thread-refs";
-import { MarkdownImagePreview, MessageFolderFiles, OutsideWorkspaceFile, saveFailureText, useLocalFileSave, type MessageAttachmentContext } from "./AttachmentPreview";
+import { MarkdownImagePreview, FileSaveButton, MessageFolderFiles, OutsideWorkspaceFile, saveFailureText, useLocalFileSave, type MessageAttachmentContext } from "./AttachmentPreview";
 import { ThreadLink, ThreadRefsContext, threadLinkFromProps, type ThreadRefsValue } from "./ThreadRefs";
 import { MarkdownTable } from "./MarkdownTable";
-import { FilePreviewButton } from "./FilePreviewButton";
+import { filePreviewLabel } from "./FilePreviewButton";
+import { openFilePreview } from "@/lib/file-preview";
 
 const highlightCache = new Map<string, string>();
 export const HIGHLIGHT_CACHE_MAX = 200;
@@ -583,25 +584,15 @@ function LocalFileLink({ filePath, name, children, message }: { filePath: string
 
   return (
     <span dir="ltr" className="inline-flex flex-wrap items-center gap-x-1.5 [unicode-bidi:isolate]">
-      <FilePreviewButton path={filePath} name={name ?? fileName(filePath)} message={message} />
       <button
         type="button"
-        onClick={() => void save.save()}
-        disabled={save.state === "saving"}
-        title={uiText("ui.ChatMarkdown.2c2a765c72")}
+        onClick={() => openFilePreview({ path: filePath, name: name ?? fileName(filePath), message })}
+        title={filePreviewLabel(filePath, name ?? fileName(filePath))}
         className="inline-flex items-center gap-1 break-words text-start text-accent underline decoration-accent/40 hover:decoration-accent disabled:cursor-wait"
       >
         {children}
-        {save.state === "saving" ? (
-          <LoaderCircle size={12} className="shrink-0 animate-spin" aria-hidden="true" />
-        ) : save.state === "saved" ? (
-          <Check size={12} className="shrink-0 text-success" aria-hidden="true" />
-        ) : save.state === "failed" ? (
-          !save.outsideWorkspace && <RotateCcw size={12} className="shrink-0" aria-hidden="true" />
-        ) : (
-          <Download size={12} className="shrink-0" aria-hidden="true" />
-        )}
       </button>
+      <FileSaveButton name={name ?? fileName(filePath)} save={save} />
       {label && (
         <span
           role={save.state === "failed" ? "alert" : "status"}
@@ -847,7 +838,7 @@ function MarkdownImage(props: ComponentProps<"img"> & ExtraProps) {
       src={src}
       name={markdownImageName(src, alt)}
       openUrl={markdownImageOpenUrl(typeof (props as Record<string, unknown>)["data-open-url"] === "string" ? String((props as Record<string, unknown>)["data-open-url"]) : src)}
-      filePath={filePath}
+      filePath={filePath ? src : undefined}
       message={filePath ? message : undefined}
       sourceOffset={sourceOffset === undefined ? undefined : imageOffsets?.get(sourceOffset) ?? sourceOffset}
     />
@@ -866,7 +857,7 @@ function MarkdownLink({ href, children, ...rest }: { href?: string; children?: R
   const localPath = localFilePath(href);
   if (localPath) {
     const copy = delivered && Object.hasOwn(delivered, fileName(localPath)) ? delivered[fileName(localPath)] : undefined;
-    return <LocalFileLink filePath={copy ?? localPath} name={copy ? fileName(localPath) : undefined} message={message}>{children}</LocalFileLink>;
+    return <LocalFileLink filePath={copy ?? href!} name={fileName(localPath)} message={message}>{children}</LocalFileLink>;
   }
   if (!href || !/^https?:\/\//i.test(href)) {
     return (

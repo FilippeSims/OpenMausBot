@@ -20,11 +20,11 @@ No personal provider account, real credentials, or user workspace is used.
    failed file lookup; Search says no output was recorded. Reload and reopen
    Bash: its input/result still appear. The disclosure is closed by default,
    exposes its expanded state, and has visible keyboard focus.
-2. Open the uploaded image from the gallery, then close its existing viewer.
+2. Open the uploaded image from the gallery, then close its right-side preview panel.
 3. The assistant gallery starts with four of five attachments. Show more reveals
    the fifth, Show less collapses it, and original Markdown links remain usable.
 4. The video is initially unloaded. Load it explicitly, use the native play
-   control, verify playback, then close the preview. No autoplay. This is a
+   control, verify playback, then close the right-side preview panel. No autoplay. This is a
    message-authorized local file, not a direct filesystem URL in the browser.
 5. Open Settings: search has focus. General uses aligned language/analytics
    rows; Appearance retains the existing skins and flattens simple switches.

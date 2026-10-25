@@ -5,8 +5,12 @@ import { editionForSettings } from "./host/edition-settings.ts";
 import { queuedTurnTrigger } from "./steer-queue.ts";
 import { NotificaService } from "./notifica.ts";
 import { NotificaClient, NOTIFICA_API } from "./notifica-client.ts";
-import { enqueueNotificaReply, notificaOriginExists } from "./notifica-host.ts";
+import { enqueueNotificaReply, enqueueNotificaText, notificaOriginExists } from "./notifica-host.ts";
 import { createNotificaRoutes } from "./routes/notifica.ts";
+import { NotificaWorkspaceService } from "./notifica-workspace.ts";
+import { workspaceApprovals, workspaceApprovalState } from "./notifica-workspace-host.ts";
+import { openWorkspaceOutputFile, workspaceOutputs } from "./notifica-workspace-files.ts";
+import { createNotificaWorkspaceRoutes } from "./routes/notifica-workspace.ts";
 import { TeamFilesHost } from "./team-files-host.ts";
 import { createTeamFilesRoutes, runTeamFileTool } from "./routes/team-files.ts";
 import { teamFilesSystemPrompt } from "./team-files-prompt.ts";
@@ -2519,7 +2523,7 @@ function hasDirectDispatch(botId: string): boolean {
 
 /** Must match what startTurn admits for a direct thread. */
 function canAdmitDirectTurn(botId: string, threadId: string): boolean {
-  if (notificaService?.waiting(botId, threadId)) return false;
+  if (notificaWaiting(botId, threadId)) return false;
   return admit("peer", {}, {
     threadBusy: threadBusy(botId, threadId),
     atCapacity: botAtThreadCapacity(botId),
@@ -3213,12 +3217,16 @@ if (browserCleanupReferencesReconciled) browserCleanup.startPending();
 
 let threadsAwaitingTeammates = (): ReadonlySet<string> => new Set<string>();
 let notificaService: NotificaService | undefined;
+let notificaWorkspace: NotificaWorkspaceService | undefined;
+const notificaWaiting = (botId: string, threadId: string) => Boolean(notificaService?.waiting(botId, threadId) || notificaWorkspace?.waiting(botId, threadId));
+const notificaWaitingThread = (threadId: string) => Boolean(notificaService?.waitingThread(threadId) || notificaWorkspace?.waitingThread(threadId));
+const notificaPrompt = (botId: string) => [notificaService?.prompt(botId), notificaWorkspace?.prompt()].filter(Boolean).join("\n");
 let cacheKeepWarmStatus = (_threadId: string): KeepWarmStatus | undefined => undefined;
 const wireTask = (task: TaskRecord, botModel: ModelSelection, awaiting = threadsAwaitingTeammates()): WireTask => {
   // Snoozes heal on read against the server clock; the 0 sentinel ("until new activity") survives reads.
   const { snoozedUntil, ...base } = toWireTask(task, botModel);
   const keepWarm = cacheKeepWarmStatus(task.threadId);
-  const coordinated = { ...base, ...(!task.busy && notificaService?.waitingThread(task.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(task.threadId) && !task.busy, ...(keepWarm ? { cacheKeepWarm: keepWarm } : {}) };
+  const coordinated = { ...base, ...(!task.busy && notificaWaitingThread(task.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(task.threadId) && !task.busy, ...(keepWarm ? { cacheKeepWarm: keepWarm } : {}) };
   const asleep = snoozedUntil === 0 || (snoozedUntil !== undefined && snoozedUntil > Date.now());
   return asleep ? { ...coordinated, snoozedUntil } : coordinated;
 };
@@ -3231,7 +3239,7 @@ const wireBot = (bot: BotRecord): WireBot => {
     ? { ...rest, approvalMode: "ask" as const, autoApprove: false }
     : { ...rest, approvalMode: approvalModeFor(rest) };
   const awaiting = threadsAwaitingTeammates();
-  return { ...visible, ...(!bot.busy && notificaService?.waiting(bot.id, bot.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(bot.threadId) && !threadBusy(bot.id, bot.threadId),
+  return { ...visible, ...(!bot.busy && notificaWaiting(bot.id, bot.threadId) ? { activity: "waiting-on-you" as const } : {}), waitingForTeammates: awaiting.has(bot.threadId) && !threadBusy(bot.id, bot.threadId),
     mainThreadId: botMainThread(bot.id),
     avatarUrl: visible.avatarUrl ?? null, ...(tasks ? { tasks: tasks.map((task) => wireTask(task, bot.modelSelection, awaiting)) } : {}) };
 };
@@ -3303,7 +3311,7 @@ function previewSystemPrompt(bot: BotRecord) {
     { id: "profile", label: "Profile changes", text: agentsMounted ? PROFILE_PROMPT : "" },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
     { id: "team-files", label: "Team files", text: agentsMounted ? teamFilesSystemPrompt(bot) : "" },
-    { id: "notifica", label: "Notifica", text: agentsMounted ? notificaService?.prompt(bot.id) ?? "" : "" },
+    { id: "notifica", label: "Notifica", text: agentsMounted ? notificaPrompt(bot.id) : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (agentsMounted ? TEAM_MEMORY_PROMPT : "") },
     teamAvailabilityPart(agentsMounted && coordination ? peers : []),
     { id: "memory", label: "Memory", text: memorySystemPrompt(bot.id, { managedWrites: agentsMounted, fileTools: Boolean(privateWorkspace), enabled: bot.memoryEnabled !== false, semanticTools: !CLOUD_HOME }) },
@@ -7783,7 +7791,7 @@ function drainQueuedSendsNow() {
       }).catch(reject);
     }),
     // Provider completion can precede its dispatch promise: keep the queue until that exact handshake releases its claim.
-    (botId, threadId, head) => Boolean(notificaService?.waiting(botId, threadId)) || threadBusy(botId, threadId) || botAtThreadCapacity(botId) || Boolean(activeGroupTurnForBot(botId))
+    (botId, threadId, head) => Boolean(notificaWaiting(botId, threadId)) || threadBusy(botId, threadId) || botAtThreadCapacity(botId) || Boolean(activeGroupTurnForBot(botId))
       || directRootQueued(threadId) || (!head.peerAsk?.incident && parksBehindCoordination(botId, threadId)),
   );
 }
@@ -7791,7 +7799,7 @@ function drainQueuedSendsNow() {
 async function startOrQueueDirectMessage(botId: string, threadId: string, text: string, replyTo?: Message, sendId?: string, sender?: ResolvedSender, trigger?: UsageTrigger, via?: "call", callId?: string, dataContext?: DataContext) {
   const decision = admit("direct", {}, {
     atCapacity: botAtThreadCapacity(botId),
-    threadBusy: threadBusy(botId, threadId) || Boolean(notificaService?.waiting(botId, threadId)),
+    threadBusy: threadBusy(botId, threadId) || Boolean(notificaWaiting(botId, threadId)),
     groupTurn: Boolean(activeGroupTurnForBot(botId)),
     parksBehindCoordination: parksBehindCoordination(botId, threadId),
   });
@@ -7903,7 +7911,7 @@ async function acceptDirectSend(
       }
 
       if (guardedStart) return guardedStart(currentAtStart);
-      if (notificaService?.waiting(botId, threadId)) return startOrQueueDirectMessage(botId, threadId, text, replyTo, sendId, sender, trigger, via, callId, dataContext);
+      if (notificaWaiting(botId, threadId)) return startOrQueueDirectMessage(botId, threadId, text, replyTo, sendId, sender, trigger, via, callId, dataContext);
 
       if (currentAtStart.busy) {
         const instance = runningTurnInstance(currentAtStart, threadId);
@@ -9091,7 +9099,7 @@ async function startTurn(
         { id: "learn", label: "Skill authoring", text: learnPrompt },
         { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
         { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
-        { id: "notifica", label: "Notifica", text: integrations.agents ? notificaService?.prompt(bot.id) ?? "" : "" },
+        { id: "notifica", label: "Notifica", text: integrations.agents ? notificaPrompt(bot.id) : "" },
         { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
         // Volatile, so a teammate starting or finishing never changes the stable half.
         teamAvailabilityPart(coordinationPrompt ? sectionPeers : []),
@@ -10943,7 +10951,7 @@ async function runClaimedGroupMemberTurn(
     { id: "recent", label: "Recent work", text: recentWorkPrompt(recentLines) },
     { id: "section-context", label: "Section context", text: isGlobalChief(bot) ? "" : sectionContextSystemPrompt(bot.section) },
     { id: "team-files", label: "Team files", text: integrations.agents ? teamFilesSystemPrompt(bot) : "" },
-    { id: "notifica", label: "Notifica", text: integrations.agents ? notificaService?.prompt(bot.id) ?? "" : "" },
+    { id: "notifica", label: "Notifica", text: integrations.agents ? notificaPrompt(bot.id) : "" },
     { id: "team-memory", label: "Team memory", text: (isGlobalChief(bot) ? "" : teamMemory.systemPrompt(bot.section)) + (integrations.agents ? TEAM_MEMORY_PROMPT : "") },
     { id: "memory", label: "Memory", text: roomMemory ? `\n${roomMemory.trim()}` : "" },
     { id: "skills", label: "Skills index", text: workspace ? skillsHost.skillsIndex(bot, threadId, instance) : "" },
@@ -11978,7 +11986,7 @@ function drainQueuedChannelSends(): void {
 }
 function drainQueuedChannelSendsNow(): void {
   drainChannelMessages(
-    (groupId, threadId, head) => Boolean(notificaService?.waitingThread(threadId)) || groupThreadIsWorking(groupId, threadId)
+    (groupId, threadId, head) => Boolean(notificaWaitingThread(threadId)) || groupThreadIsWorking(groupId, threadId)
       || Boolean(head?.targetBotId && (!store.group(groupId)?.memberIds.includes(head.targetBotId) || store.bot(head.targetBotId)?.hidden || roomHeld(store.group(groupId), head.targetBotId))),
     ({ groupId, threadId, items }) => {
       const group = store.group(groupId);
@@ -13312,12 +13320,12 @@ const workspaceBackupAccess = {
       teamComputers.list().every(computer => !teamComputerInUse(computer)) &&
       store.bots.every((bot) => !botHasActiveTurn(bot.id) && !routines?.activeRunForBot(bot.id) && !botComputerControlSnapshot(bot.id).held) &&
       store.groups.every((group) => !groupIsWorking(group)),
-    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); hindsightMemory.stop(); notificaService?.stop(); },
-    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); hindsightMemory.start(); notificaService?.start(); drainQueuedSends(); drainQueuedChannelSends(); },
+    pause: () => { routines?.stop(); calendarCalls?.stop(); watchdog.stop(); memoryUpkeep.pause(); hindsightMemory.stop(); notificaService?.stop(); notificaWorkspace?.stop(); },
+    resume: () => { routines?.start(); calendarCalls?.start(); watchdog.start(); memoryUpkeep.resume(); hindsightMemory.start(); notificaService?.start(); notificaWorkspace?.start(); drainQueuedSends(); drainQueuedChannelSends(); },
     flush: async () => {
       await Promise.all([flushAllProfileHistory(), flushAllMemoryJournals(), flushUsageLedger(DATA_DIR), flushDecisionLog(DATA_DIR), flushAdminActivity(DATA_DIR)]);
       // Writers gated and work idle: release the WAL connection for a consistent snapshot; Store reopens it lazily.
-      await hindsightMemory.settled(); await teamFilesHost.settled(); await notificaService?.settled();
+      await hindsightMemory.settled(); await teamFilesHost.settled(); await notificaService?.settled(); await notificaWorkspace?.settled();
       await closeMessageSearch();
       closeMessageDb();
     },
@@ -13402,6 +13410,48 @@ notificaService = new NotificaService(DATA_DIR, {
   changed: botId => { const bot = store.bot(botId); if (bot) broadcast({ kind: "bot", bot: wireBot(bot) }); queueMicrotask(() => { drainQueuedSends(); drainQueuedChannelSends(); }); },
 }, new NotificaClient(notificaFixtureUrl ?? NOTIFICA_API));
 ROUTES.push(createNotificaRoutes(notificaService, id => Boolean(store.bot(id)), () => workspaceMaintenance.assertAvailable()));
+notificaWorkspace = new NotificaWorkspaceService(DATA_DIR, {
+  ready: () => followupsReady && !workspaceMaintenance.active && !companyShutdown,
+  bots: () => store.bots.filter(bot => !bot.hidden).map(bot => ({ id: bot.id, name: bot.name, section: bot.section, role: bot.title, chief: bot.chiefOfStaff })),
+  sections: () => store.sections,
+  exists: origin => notificaOriginExists(store, origin),
+  createThread: (botId, title) => {
+    const task = store.createTask(botId, title, false, undefined, undefined, "ask");
+    if (!task) throw new Error("Notifica target bot no longer exists");
+    return { botId, threadId: task.threadId };
+  },
+  deliver: async (origin, text, sendId) => { assertWithinBudget(cfg, DATA_DIR); enqueueNotificaText(store, origin, text, sendId); },
+  outputs: (origin, since) => workspaceOutputs(store, origin, since, redactSecretsInText),
+  openFile: (origin, messageId, href) => openWorkspaceOutputFile(store, origin, messageId, href),
+  approvals: () => workspaceApprovals(store),
+  approvalState: (approval, decision) => workspaceApprovalState(store, approval, decision),
+  decide: async (approval, decision) => {
+    if (workspaceApprovalState(store, approval) !== "pending") return false;
+    const { botId, threadId } = approval.origin, bot = store.bot(botId);
+    if (!bot) return false;
+    const behavior = decision === "approved" ? "allow" : "deny";
+    let accepted = false;
+    await answeringCardAs({ kind: "loopback", scopes: ["admin", "client"] }, threadId, approval.requestId, async () => {
+      const message = store.messagesFor(threadId).find(message => message.id === approval.messageId);
+      if (message?.card?.outboundRequest) {
+        const result = outboundRequests.resolve({ threadId, requestId: approval.requestId, behavior });
+        if (!result.claimed) return;
+        if (result.state === "already_settled") { accepted = result.behavior === behavior; return; }
+        store.patchMessage(threadId, message.id, { card: { ...message.card, answered: behavior } });
+        appendDecision(DATA_DIR, { threadId, requestId: approval.requestId, botId, botName: bot.name, tool: approval.tool,
+          summary: approval.message, decision: behavior === "allow" ? "user-approved" : "user-denied", source: "user" });
+        accepted = true; return;
+      }
+      if (resolvePeerComms(approvalBus, approval.requestId, behavior)) { accepted = true; return; }
+      const outcome = await answerRequest(threadId, botForThread(botId, threadId)?.modelSelection.instanceId ?? "", approval.requestId, behavior,
+        decision === "denied" ? "Denied by the user in Notifica." : undefined, { id: botId, name: bot.name });
+      accepted = outcome !== "unavailable";
+    });
+    return accepted;
+  },
+  changed: () => { queueMicrotask(() => { drainQueuedSends(); drainQueuedChannelSends(); }); },
+}, new NotificaClient(notificaFixtureUrl ?? NOTIFICA_API));
+ROUTES.push(createNotificaWorkspaceRoutes(notificaWorkspace, () => workspaceMaintenance.assertAvailable()));
 ROUTES.push(createTeamFilesRoutes(teamFilesHost), createTeamContextRoutes({ store, teamMemory }));
 ROUTES.push(createBotMemoryRoutes({
   bot: (id) => store.bot(id),
@@ -13469,7 +13519,7 @@ ROUTES.push(createChannelRoutes({
   groupWithThread,
   updateChannel,
   groupIsWorking,
-  groupThreadIsWorking: (groupId, threadId) => Boolean(notificaService?.waitingThread(threadId)) || groupThreadIsWorking(groupId, threadId),
+  groupThreadIsWorking: (groupId, threadId) => Boolean(notificaWaitingThread(threadId)) || groupThreadIsWorking(groupId, threadId),
   readCursor,
   pageSize,
   messagePage,
@@ -14248,7 +14298,9 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       if (path === "/api/internal/notifica" && method === "POST") {
         const body = await readInternalBody(); requireActiveInternalCapability(); workspaceMaintenance.assertAvailable();
         const group = store.groupByThread(internalCapability.threadId);
-        return json(res, 200, notificaService!.enqueue({ botId: internalSender.id, threadId: internalCapability.threadId, ...(group ? { groupId: group.id } : {}) }, body));
+        const origin = { botId: internalSender.id, threadId: internalCapability.threadId, ...(group ? { groupId: group.id } : {}) };
+        const service = notificaWorkspace!.handlesOrigin(origin) || !notificaService!.status(internalSender.id).enabled ? notificaWorkspace! : notificaService!;
+        return json(res, 200, service.enqueue(origin, body));
       }
       if (path === "/api/internal/team-files" && method === "POST") {
         const body = await readInternalBody();
@@ -16351,6 +16403,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       }
       const error = nextName === null ? store.deleteSection(section) : store.renameSection(section, nextName, teamComputers);
       if (error) return json(res, error === "No such team" ? 404 : 409, { error });
+      if (nextName === null) notificaWorkspace?.removeTeam(section);
+      else notificaWorkspace?.renameTeam(section, nextName);
       if (nextName !== null) hindsightMemory.renameTeam(section, nextName);
       else hindsightMemory.deleteTeam(section);
       hindsightMemory.schedule();
@@ -17102,7 +17156,7 @@ function sweepThreadEventLogsNow(): void {
       closedAt: task.closedBy?.at ?? null,
       archivedAt: task.archivedAt ?? null,
       unread: task.unread === true,
-      busy: threadBusy(bot.id, task.threadId) || Boolean(notificaService?.waiting(bot.id, task.threadId)),
+      busy: threadBusy(bot.id, task.threadId) || Boolean(notificaWaiting(bot.id, task.threadId)),
       openDirectHandoff: coordinator.activeDirect(task.threadId),
     })));
   const swept = sweepThreadEventLogs(candidates, retentionDays);
@@ -17168,7 +17222,7 @@ server.listen(PORT, "127.0.0.1", async () => {
   browserSweep.start(); appTriggers.start(); startCloudHomeConnectedApps({ cloudHome: CLOUD_HOME !== null, dataDir: DATA_DIR, cloudGrant: CLOUD_ENV.OMB_CLOUD_CONNECTED_APPS_GRANT, apply: (access) => { composio.setManagedBrokerAccess(access); broadcast({ kind: "config", ...configStatus() }); } });
   if (builtInBrowserEnabled(cfg)) chromeLauncher.start();
   followupsReady = true;
-  notificaService?.start();
+  notificaService?.start(); notificaWorkspace?.start();
   drainQueuedSends();
   drainQueuedChannelSends();
   void cloudComputerPower.armRunning();
@@ -17243,14 +17297,14 @@ const gracefulShutdown = createGracefulShutdown({
       calendarCalls?.stop();
       memoryUpkeep.stop();
       hindsightMemory.stop();
-      notificaService?.stop();
+      notificaService?.stop(); notificaWorkspace?.stop();
       cacheKeepWarm.dispose();
       skillReview.stop();
       webhookIngress?.server.close();
       tunnelListener?.close(); stopCloudHomeConnectedApps();
     },
     async () => { await managedDesktop.close(); await registry.disposeAll(); },
-    () => hindsightRuntime.close(), () => teamFilesHost.close(), () => notificaService?.close(),
+    () => hindsightRuntime.close(), () => teamFilesHost.close(), () => notificaService?.close(), () => notificaWorkspace?.close(),
     async () => { await dataEngine.closeAll().catch((error) => console.warn("data: close failed", error)); },
     async () => {
       const temporaries = [...temporaryBrowserSessions.keys()].map((botId) => forgetTemporaryBrowser(botId));
