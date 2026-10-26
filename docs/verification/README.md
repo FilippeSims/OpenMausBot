@@ -211,6 +211,11 @@ The [people invitation fixture](people.md) checks hosted workspace sign-in,
 roles and device revocation through the real HTTP API with a stubbed email
 service. It does not drive the People settings UI through `control-omb`.
 
+The [personal organization fixture](personal-organization.md) checks the shared
+Notifica calendar/Kanban API, bot tool, reminders, restart persistence and
+bidirectional text history in an isolated fake-engine workspace with Firebase
+emulators. The two browser adapters mount the real shared panel.
+
 The [sidebar fixture](sidebar.md) checks archive and delete confirmations, their
 default focus, keyboard wrapping and focus return against two disposable bots.
 

@@ -31,12 +31,27 @@ describe("workspace Notifica bridge", () => {
       if (path === "/agentInbox") return response({ messages });
       if (path === "/agentAck") { messages = messages.filter(message => message.id !== body.messageId); return response({ ok: true }); }
       if (path === "/agentMessage") return response({ conversationId: "conv-1", messageId: "remote-" + body.eventId, alertId: null, duplicate: false });
+      if (path === "/agentTranscript") return response({conversationId:"conv-1",messageId:"mirror-"+body.eventId,duplicate:false});
       if (path === "/agentApproval") return response({ conversationId: "approval-conv", approvalId: "remote-approval", alertId: "alert", duplicate: false });
       return response({ ok: true });
     };
   });
   afterEach(async () => { await Promise.all(services.splice(0).map(value => value.close())); vi.useRealTimers(); rmSync(dir, { recursive: true, force: true }); });
   const step = (ms = 10) => vi.advanceTimersByTimeAsync(ms);
+  it("backfills linked text without historical notifications, attachments, or repeated execution",async()=>{
+    const old=Date.now()-60000;
+    host.outputs=()=>[{id:'old-user',at:old,role:'user',text:'Earlier request'},{id:'old-bot',at:old+1000,text:'Earlier answer',files:[{href:'old.pdf',name:'old.pdf'}]}];
+    const value=service();value.configure(settings);value.linkConversation(origin);value.start();await step(2500);
+    const history=calls.filter(c=>c.path==='/agentTranscript');
+    expect(history.map(c=>[c.body.role,c.body.message])).toEqual([['user','Earlier request'],['agent','Earlier answer']]);
+    expect(history[0].body.occurredAt).toBe(new Date(old).toISOString());
+    expect(calls.some(c=>c.path==='/agentMessage'||c.path==='/agentAttachment')).toBe(false);
+    expect(host.deliver).not.toHaveBeenCalled();
+    await value.close();const restarted=service();restarted.start();await step(2500);
+    expect(calls.filter(c=>c.path==='/agentTranscript')).toHaveLength(2);
+    host.outputs=()=>[{id:'new-bot',at:Date.now(),text:'Current answer'}];await step(2500);
+    expect(calls.filter(c=>c.path==='/agentMessage').map(c=>c.body.message)).toEqual(['Current answer']);
+  });
   it("syncs multiple companies, receives a new task, persists before acknowledgement and mirrors terminal replies once across restart", async () => {
     const normal = handler; let loseAck = true;
     handler = (path, body) => { if (path === "/agentAck" && loseAck) { loseAck = false; throw new TypeError("lost ack"); } return normal(path, body); };

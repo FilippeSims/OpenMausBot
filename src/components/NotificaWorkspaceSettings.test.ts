@@ -8,7 +8,7 @@ import { setLocale } from "@/lib/i18n";
 import { NotificaWorkspaceSettings } from "./NotificaWorkspaceSettings";
 
 const fixture = vi.hoisted(() => ({ request: vi.fn(), owner: true }));
-vi.mock("@/state/store", () => ({ api: fixture.request }));
+vi.mock("@/state/store", () => ({ api: fixture.request, useStore: () => ({dispatch:vi.fn()}) }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.owner }));
 
 let host: HTMLDivElement;

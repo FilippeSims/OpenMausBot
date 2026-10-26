@@ -9,7 +9,7 @@ import { notificaOriginExists } from "./notifica-host.ts";
 import type { NotificaOrigin } from "./notifica-state.ts";
 import type { Message, Store } from "./store.ts";
 
-export type WorkspaceOutput = { id: string; text: string; files?: Array<{ href: string; name: string }> };
+export type WorkspaceOutput = { role?: "user" | "agent"; at?: number; id: string; text: string; files?: Array<{ href: string; name: string }> };
 type Node = { type: string; url?: string; identifier?: string; value?: string; alt?: string; children?: Node[]; position?: { start: { offset?: number }; end: { offset?: number } } };
 const walk = (node: Node, visit: (node: Node) => void): void => { visit(node); for (const child of node.children ?? []) walk(child, visit); };
 const label = (node: Node): string => node.value ?? node.alt ?? (node.children ?? []).map(label).join("");
@@ -43,9 +43,9 @@ export function workspaceOutput(message: Message): WorkspaceOutput {
 }
 
 export function workspaceOutputs(store: Store, origin: NotificaOrigin, since: number, redact: (text: string) => string): WorkspaceOutput[] {
-  return store.messagesFor(origin.threadId).filter(message => message.at >= since && message.role === "bot" && message.kind === "text"
+  return store.messagesFor(origin.threadId).filter(message => message.at >= since && (message.role === "bot" || (message.role === "user" && !message.sendId?.startsWith("notifica-"))) && message.kind === "text"
     && (message.text?.trim() || message.attachments?.length) && (!message.from?.botId || message.from.botId === origin.botId))
-    .map(message => { const output = workspaceOutput(message); return { ...output, text: redact(output.text) }; });
+    .map(message => { const output = workspaceOutput(message); return { ...output, at:message.at, ...(message.role === "user" ? {role: "user" as const, files: undefined} : {}), text: redact(output.text) }; });
 }
 
 export async function openWorkspaceOutputFile(store: Store, origin: NotificaOrigin, messageId: string, href: string,

@@ -1,5 +1,6 @@
 // Import first: it reads a Cloud home's secrets off the launcher's pipe before any module can start a process.
 import { BOOT_CLOUD_SECRETS } from "./cloud-secrets-boot.ts";
+import { createNotificaOrganizationRoutes } from "./routes/notifica-organization.ts";
 import { roomRoutingInput } from "./host/room-routing-input.ts";
 import { editionForSettings } from "./host/edition-settings.ts";
 import { queuedTurnTrigger } from "./steer-queue.ts";
@@ -13452,6 +13453,7 @@ notificaWorkspace = new NotificaWorkspaceService(DATA_DIR, {
   changed: () => { queueMicrotask(() => { drainQueuedSends(); drainQueuedChannelSends(); }); },
 }, new NotificaClient(notificaFixtureUrl ?? NOTIFICA_API));
 ROUTES.push(createNotificaWorkspaceRoutes(notificaWorkspace, () => workspaceMaintenance.assertAvailable()));
+ROUTES.push(createNotificaOrganizationRoutes(notificaWorkspace, () => workspaceMaintenance.assertAvailable()));
 ROUTES.push(createTeamFilesRoutes(teamFilesHost), createTeamContextRoutes({ store, teamMemory }));
 ROUTES.push(createBotMemoryRoutes({
   bot: (id) => store.bot(id),
@@ -14295,6 +14297,10 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           throw Object.assign(new Error("the internal turn capability has expired"), { status: 401 });
         }
       };
+      if (path === "/api/internal/organization" && method === "POST") {
+        const body = await readInternalBody(); requireActiveInternalCapability(); workspaceMaintenance.assertAvailable();
+        return json(res, 200, await notificaWorkspace!.organization(body, {type: 'bot', id: internalSender.id, conversation_id: internalCapability.threadId}));
+      }
       if (path === "/api/internal/notifica" && method === "POST") {
         const body = await readInternalBody(); requireActiveInternalCapability(); workspaceMaintenance.assertAvailable();
         const group = store.groupByThread(internalCapability.threadId);

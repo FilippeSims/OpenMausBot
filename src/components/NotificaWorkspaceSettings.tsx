@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Building2, Plus, Radio, Trash2 } from "lucide-react";
 import type { NotificaWorkspaceStatus } from "../../shared/notifica";
-import { api } from "@/state/store";
+import { api, useStore } from "@/state/store";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { Switch } from "./SettingsPrimitives";
 
@@ -15,6 +15,7 @@ export function NotificaWorkspaceSettings() {
 }
 
 function WorkspaceEditor() {
+  const {dispatch} = useStore();
   const [status, setStatus] = useState<NotificaWorkspaceStatus | null>(null);
   const [companies, setCompanies] = useState<NotificaWorkspaceStatus["companies"]>([]);
   const [teamCompanies, setTeamCompanies] = useState<Record<string, string>>({});
@@ -70,6 +71,7 @@ function WorkspaceEditor() {
         <select className={field} disabled={busy} aria-label={`Empresa do time ${team.name}`} value={teamCompanies[section] ?? companies[0]?.id ?? ""}
           onChange={event => { setTeamCompanies(value => ({ ...value, [section]: event.target.value })); setSaved(false); }}>{companies.map(company => <option key={company.id} value={company.id}>{company.name}</option>)}</select></label>; })}
     </div>}
+    {Boolean(status?.conversations?.length) && <div className="flex flex-col gap-2"><h4 className="text-[13px] font-medium text-ink">Conversas sincronizadas</h4><p className="text-[12px] text-ink-secondary">As mensagens do Notifica continuam nestes tópicos. Abra o mesmo tópico para acompanhar e responder pelo computador.</p>{status!.conversations!.map(conversation => <button key={conversation.threadId} className={button + " text-left"} onClick={() => {dispatch({type: "toggleAppSettings", open: false});dispatch({type: "switchTask", botId: conversation.botId, threadId: conversation.threadId});}}>Abrir {conversation.title}</button>)}</div>}
     <p className="text-[12px] leading-relaxed text-ink-secondary">Cada mensagem segue para a conversa do agente escolhido. Aprovações de ferramentas, contatos entre agentes e envios externos exigem uma decisão explícita no Notifica; propostas de configuração continuam na tela do OpenMausBot.</p>
     <div className="flex flex-wrap gap-2"><button className={button} disabled={busy || !status || (!status.configured && !key.trim()) || companies.some(company => !company.name.trim())} onClick={() => void act("save")}>Salvar conexão</button>
       <button className={button} disabled={busy} onClick={() => void act("refresh")}>Atualizar status</button>

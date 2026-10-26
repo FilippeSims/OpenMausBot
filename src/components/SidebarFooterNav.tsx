@@ -1,4 +1,4 @@
-import { FolderOpen, Network, Puzzle, Sun, Zap } from "lucide-react";
+import { CalendarDays, FolderOpen, Network, Puzzle, Sun, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useAppTriggers } from "@/lib/app-triggers";
@@ -137,6 +137,8 @@ export function SidebarFooterNav({
     icon={(active) => <Zap size={iconSize} className={tone(active)} />}
     onClick={() => dispatch({ type: "showRoutines", view: "list" })}
   />;
+  const organizationRow = <NavRow caption={compactNavigation} id="organization" label="Organização" iconsOnly={iconsOnly || toolbar} rail={rail} active={state.activeView === "organization"}
+    icon={active => <CalendarDays size={iconSize} className={tone(active)} />} onClick={() => dispatch({type: "showOrganization"})} />;
   const filesRow = useCloudFilesReady() && <NavRow
     caption={compactNavigation}
     id="files"
@@ -147,10 +149,11 @@ export function SidebarFooterNav({
     icon={(active) => <FolderOpen size={iconSize} className={tone(active)} />}
     onClick={() => dispatch({ type: "showFiles" })}
   />;
-  if (!compactNavigation && !advanced && !iconsOnly) return <nav aria-label={t("sidebar.tools")} className="flex flex-col gap-0.5">{automationsRow}{filesRow}</nav>;
+  if (!compactNavigation && !advanced && !iconsOnly) return <nav aria-label={t("sidebar.tools")} className="flex flex-col gap-0.5">{organizationRow}{automationsRow}{filesRow}</nav>;
 
   const rows = (
     <>
+      {organizationRow}
       {automationsRow}
       {iconsOnly && <NavRow
         id="apps"

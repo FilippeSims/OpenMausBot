@@ -1,4 +1,5 @@
 import { TEAM_FILES_TOOL } from "./team-files-tool.ts";
+import { ORGANIZATION_TOOL } from './organization-tool.ts';
 import { NOTIFICA_TOOL } from "./notifica-tool.ts";
 import { TRIGGER_FIELDS_SCHEMA } from "./agents-schedule-schema.ts";
 export { WEEKDAYS } from "./agents-schedule-schema.ts";
@@ -51,6 +52,7 @@ const START_THREAD_SELF_ID = "Leave out, or use your own bot ID. For teammates u
 const TOOL_DEFINITIONS = [
   TEAM_FILES_TOOL,
   NOTIFICA_TOOL,
+  ORGANIZATION_TOOL,
   {
     name: "create_options_card",
     description:

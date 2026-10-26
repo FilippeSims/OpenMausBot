@@ -153,6 +153,10 @@ function recallWhen(at: unknown, dateOnly: boolean): string {
 export async function callTool(name: string, args: Json, context: ToolCallContext): Promise<ToolCallResult> {
   const { botId: BOT_ID, threadId: THREAD_ID, depth: DEPTH } = context;
   const { api, apiResponse } = context.client;
+  if (name === "organizacao_pessoal") {
+    const { ok, body } = await apiResponse("/api/internal/organization", { method: "POST", body: JSON.stringify(args) });
+    return { text: JSON.stringify(body), ...(!ok ? { isError: true } : {}) };
+  }
   if (name === "perguntar_usuario") {
     const { ok, body } = await apiResponse("/api/internal/notifica", { method: "POST", body: JSON.stringify(args) });
     return { text: JSON.stringify(body), ...(!ok ? { isError: true } : {}) };

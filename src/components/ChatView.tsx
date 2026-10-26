@@ -1,3 +1,4 @@
+import {NotificaConversationButton} from './NotificaConversationButton';
 import { ChatBotIdentity } from "./ChatBotIdentity";
 import { t as uiText } from "@/lib/i18n";
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type Dispatch } from "react";
@@ -1223,6 +1224,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
               <span className="@max-4xl/chathead:hidden">{t("chat.stop")}</span>
             </button>
           )}
+          <NotificaConversationButton key={bot.threadId} botId={bot.id} threadId={bot.threadId} />
           <ThreadContextWarning bot={bot} messages={messages} />
           <EngineLimitNotice engine={bot.modelSelection?.instanceId} />
           {/* Simple mode moves the model, the computer and ⋯ into the bot panel; a remote client's panel has neither. */}

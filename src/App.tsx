@@ -1,3 +1,4 @@
+import {OrganizationPage} from './components/OrganizationPage';
 import { TeamFilesHost } from "@/components/TeamFilesDialog";
 import { FilePreviewPanel } from "@/components/FilePreviewPanel";
 import { closeFilePreview, useFilePreview } from "@/lib/file-preview";
@@ -307,7 +308,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         <TeamMapPage />
       ) : state.activeView === "files" ? (
         <FilesView />
-      ) : state.activeView === "today" ? <TodayPage /> : state.activeView === "routines" ? (
+      ) : state.activeView === "organization" ? <OrganizationPage /> : state.activeView === "today" ? <TodayPage /> : state.activeView === "routines" ? (
         <TriggersPage onBack={closeCalendar} onOpenRoom={openCalendarRoom} />
       ) : !remoteClient && localVmWorkspaceBotId ? (
         <LocalVmWorkspace

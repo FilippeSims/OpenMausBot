@@ -27,10 +27,10 @@ export const workspaceInbox = z.object({ messages: z.array(z.object({
 export type WorkspaceInboxMessage = z.infer<typeof workspaceInbox>["messages"][number];
 const approval = z.object({ id: z.string(), origin, requestId: z.string(), messageId: z.string(), title: z.string(), message: z.string(), tool: z.string(), expiresAt: z.string() });
 export type WorkspaceApproval = z.infer<typeof approval>;
-const binding = z.object({ origin, conversationKey: z.string(), conversationId: z.string().optional(), title: z.string(), since: z.number() });
+const binding = z.object({ origin, conversationKey: z.string(), conversationId: z.string().optional(), title: z.string(), since: z.number(), historyThrough: z.number().optional() });
 export type WorkspaceBinding = z.infer<typeof binding>;
 const outbox = z.object({
-  id: z.string(), path: z.enum(["agentMessage", "agentApproval", "agentApprovalResolve"]), body: z.record(z.string(), z.unknown()),
+  id: z.string(), path: z.enum(["agentMessage", "agentTranscript", "agentApproval", "agentApprovalResolve"]), body: z.record(z.string(), z.unknown()),
   sent: z.boolean().default(false), failed: z.string().optional(), requestHash: z.string().optional(), questionId: z.string().optional(), answered: z.boolean().optional(),
 });
 const fileTransfer = z.object({

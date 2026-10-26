@@ -58,3 +58,15 @@ describe("Notifica message-scoped file boundary", () => {
     truncateSync(path, 50 * 1024 * 1024 + 1); await expect(open("large.mp4")).rejects.toMatchObject({ status: 413 });
   });
 });
+
+it("mirrors local user text in linked threads without echoing Notifica inbound messages", async () => {
+  const {workspaceOutputs} = await import('./notifica-workspace-files.ts');
+  const messages = [
+    {id:'remote',role:'user',kind:'text',text:'Sent remotely',at:10,sendId:'notifica-fixture'},
+    {id:'local',role:'user',kind:'text',text:'Continue locally',at:11},
+    {id:'answer',role:'bot',kind:'text',text:'Same answer',at:12},
+    {id:'old',role:'user',kind:'text',text:'Before sharing',at:1},
+  ] as Message[];
+  const output = workspaceOutputs({messagesFor:()=>messages} as unknown as Store,{botId:'bot',threadId:'thread'},5,text=>text);
+  expect(output.map(item=>({id:item.id,role:item.role??'agent',text:item.text}))).toEqual([{id:'local',role:'user',text:'Continue locally'},{id:'answer',role:'agent',text:'Same answer'}]);
+});

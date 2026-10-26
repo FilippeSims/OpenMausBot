@@ -27,6 +27,7 @@ export interface NotificaWorkspaceStatus {
   companies: Array<{ id: string; name: string }>;
   teamCompanies: Record<string, string>;
   teams: Array<{ id: string; name: string; companyId: string; section: string }>;
+  conversations?: Array<{botId: string; threadId: string; title: string; conversationId?: string}>;
   bots: number;
   pending: number;
 }

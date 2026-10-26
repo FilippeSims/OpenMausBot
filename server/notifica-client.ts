@@ -8,8 +8,8 @@ export const notificaAttachment = z.object({ id: z.string().regex(/^[a-f0-9]{64}
 export class NotificaHttpError extends Error {
   readonly status: number;
   readonly retryAt?: number;
-  constructor(status: number, retryAt?: number) {
-    super(`Notifica HTTP ${status}`);
+  constructor(status: number, retryAt?: number, message?: string) {
+    super(message ?? `Notifica HTTP ${status}`);
     this.status = status;
     this.retryAt = retryAt;
   }
@@ -44,7 +44,7 @@ export class NotificaClient {
       method: "POST", redirect: "error", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify(body), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000),
     });
-    return this.readResponse(response);
+    return this.readResponse(response, path === "agentOrganization" ? 8_000_000 : 512_000);
   }
   async uploadAttachment(key: string, metadata: { eventId: string; name: string; targetBotId: string }, bytes: Uint8Array, signal?: AbortSignal) {
     if (bytes.byteLength > NOTIFICA_ATTACHMENT_MAX_BYTES) throw new NotificaHttpError(413);
@@ -54,13 +54,11 @@ export class NotificaClient {
     });
     return z.object({ attachment: notificaAttachment }).parse(await this.readResponse(response)).attachment;
   }
-  private async readResponse(response: Response): Promise<unknown> {
-    if (!response.ok) {
-      await response.body?.cancel();
-      throw new NotificaHttpError(response.status, notificaRetryAt(response.headers.get("retry-after"), Date.now()));
-    }
+  private async readResponse(response: Response, maxBytes = 512_000): Promise<unknown> {
+    const httpError = (message?: string) => new NotificaHttpError(response.status, notificaRetryAt(response.headers.get("retry-after"), Date.now()), message);
+    if (!response.ok) maxBytes = 64_000;
     const reader = response.body?.getReader();
-    if (!reader) throw new Error("Empty Notifica response");
+    if (!reader) throw response.ok ? new Error("Empty Notifica response") : httpError();
     let size = 0;
     const chunks: Uint8Array[] = [];
     try {
@@ -68,10 +66,16 @@ export class NotificaClient {
         const { done, value } = await reader.read();
         if (done) break;
         size += value.byteLength;
-        if (size > 512_000) throw new Error("Notifica response too large");
+        if (size > maxBytes) throw response.ok ? new Error("Notifica response too large") : httpError();
         chunks.push(value);
       }
-      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      const body = Buffer.concat(chunks).toString("utf8");
+      if (!response.ok) {
+        let message: string | undefined;
+        try { const parsed = JSON.parse(body); if (typeof parsed.error === "string") message = parsed.error; } catch {}
+        throw httpError(message);
+      }
+      return JSON.parse(body);
     } finally { await reader.cancel().catch(() => {}); }
   }
 }
